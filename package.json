@@ -1,0 +1,17 @@
+{
+  "name": "pdfloom",
+  "private": true,
+  "version": "0.1.0",
+  "description": "PDFLoom — a premium, AI-native PDF editor. 100% client-side.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @pdfloom/web dev",
+    "build": "pnpm --filter @pdfloom/core build && pnpm --filter @pdfloom/ui build && pnpm --filter @pdfloom/web build",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck"
+  },
+  "packageManager": "pnpm@11.24.0"
+}

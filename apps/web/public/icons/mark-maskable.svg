@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PDFLoom">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#181b22"/>
+      <stop offset="1" stop-color="#0f1115"/>
+    </linearGradient>
+    <linearGradient id="weave1" x1="96" y1="96" x2="416" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8f81f3"/>
+      <stop offset="1" stop-color="#6a5adf"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Maskable: full-bleed background, artwork scaled/centered within the ~80% safe zone -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <g transform="translate(78 78) scale(0.7)" stroke-linecap="round">
+    <path d="M 152 108 L 152 332 Q 152 388 208 388 L 368 388" fill="none" stroke="url(#weave1)" stroke-width="46"/>
+    <path d="M 232 108 L 232 300" fill="none" stroke="#f2f3f5" stroke-width="46" opacity="0.94"/>
+    <path d="M 312 108 L 312 388" fill="none" stroke="#f5a623" stroke-width="46"/>
+  </g>
+</svg>

@@ -1,0 +1,182 @@
+import { recentsStore, type RecentFileEntry } from "@pdfloom/core";
+import { Button, Mark, cn, toast } from "@pdfloom/ui";
+import { Cpu, FileText, FolderOpen, ShieldCheck, UploadCloud, WifiOff } from "lucide-react";
+import { useEffect, useState, type DragEvent } from "react";
+import { useLoomStore } from "../app/store";
+
+const TRUST_BADGES = [
+  { icon: ShieldCheck, label: "100% local & private" },
+  { icon: Cpu, label: "Free AI, no account" },
+  { icon: WifiOff, label: "Works offline" },
+];
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function formatRelativeTime(timestampMs: number): string {
+  const diffSeconds = Math.round((timestampMs - Date.now()) / 1000);
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  const divisions: [number, Intl.RelativeTimeFormatUnit][] = [
+    [60, "second"],
+    [60, "minute"],
+    [24, "hour"],
+    [7, "day"],
+    [4.34524, "week"],
+    [12, "month"],
+    [Number.POSITIVE_INFINITY, "year"],
+  ];
+  let duration = diffSeconds;
+  for (const [amount, unit] of divisions) {
+    if (Math.abs(duration) < amount) return formatter.format(Math.round(duration), unit);
+    duration /= amount;
+  }
+  return formatter.format(Math.round(duration), "year");
+}
+
+export function WelcomeScreen() {
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [recents, setRecents] = useState<RecentFileEntry[]>([]);
+  const openViaPicker = useLoomStore((s) => s.openViaPicker);
+  const openOpenedFile = useLoomStore((s) => s.openOpenedFile);
+  const storage = useLoomStore((s) => s.storage);
+  const loadError = useLoomStore((s) => s.loadError);
+  const isLoading = useLoomStore((s) => s.isLoading);
+
+  useEffect(() => {
+    void recentsStore.list().then(setRecents);
+  }, []);
+
+  useEffect(() => {
+    if (loadError) toast.error("Couldn't open this PDF", loadError);
+  }, [loadError]);
+
+  const handleDrop = async (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingOver(false);
+    const file = [...event.dataTransfer.files].find((f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
+    if (!file) {
+      toast.warning("That's not a PDF", "Drop a .pdf file to open it.");
+      return;
+    }
+    const opened = await storage.openFromFile(file);
+    await openOpenedFile(opened);
+  };
+
+  const handleOpenRecent = async (entry: RecentFileEntry) => {
+    const handle = await recentsStore.getHandle(entry.id);
+    if (!handle) {
+      toast.info("Locate the file again", "Your browser doesn't support reopening files without picking them.");
+      await openViaPicker();
+      return;
+    }
+    try {
+      const permission = await handle.queryPermission({ mode: "read" });
+      const granted = permission === "granted" || (await handle.requestPermission({ mode: "read" })) === "granted";
+      if (!granted) {
+        toast.warning("Permission needed", "PDFLoom needs permission to reopen this file.");
+        return;
+      }
+      const file = await handle.getFile();
+      const opened = await storage.openFromFile(file, handle);
+      await openOpenedFile(opened);
+    } catch {
+      toast.error("Couldn't reopen this file", "It may have been moved, renamed, or deleted.");
+      await recentsStore.remove(entry.id);
+      setRecents((prev) => prev.filter((r) => r.id !== entry.id));
+    }
+  };
+
+  return (
+    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto bg-bg p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        style={{
+          background:
+            "radial-gradient(60rem 34rem at 18% 8%, color-mix(in srgb, var(--loom-primary) 16%, transparent), transparent 60%), " +
+            "radial-gradient(48rem 30rem at 88% 92%, color-mix(in srgb, var(--loom-ai) 12%, transparent), transparent 60%)",
+        }}
+      />
+
+      <div className="relative grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <Mark size={40} className="rounded-[--radius-md] shadow-[--shadow-panel]" />
+            <div>
+              <div className="font-serif text-2xl font-medium leading-none tracking-tight text-text">PDFLoom</div>
+              <div className="mt-1 text-xs text-text-faint">Weave every page</div>
+            </div>
+          </div>
+
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDraggingOver(true);
+            }}
+            onDragLeave={() => setIsDraggingOver(false)}
+            onDrop={(e) => void handleDrop(e)}
+            className={cn(
+              "flex flex-col items-center justify-center gap-5 rounded-[--radius-xl] border-2 border-dashed p-12 text-center shadow-[--shadow-panel] transition-colors",
+              isDraggingOver ? "border-primary bg-primary-muted" : "border-border bg-bg-elevated",
+            )}
+          >
+            <UploadCloud className="h-9 w-9 text-text-faint" />
+            <p className="max-w-sm text-sm text-text-muted">
+              Drop a PDF here, or open one from your device. Everything runs locally in your browser — nothing is
+              ever uploaded.
+            </p>
+            <Button variant="primary" size="lg" onClick={() => void openViaPicker()} disabled={isLoading}>
+              <FolderOpen className="h-4 w-4" />
+              {isLoading ? "Opening…" : "Open a PDF"}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-2 px-1">
+            {TRUST_BADGES.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-1.5 text-xs text-text-faint">
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-[--radius-xl] border border-border bg-bg-elevated/60 p-4">
+          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-text-faint">Recent</h2>
+          {recents.length === 0 ? (
+            <p className="px-1 text-sm text-text-faint">Files you open will show up here.</p>
+          ) : (
+            <ul className="flex flex-col gap-0.5">
+              {recents.map((entry) => (
+                <li key={entry.id}>
+                  <button
+                    type="button"
+                    onClick={() => void handleOpenRecent(entry)}
+                    className="flex w-full items-center gap-3 rounded-[--radius-md] px-2.5 py-2 text-left hover:bg-surface-hover"
+                  >
+                    <FileText className="h-5 w-5 shrink-0 text-text-faint" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-text">{entry.name}</span>
+                      <span className="block text-xs text-text-faint">
+                        {entry.pageCount} pages · {formatBytes(entry.sizeBytes)} · {formatRelativeTime(entry.lastOpenedAt)}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

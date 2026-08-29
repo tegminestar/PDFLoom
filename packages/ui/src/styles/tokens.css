@@ -1,0 +1,281 @@
+@import "tailwindcss";
+
+/* Tailwind v4's automatic content detection only walks from the consuming
+   app's own root (apps/web) — this package lives outside that tree as a
+   pnpm workspace sibling, so without this directive every utility class
+   used only inside packages/ui/src (never coincidentally duplicated in
+   apps/web) would silently generate no CSS at all. */
+@source "../";
+
+/* PDFLoom is dark-mode-first by design (a "studio," not a corporate form).
+   Theme is switched at runtime by ThemeProvider setting data-theme on <html>,
+   not by prefers-color-scheme — a person's choice here is a product setting,
+   not just a website content preference. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  /* ---- Dark theme (default) ---- */
+  --loom-bg: #0f1115;
+  --loom-bg-elevated: #15171d;
+  --loom-surface: #1a1d24;
+  --loom-surface-hover: #21242c;
+  --loom-border: #2a2e38;
+  --loom-border-strong: #383d4a;
+  --loom-text: #f2f3f5;
+  --loom-text-muted: #9aa0ad;
+  --loom-text-faint: #676d7a;
+  --loom-canvas: #faf9f6;
+  --loom-canvas-shadow: rgb(0 0 0 / 0.45);
+
+  --loom-primary: #7c6cf0;
+  --loom-primary-hover: #8f81f3;
+  --loom-primary-active: #6a5adf;
+  --loom-primary-text: #ffffff;
+  --loom-primary-muted: #7c6cf026;
+
+  --loom-ai: #f5a623;
+  --loom-ai-hover: #f7b64c;
+  --loom-ai-active: #dd950f;
+  --loom-ai-text: #1a1204;
+  --loom-ai-muted: #f5a62326;
+
+  --loom-danger: #f2555a;
+  --loom-danger-hover: #f57579;
+  --loom-danger-muted: #f2555a26;
+  --loom-success: #3ecf8e;
+  --loom-warning: #f5c343;
+
+  --loom-focus-ring: #7c6cf0;
+  --loom-overlay: rgb(6 7 10 / 0.6);
+}
+
+:root[data-theme="light"] {
+  --loom-bg: #f4f4f6;
+  --loom-bg-elevated: #ffffff;
+  --loom-surface: #ffffff;
+  --loom-surface-hover: #ececf0;
+  --loom-border: #e0e1e7;
+  --loom-border-strong: #cbccd6;
+  --loom-text: #16181d;
+  --loom-text-muted: #5b606c;
+  --loom-text-faint: #8a8f9c;
+  --loom-canvas: #ffffff;
+  --loom-canvas-shadow: rgb(20 20 30 / 0.16);
+
+  --loom-primary: #6c5ce7;
+  --loom-primary-hover: #5c4bd8;
+  --loom-primary-active: #4f3fc9;
+  --loom-primary-text: #ffffff;
+  --loom-primary-muted: #6c5ce71a;
+
+  --loom-ai: #c97c0a;
+  --loom-ai-hover: #b06e08;
+  --loom-ai-active: #925c06;
+  --loom-ai-text: #ffffff;
+  --loom-ai-muted: #c97c0a1a;
+
+  --loom-danger: #d63a3f;
+  --loom-danger-hover: #c22e33;
+  --loom-danger-muted: #d63a3f1a;
+  --loom-success: #1f9d67;
+  --loom-warning: #b8860b;
+
+  --loom-focus-ring: #6c5ce7;
+  --loom-overlay: rgb(20 20 30 / 0.4);
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+
+  --color-bg: var(--loom-bg);
+  --color-bg-elevated: var(--loom-bg-elevated);
+  --color-surface: var(--loom-surface);
+  --color-surface-hover: var(--loom-surface-hover);
+  --color-border: var(--loom-border);
+  --color-border-strong: var(--loom-border-strong);
+  --color-text: var(--loom-text);
+  --color-text-muted: var(--loom-text-muted);
+  --color-text-faint: var(--loom-text-faint);
+  --color-canvas: var(--loom-canvas);
+
+  --color-primary: var(--loom-primary);
+  --color-primary-hover: var(--loom-primary-hover);
+  --color-primary-active: var(--loom-primary-active);
+  --color-primary-text: var(--loom-primary-text);
+  --color-primary-muted: var(--loom-primary-muted);
+
+  --color-ai: var(--loom-ai);
+  --color-ai-hover: var(--loom-ai-hover);
+  --color-ai-active: var(--loom-ai-active);
+  --color-ai-text: var(--loom-ai-text);
+  --color-ai-muted: var(--loom-ai-muted);
+
+  --color-danger: var(--loom-danger);
+  --color-danger-hover: var(--loom-danger-hover);
+  --color-danger-muted: var(--loom-danger-muted);
+  --color-success: var(--loom-success);
+  --color-warning: var(--loom-warning);
+
+  --color-focus-ring: var(--loom-focus-ring);
+  --color-overlay: var(--loom-overlay);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-panel: 0 8px 30px -8px rgb(0 0 0 / 0.35);
+  --shadow-floating: 0 12px 40px -10px rgb(0 0 0 / 0.5);
+}
+
+html,
+body {
+  background-color: var(--loom-bg);
+  color: var(--loom-text);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] html,
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+* {
+  border-color: var(--loom-border);
+}
+
+::selection {
+  background-color: var(--loom-primary-muted);
+  color: var(--loom-text);
+}
+
+/* Slim, unobtrusive scrollbars that fit the studio aesthetic. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--loom-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--loom-border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Shared enter/exit motion for Radix popovers/tooltips/dialogs/menus. */
+@keyframes loom-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes loom-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes loom-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loom-pop,
+  .loom-overlay {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+.loom-pop {
+  animation: loom-pop-in 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: var(--radix-tooltip-content-transform-origin, var(--radix-popover-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, center)));
+}
+.loom-pop[data-state="closed"] {
+  animation: loom-fade-out 100ms ease-in forwards;
+}
+
+.loom-overlay {
+  animation: loom-overlay-in 150ms ease-out;
+}
+.loom-overlay[data-state="closed"] {
+  animation: loom-fade-out 100ms ease-in forwards;
+}
+
+/* pdf.js text layer — a faithful port of the relevant rules from
+   pdfjs-dist's web/pdf_viewer.css (normally scoped under `.pdfViewer
+   .page`, which we don't use), scoped to our own class instead so it can
+   sit directly over a page canvas rendered via PdfDocument.renderPage at
+   the same scale/rotation. `--scale-factor` is set at runtime by
+   PdfDocument.renderTextLayer; everything else here is static. */
+.loom-text-layer {
+  --user-unit: 1;
+  --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  -webkit-text-size-adjust: none;
+  -moz-text-size-adjust: none;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 1;
+}
+.loom-text-layer span,
+.loom-text-layer br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+.loom-text-layer > :not(.markedContent),
+.loom-text-layer .markedContent span:not(.markedContent) {
+  --font-height: 0;
+  --scale-x: 1;
+  --rotate: 0deg;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.loom-text-layer .markedContent {
+  display: contents;
+}
+.loom-text-layer span[role="img"] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+.loom-text-layer ::selection {
+  background: color-mix(in srgb, var(--loom-primary) 35%, transparent);
+}
