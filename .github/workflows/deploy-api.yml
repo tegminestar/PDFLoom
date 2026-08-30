@@ -131,3 +131,11 @@ jobs:
           echo "API URL: https://$AZURE_WEBAPP_NAME.azurewebsites.net"
           echo "Health check: https://$AZURE_WEBAPP_NAME.azurewebsites.net/api/health"
           echo "Webhook endpoint to register in Stripe: https://$AZURE_WEBAPP_NAME.azurewebsites.net/api/stripe/webhook"
+
+      - name: Wait, then check health and pull recent application logs
+        run: |
+          sleep 30
+          echo "--- health check ---"
+          curl -s -w "\nSTATUS:%{http_code}\n" "https://$AZURE_WEBAPP_NAME.azurewebsites.net/api/health" --max-time 30 || true
+          echo "--- recent log stream (15s) ---"
+          timeout 15 az webapp log tail --name "$AZURE_WEBAPP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" || true
