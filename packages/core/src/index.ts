@@ -51,6 +51,8 @@ export { detectPii } from "./ai/smart-redact";
 export type { NamedEntityType, SmartRedactOptions, SmartRedactMatch } from "./ai/smart-redact";
 export { translateText, TRANSLATION_LANGUAGES } from "./ai/translate";
 export type { TranslationLanguage, TranslateStage, TranslateOptions, TranslateResult } from "./ai/translate";
+export { explainClause } from "./ai/explain-clause";
+export type { ExplainClauseStage, ExplainClauseOptions } from "./ai/explain-clause";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

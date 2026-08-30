@@ -36,6 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
 import { TranslateDialog } from "./features/ai/TranslateDialog";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
@@ -491,6 +492,7 @@ export function App() {
       </div>
       <CommandPalette groups={commandGroups} />
       <SelectionMarkupToolbar />
+      <ExplainSelectionToolbar />
       <PasswordPromptDialog />
       {meta && (
         <>
