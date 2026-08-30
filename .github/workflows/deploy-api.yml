@@ -40,6 +40,12 @@ jobs:
           # run that never referenced it. Shadow it empty for this step.
           NODE_AUTH_TOKEN: ""
         run: |
+          echo "--- npm config sources ---"
+          npm config list -l --json 2>&1 | grep -i -E "registry|auth|token" || true
+          echo "--- .npmrc file locations npm would read ---"
+          for f in /etc/npmrc ~/.npmrc ./.npmrc; do
+            if [ -f "$f" ]; then echo "FOUND: $f"; cat "$f"; else echo "absent: $f"; fi
+          done
           npm config set //registry.npmjs.org/:_authToken "" --location=project
           npm install --registry=https://registry.npmjs.org/
           npm run typecheck
