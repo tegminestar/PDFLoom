@@ -38,6 +38,7 @@ import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
+import { CommandBarDialog } from "./features/ai/CommandBarDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { VoiceToFillButton } from "./features/forms/VoiceToFillButton";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
@@ -107,6 +108,7 @@ export function App() {
   const [translateOpen, setTranslateOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [commandBarOpen, setCommandBarOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
@@ -395,12 +397,13 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen} />}
+            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen || commandBarOpen} />}
             items={[
               { id: "summarize", label: "Summarize…", icon: <Sparkles />, onSelect: () => setSummarizeOpen(true) },
               { id: "translate", label: "Translate…", icon: <Sparkles />, onSelect: () => setTranslateOpen(true) },
               { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, onSelect: () => setAccessibilityOpen(true) },
               { id: "chat", label: "Chat with your PDF…", icon: <Sparkles />, onSelect: () => setChatOpen(true) },
+              { id: "command-bar", label: "AI command bar…", icon: <Sparkles />, onSelect: () => setCommandBarOpen(true) },
             ]}
           />
           <DropdownMenu
@@ -518,6 +521,7 @@ export function App() {
           <TranslateDialog open={translateOpen} onOpenChange={setTranslateOpen} />
           <AccessibilityDialog open={accessibilityOpen} onOpenChange={setAccessibilityOpen} />
           <ChatDialog open={chatOpen} onOpenChange={setChatOpen} />
+          <CommandBarDialog open={commandBarOpen} onOpenChange={setCommandBarOpen} />
         </>
       )}
     </div>

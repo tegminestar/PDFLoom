@@ -60,6 +60,8 @@ export { chunkPagesForRag, cosineSimilarity, findRelevantChunks, embedChunks, em
 export type { DocumentChunk, EmbeddedChunk, EmbedOptions } from "./ai/rag";
 export { isChatAvailable, sendChatMessage } from "./ai/webllm-chat";
 export type { ChatMessage, ChatLoadStage, WebLlmChatOptions } from "./ai/webllm-chat";
+export { buildCommandPrompt, extractJsonObject, validateCommand, describeCommand } from "./ai/command-bar";
+export type { CommandOperation, ValidationSuccess, ValidationFailure } from "./ai/command-bar";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 
