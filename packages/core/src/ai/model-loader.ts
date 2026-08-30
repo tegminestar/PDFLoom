@@ -1,0 +1,127 @@
+import type { AllTasks, DataType, PipelineType, ProgressInfo } from "@huggingface/transformers";
+import type { InferenceSession } from "onnxruntime-common";
+import { detectAiCapabilities, isWebgpuAdapterAvailable } from "./capabilities";
+
+export type ModelLoadStage =
+  | { stage: "initiating"; file: string }
+  | { stage: "downloading"; file: string; progressPct: number; loadedBytes: number; totalBytes: number }
+  | { stage: "ready" };
+
+export type ModelLoadProgressCallback = (info: ModelLoadStage) => void;
+
+type TransformersModule = typeof import("@huggingface/transformers");
+
+let transformersPromise: Promise<TransformersModule> | null = null;
+
+/**
+ * Transformers.js is a large (multi-hundred-KB) library that only matters
+ * once a user actually opens an AI feature — a dynamic import keeps it out
+ * of the app's normal load path, mirroring pdf.js's own lazy loadPdfjs().
+ * Env config (no local filesystem models, browser Cache API for
+ * already-downloaded models) is set exactly once, on first load.
+ */
+function loadTransformers(): Promise<TransformersModule> {
+  transformersPromise ??= import("@huggingface/transformers").then((mod) => {
+    mod.env.allowLocalModels = false;
+    mod.env.useBrowserCache = true;
+    return mod;
+  });
+  return transformersPromise;
+}
+
+function normalizeProgress(info: ProgressInfo, onProgress: ModelLoadProgressCallback): void {
+  switch (info.status) {
+    case "initiate":
+      onProgress({ stage: "initiating", file: info.file });
+      break;
+    case "progress":
+      onProgress({ stage: "downloading", file: info.file, progressPct: info.progress, loadedBytes: info.loaded, totalBytes: info.total });
+      break;
+    case "ready":
+      onProgress({ stage: "ready" });
+      break;
+    // "download" (about to start a file) and "done" (one file finished) are
+    // both already covered by the "progress" events surrounding them —
+    // deliberately not forwarded to avoid noisy, redundant UI updates.
+    default:
+      break;
+  }
+}
+
+export interface LoadPipelineOptions {
+  onProgress?: ModelLoadProgressCallback;
+  /**
+   * Overrides Transformers.js's automatic per-device quantization choice.
+   * Some models publish a broken export for one quantization level (see
+   * summarize.ts, which pins "int8" — the default "q8" export for
+   * Xenova/distilbart-cnn-6-6 fails to load with an ONNX Runtime error
+   * about a missing dequantization scale) — this lets a caller work around
+   * that on a per-model basis instead of guessing a global default.
+   */
+  dtype?: DataType;
+  /** Passed straight through to onnxruntime-web as the session's SessionOptions — see summarize.ts for why. */
+  sessionOptions?: InferenceSession.SessionOptions;
+}
+
+const pipelineCache = new Map<string, Promise<unknown>>();
+
+/**
+ * `navigator.gpu` being present only means the WebGPU *API* exists, not
+ * that a real adapter is obtainable — observed directly in a sandboxed
+ * headless Chromium (capabilities.ts reports webgpu:true, but
+ * `requestAdapter()` fails at runtime with "No available adapters"). Rather
+ * than trying to perfectly predict that up front, loadPipeline always has a
+ * real runtime fallback: if a WebGPU load fails with an adapter-shaped
+ * error, it transparently retries on WASM instead of failing the feature.
+ */
+function isWebgpuAdapterError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /webgpu|gpu adapter|no available (backend|adapters)/i.test(message);
+}
+
+/**
+ * Loads (or reuses an already-loaded) Transformers.js pipeline for the
+ * given task+model, on the best available device (WebGPU when present and
+ * actually usable, WASM otherwise). Cached by task+model — once a device
+ * choice succeeds (including a WASM fallback after a WebGPU failure), later
+ * calls for the same task+model reuse that same pipeline instance.
+ */
+export async function loadPipeline<T extends PipelineType>(task: T, model: string, options?: LoadPipelineOptions): Promise<AllTasks[T]> {
+  const dtype = options?.dtype;
+  const sessionOptions = options?.sessionOptions;
+  const cacheKey = `${task}::${model}::${dtype ?? "auto"}::${JSON.stringify(sessionOptions ?? {})}`;
+  const cached = pipelineCache.get(cacheKey);
+  if (cached) return cached as Promise<AllTasks[T]>;
+
+  const onProgress = options?.onProgress;
+
+  const promise = (async () => {
+    // detectAiCapabilities() is a fast synchronous heuristic (API presence
+    // only); actually probing for a real adapter before picking WebGPU
+    // avoids ever attempting a load we already know will fail downstream.
+    const capabilities = detectAiCapabilities();
+    const preferredDevice = capabilities.webgpu && (await isWebgpuAdapterAvailable()) ? "webgpu" : "wasm";
+
+    const { pipeline } = await loadTransformers();
+    const progressOptions = onProgress ? { progress_callback: (info: ProgressInfo) => normalizeProgress(info, onProgress) } : {};
+    const dtypeOptions = dtype ? { dtype } : {};
+    const sessionOptionsOptions = sessionOptions ? { session_options: sessionOptions } : {};
+    try {
+      return await pipeline(task, model, { device: preferredDevice, ...dtypeOptions, ...sessionOptionsOptions, ...progressOptions });
+    } catch (error) {
+      // Defense in depth: the adapter probe above should already prevent
+      // this, but a WebGPU failure can still surface late (e.g. only once
+      // the model actually runs) — fall back to WASM rather than failing
+      // the whole feature.
+      if (preferredDevice === "webgpu" && isWebgpuAdapterError(error)) {
+        return await pipeline(task, model, { device: "wasm", ...dtypeOptions, ...sessionOptionsOptions, ...progressOptions });
+      }
+      throw error;
+    }
+  })();
+
+  pipelineCache.set(cacheKey, promise);
+  // Don't cache a failed load — the next call should get a fresh retry, not a permanently-rejected promise.
+  promise.catch(() => pipelineCache.delete(cacheKey));
+  return promise as Promise<AllTasks[T]>;
+}

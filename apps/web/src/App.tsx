@@ -26,6 +26,7 @@ import {
   Search,
   Shrink,
   Signature,
+  Sparkles,
   Stamp,
   Sun,
   ZoomIn,
@@ -35,6 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { SummarizeDialog } from "./features/ai/SummarizeDialog";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
 import { CompareDialog } from "./features/compare/CompareDialog";
@@ -96,6 +98,7 @@ export function App() {
   const [ocrOpen, setOcrOpen] = useState(false);
   const [exportOfficeOpen, setExportOfficeOpen] = useState(false);
   const [protectOpen, setProtectOpen] = useState(false);
+  const [summarizeOpen, setSummarizeOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
@@ -244,6 +247,7 @@ export function App() {
                   icon: <GitCompare />,
                   onSelect: () => (mainView === "compare" ? setMainView("read") : compareTarget ? setMainView("compare") : setCompareDialogOpen(true)),
                 },
+                { id: "summarize", label: "Summarize…", icon: <Sparkles />, tone: "ai", onSelect: () => setSummarizeOpen(true) },
               ],
             },
             {
@@ -304,6 +308,7 @@ export function App() {
       setProtectOpen,
       compareTarget,
       setCompareDialogOpen,
+      setSummarizeOpen,
       imagePicker.open,
     ],
   );
@@ -378,6 +383,7 @@ export function App() {
             active={mainView === "compare"}
             onClick={() => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true))}
           />
+          <RailItem icon={<Sparkles />} label="Summarize" tone="ai" active={summarizeOpen} onClick={() => setSummarizeOpen(true)} />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Stamp />} label="Page design" active={watermarkOpen || headerFooterOpen || pageNumbersOpen} />}
@@ -487,6 +493,7 @@ export function App() {
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />
           <ProtectDialog open={protectOpen} onOpenChange={setProtectOpen} />
           <CompareDialog open={compareDialogOpen} onOpenChange={setCompareDialogOpen} onPicked={handleComparePicked} />
+          <SummarizeDialog open={summarizeOpen} onOpenChange={setSummarizeOpen} />
         </>
       )}
     </div>

@@ -37,6 +37,14 @@ export type { TypedSignatureOptions, SignedTimestampOptions } from "./pdf/signat
 export type { SanitizeOptions, SanitizeReport } from "./pdf/sanitize";
 export { diffPageText, summarizeTextComparison, diffPixelsRgba } from "./pdf/compare";
 export type { WordDiffOp, WordDiffOpType, PageTextDiffResult, PageComparisonSummary, ComparisonSummary, PixelDiffResult } from "./pdf/compare";
+
+export { detectAiCapabilities, isWebgpuAdapterAvailable } from "./ai/capabilities";
+export type { AiCapabilities } from "./ai/capabilities";
+export { chunkText } from "./ai/chunk-text";
+export { loadPipeline } from "./ai/model-loader";
+export type { ModelLoadStage, ModelLoadProgressCallback, LoadPipelineOptions } from "./ai/model-loader";
+export { summarizeText } from "./ai/summarize";
+export type { SummarizeStage, SummarizeOptions, SummarizeResult } from "./ai/summarize";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

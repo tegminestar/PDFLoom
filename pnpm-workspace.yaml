@@ -2,4 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  # This app is 100% browser/WASM — these packages' native Node addons are
+  # never used (@huggingface/transformers only needs its browser bundle
+  # here), so their install/build scripts stay disallowed.
+  onnxruntime-node: false
+  protobufjs: false
+  sharp: false
   tesseract.js: true
