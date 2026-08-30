@@ -16,14 +16,19 @@ export interface PageCanvasProps {
 }
 
 /**
- * Renders one PDF page. Dimensions are fetched immediately on mount (cheap
- * metadata reads, needed for accurate scroll-height layout); actual pixel
- * rendering to canvas is gated behind IntersectionObserver so a long
- * document doesn't rasterize every page at once. This visibility is purely
- * a render-gating concern local to this component — "which page is the
- * user currently reading" is tracked separately by the Viewer via scroll
- * geometry (see Viewer.tsx), which is synchronous and doesn't race with
- * this observer's own eventual-consistency timing.
+ * Renders one PDF page. Both the dimensions fetch and actual pixel
+ * rendering are gated behind IntersectionObserver, so a long document
+ * doesn't fire hundreds of concurrent requests against pdf.js's internal
+ * worker at once — that flooding was measured to stall even page 1's own
+ * render for 60+ seconds on a 300-page document, since its request queued
+ * up behind everyone else's. Until a page's real dimensions arrive, it
+ * lays out at a standard-Letter-page default (below), which is corrected
+ * once visible — the same one-time reflow-on-arrival the canvas render
+ * itself already does. This visibility is purely a render-gating concern
+ * local to this component — "which page is the user currently reading" is
+ * tracked separately by the Viewer via scroll geometry (see Viewer.tsx),
+ * which is synchronous and doesn't race with this observer's own
+ * eventual-consistency timing.
  */
 export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchResult }: PageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,16 +38,6 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
   const [dimensions, setDimensions] = useState<{ widthPt: number; heightPt: number } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [hasRendered, setHasRendered] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    doc.getPageDimensions(pageNumber).then((dims) => {
-      if (!cancelled) setDimensions(dims);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [doc, pageNumber]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -57,6 +52,17 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageNumber]);
+
+  useEffect(() => {
+    if (!isVisible || dimensions) return;
+    let cancelled = false;
+    doc.getPageDimensions(pageNumber).then((dims) => {
+      if (!cancelled) setDimensions(dims);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [doc, pageNumber, isVisible, dimensions]);
 
   useEffect(() => {
     if (!isVisible || !canvasRef.current) return;

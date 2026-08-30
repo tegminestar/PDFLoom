@@ -21,35 +21,47 @@ function PageThumbnail({
   const containerRef = useRef<HTMLButtonElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dims, setDims] = useState<{ widthPt: number; heightPt: number } | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [rendered, setRendered] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    doc.getPageDimensions(pageNumber).then((d) => {
-      if (!cancelled) setDims(d);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [doc, pageNumber]);
-
+  // Visibility gates three things now, not just the render call: the
+  // dimensions fetch, the render itself, and — critically — whether a real
+  // <canvas> DOM node exists at all. An unconditionally-mounted <canvas>
+  // carries its own backing pixel buffer even while blank; on a 300-page
+  // document that was measured to mount 300 canvases (and, before the
+  // dimensions fix below, flood pdf.js's worker queue badly enough to
+  // stall page 1's own render for 60+ seconds — the Viewer's PageCanvas
+  // hit the identical bug, see its writeup). Until dims arrive, the
+  // thumbnail lays out at the standard-Letter default below.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting && canvasRef.current && !rendered) {
-          doc
-            .renderPage(pageNumber, { canvas: canvasRef.current, scale: THUMB_SCALE, rotation })
-            .then(() => setRendered(true))
-            .catch(() => undefined);
-        }
+        const nowVisible = entry?.isIntersecting ?? false;
+        setIsVisible(nowVisible);
+        // Unmounting the canvas (below) discards its pixels, so the next
+        // time this thumbnail scrolls into view it needs to render again.
+        if (!nowVisible) setRendered(false);
       },
       { rootMargin: "400px 0px 400px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [doc, pageNumber, rotation, rendered]);
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible || dims) return;
+    doc.getPageDimensions(pageNumber).then((d) => setDims(d)).catch(() => undefined);
+  }, [doc, pageNumber, isVisible, dims]);
+
+  useEffect(() => {
+    if (!isVisible || !canvasRef.current || rendered) return;
+    doc
+      .renderPage(pageNumber, { canvas: canvasRef.current, scale: THUMB_SCALE, rotation })
+      .then(() => setRendered(true))
+      .catch(() => undefined);
+  }, [doc, pageNumber, rotation, rendered, isVisible]);
 
   // Re-render if rotation changes after an initial render.
   useEffect(() => {
@@ -76,7 +88,7 @@ function PageThumbnail({
         )}
         style={{ width: widthPt * THUMB_SCALE, height: heightPt * THUMB_SCALE }}
       >
-        <canvas ref={canvasRef} className="block" />
+        {isVisible && <canvas ref={canvasRef} className="block" />}
       </div>
       <span className={cn("text-[11px] tabular-nums", active ? "font-semibold text-primary" : "text-text-faint")}>
         {pageNumber}
