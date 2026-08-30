@@ -9,7 +9,13 @@ on:
 env:
   AZURE_WEBAPP_NAME: pdfloom-api-tegminestar
   AZURE_RESOURCE_GROUP: pdfloom-rg
-  AZURE_LOCATION: westus2
+  # The resource group itself already exists in eastus (from the earlier
+  # Functions attempt) and a group's location can't be changed after
+  # creation — but resources *inside* it can be in a different region, and
+  # eastus has 0 quota for Free-tier (F1) App Service plans on this
+  # subscription while westus2 does, so the plan/app use that instead.
+  AZURE_LOCATION: eastus
+  AZURE_APP_LOCATION: westus2
   AZURE_PLAN_NAME: pdfloom-api-plan
   # Left over from an earlier Azure Functions attempt (see git history) —
   # Functions needed a storage account and its own Dynamic/Consumption
@@ -76,7 +82,7 @@ jobs:
             az appservice plan create \
               --name "$AZURE_PLAN_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --location "$AZURE_LOCATION" \
+              --location "$AZURE_APP_LOCATION" \
               --is-linux \
               --sku F1 \
               --output none
