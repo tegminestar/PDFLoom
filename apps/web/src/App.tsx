@@ -18,6 +18,7 @@ import {
   PenTool,
   RotateCw,
   Search,
+  Shrink,
   Stamp,
   Sun,
   ZoomIn,
@@ -28,6 +29,7 @@ import { useLoomStore } from "./app/store";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
+import { CompressDialog } from "./features/convert/CompressDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
@@ -69,6 +71,7 @@ export function App() {
   const [headerFooterOpen, setHeaderFooterOpen] = useState(false);
   const [pageNumbersOpen, setPageNumbersOpen] = useState(false);
   const [exportImagesOpen, setExportImagesOpen] = useState(false);
+  const [compressOpen, setCompressOpen] = useState(false);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
 
   const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
@@ -180,6 +183,7 @@ export function App() {
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
                 { id: "insert-images", label: "Insert images as pages…", icon: <ImagePlus />, onSelect: () => imagePicker.open() },
                 { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
+                { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
               ],
             },
             {
@@ -229,6 +233,7 @@ export function App() {
       setHeaderFooterOpen,
       setPageNumbersOpen,
       setExportImagesOpen,
+      setCompressOpen,
       imagePicker.open,
     ],
   );
@@ -289,7 +294,7 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen} />}
+            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen || compressOpen} />}
             items={[
               {
                 id: "insert-images",
@@ -299,6 +304,7 @@ export function App() {
                 onSelect: () => imagePicker.open(),
               },
               { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
+              { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
             ]}
           />
         </Rail>
@@ -325,6 +331,7 @@ export function App() {
           <HeaderFooterDialog open={headerFooterOpen} onOpenChange={setHeaderFooterOpen} />
           <PageNumbersDialog open={pageNumbersOpen} onOpenChange={setPageNumbersOpen} />
           <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
+          <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
         </>
       )}
     </div>

@@ -28,6 +28,7 @@ export type {
 } from "./pdf/forms";
 export type { ReplaceImageAreaOptions } from "./pdf/edit";
 export type { SourceImage, ImagePageSizing } from "./pdf/convert";
+export type { RasterizedPage } from "./pdf/compress";
 
 export { WebStorageAdapter } from "./storage/web-storage-adapter";
 export { recentsStore } from "./storage/recents-store";
