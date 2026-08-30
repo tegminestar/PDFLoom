@@ -1,0 +1,109 @@
+name: Deploy API to Azure Functions
+
+# Manual only, on purpose — this repo's standing rule is that deployment is
+# an explicit, asked-for action, never an automatic side effect of pushing
+# to master.
+on:
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: pdfloom-api-tegminestar
+  AZURE_RESOURCE_GROUP: pdfloom-rg
+  AZURE_LOCATION: eastus
+  AZURE_STORAGE_ACCOUNT: pdfloomapitegminestar
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # A real typecheck gate before anything gets provisioned or deployed —
+      # apps/api is a self-contained package (no workspace: deps), so a
+      # plain npm install is enough here without the rest of the monorepo.
+      - name: Typecheck apps/api
+        working-directory: apps/api
+        run: |
+          npm install
+          npm run typecheck
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Ensure resource group exists
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: Ensure storage account exists
+        run: |
+          if ! az storage account show --name "$AZURE_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP" --output none 2>/dev/null; then
+            az storage account create \
+              --name "$AZURE_STORAGE_ACCOUNT" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --location "$AZURE_LOCATION" \
+              --sku Standard_LRS \
+              --output none
+          fi
+
+      - name: Ensure Function App exists (Consumption plan — free tier covers this app's traffic)
+        run: |
+          if ! az functionapp show --name "$AZURE_FUNCTIONAPP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --output none 2>/dev/null; then
+            az functionapp create \
+              --name "$AZURE_FUNCTIONAPP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --storage-account "$AZURE_STORAGE_ACCOUNT" \
+              --consumption-plan-location "$AZURE_LOCATION" \
+              --runtime node \
+              --runtime-version 20 \
+              --functions-version 4 \
+              --os-type Linux \
+              --output none
+          fi
+
+      - name: Configure app settings (Stripe/Supabase secrets, never written to the repo)
+        run: |
+          az functionapp config appsettings set \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --settings \
+              STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+              STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+              STRIPE_PRO_PRICE_ID="${{ secrets.STRIPE_PRO_PRICE_ID }}" \
+              SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
+              SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              APP_URL="${{ secrets.APP_URL }}" \
+            --output none
+
+      - name: Enable CORS for the web app's origin
+        run: |
+          az functionapp cors add \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --allowed-origins "${{ secrets.APP_URL }}" \
+            --output none || true
+
+      # Lets Azure's own build service (Oryx) run `npm install` + `npm run
+      # build` remotely from the checked-out apps/api source — no need to
+      # pre-build or bundle node_modules into the deploy package ourselves.
+      - name: Deploy
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: apps/api
+          scm-do-build-during-deployment: true
+
+      - name: Print the deployed URL
+        run: |
+          echo "Function App URL: https://$AZURE_FUNCTIONAPP_NAME.azurewebsites.net"
+          echo "Webhook endpoint to register in Stripe: https://$AZURE_FUNCTIONAPP_NAME.azurewebsites.net/api/stripe/webhook"
