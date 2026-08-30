@@ -34,20 +34,10 @@ jobs:
         working-directory: apps/api
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-          # Something at the org level appears to auto-inject a
-          # NODE_AUTH_TOKEN into every Actions run's npm config regardless
-          # of registry — confirmed via the masked token showing up in a
-          # run that never referenced it. Shadow it empty for this step.
           NODE_AUTH_TOKEN: ""
         run: |
-          echo "--- npm config sources ---"
-          npm config list -l --json 2>&1 | grep -i -E "registry|auth|token" || true
-          echo "--- .npmrc file locations npm would read ---"
-          for f in /etc/npmrc ~/.npmrc ./.npmrc; do
-            if [ -f "$f" ]; then echo "FOUND: $f"; cat "$f"; else echo "absent: $f"; fi
-          done
           npm config set //registry.npmjs.org/:_authToken "" --location=project
-          npm install --registry=https://registry.npmjs.org/ --loglevel verbose 2>&1 | grep -i -E "request|fetch|401|token|GET|PUT" | head -40
+          npm install --registry=https://registry.npmjs.org/
           npm run typecheck
 
       - uses: azure/login@v2
