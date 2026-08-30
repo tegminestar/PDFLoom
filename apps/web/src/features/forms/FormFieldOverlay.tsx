@@ -28,6 +28,7 @@ const inputClass = cn(
  */
 export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormFieldOverlayProps) {
   const formFillOpen = useLoomStore((s) => s.formFillOpen);
+  const formMode = useLoomStore((s) => s.formMode);
   const formFields = useLoomStore((s) => s.formFields);
   const formFieldValues = useLoomStore((s) => s.formFieldValues);
   const setFormFieldValue = useLoomStore((s) => s.setFormFieldValue);
@@ -36,7 +37,7 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
   const [screenRects, setScreenRects] = useState<Map<number, { x: number; y: number; width: number; height: number }>>(new Map());
 
   useEffect(() => {
-    if (!formFillOpen || fieldsOnPage.length === 0) return;
+    if (!formFillOpen || formMode !== "fill" || fieldsOnPage.length === 0) return;
     let cancelled = false;
     Promise.all(fieldsOnPage.map((f, i) => doc.pdfRectToScreenRect(pageNumber, scale, rotation, f.rect).then((r) => [i, r] as const))).then(
       (entries) => {
@@ -48,9 +49,9 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
     };
     // fieldsOnPage is derived fresh each render from a stable-enough source (formFields only changes on mode enter/doc mutation), so length+doc/scale/rotation is a sufficient dependency signal.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doc, pageNumber, scale, rotation, formFillOpen, fieldsOnPage.length]);
+  }, [doc, pageNumber, scale, rotation, formFillOpen, formMode, fieldsOnPage.length]);
 
-  if (!formFillOpen || fieldsOnPage.length === 0) return null;
+  if (!formFillOpen || formMode !== "fill" || fieldsOnPage.length === 0) return null;
 
   return (
     <div className="absolute inset-0 z-10">

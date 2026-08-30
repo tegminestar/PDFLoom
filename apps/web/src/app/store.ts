@@ -17,6 +17,8 @@ export type FitMode = "width" | "page" | "custom";
 export type PanelId = "thumbnails" | "outline" | "search" | null;
 export type MainView = "read" | "organize";
 export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "square" | "circle" | "line" | "text" | "stamp";
+export type FormMode = "fill" | "design";
+export type FieldDesignTool = "text" | "checkbox" | "radio" | "dropdown";
 
 export const ANNOTATE_COLOR_PRESETS: RgbColor[] = [
   { r: 1, g: 0.86, b: 0.2 }, // amber/yellow — default highlight
@@ -70,6 +72,9 @@ interface LoomState {
   formFields: FormFieldInfo[];
   formFieldValues: Record<string, FormFieldValue>;
   isSavingForm: boolean;
+  /** Only meaningful while formFillOpen — "fill" shows the interactive input overlay, "design" shows the click-to-place field palette. */
+  formMode: FormMode;
+  formDesignTool: FieldDesignTool | null;
 
   searchQuery: string;
   searchResults: SearchMatch[];
@@ -93,6 +98,10 @@ interface LoomState {
   setFormFieldValue: (name: string, value: FormFieldValue) => void;
   /** Writes `formFieldValues` back into the document via fillFormFields, optionally flattening, then exits form-fill mode. */
   saveFormValues: (flatten: boolean) => Promise<void>;
+  setFormMode: (mode: FormMode) => void;
+  setFormDesignTool: (tool: FieldDesignTool | null) => void;
+  /** Re-fetches `formFields` from the current document (and seeds any newly-discovered field into `formFieldValues`) — called after the field designer places a new field, so the fill overlay/count reflect it immediately. */
+  refreshFormFields: () => Promise<void>;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -145,6 +154,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   formFields: [],
   formFieldValues: {},
   isSavingForm: false,
+  formMode: "fill",
+  formDesignTool: null,
 
   searchQuery: "",
   searchResults: [],
@@ -226,32 +237,26 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formFillOpen: false,
       formFields: [],
       formFieldValues: {},
+      formMode: "fill",
+      formDesignTool: null,
     });
   },
 
-  setMainView: (mainView) => set({ mainView, annotateOpen: false, formFillOpen: false }),
-  setAnnotateOpen: (annotateOpen) => set({ annotateOpen, formFillOpen: false }),
+  setMainView: (mainView) => set({ mainView, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null }),
+  setAnnotateOpen: (annotateOpen) => set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
 
   setFormFillOpen: async (open) => {
     if (!open) {
-      set({ formFillOpen: false, formFields: [], formFieldValues: {} });
+      set({ formFillOpen: false, formFields: [], formFieldValues: {}, formMode: "fill", formDesignTool: null });
       return;
     }
     const { document: doc } = get();
     if (!doc) return;
-    set({ formFillOpen: true, annotateOpen: false });
-    const client = await getPdfWorkerClient();
-    const fields = await client.listFormFields(await doc.getRawBytes());
-    const values: Record<string, FormFieldValue> = {};
-    for (const field of fields) {
-      if (field.value !== null) values[field.name] = field.value;
-    }
-    // Guard against the user closing form-fill mode (or the doc changing)
-    // before this async fetch resolved.
-    if (get().formFillOpen) set({ formFields: fields, formFieldValues: values });
+    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null });
+    await get().refreshFormFields();
   },
 
   setFormFieldValue: (name, value) => set((s) => ({ formFieldValues: { ...s.formFieldValues, [name]: value } })),
@@ -265,9 +270,28 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       let bytes = await client.fillFormFields(await doc.getRawBytes(), formFieldValues);
       if (flatten) bytes = await client.flattenForm(bytes);
       await apply(bytes);
-      set({ formFillOpen: false, formFields: [], formFieldValues: {} });
+      set({ formFillOpen: false, formFields: [], formFieldValues: {}, formMode: "fill", formDesignTool: null });
     } finally {
       set({ isSavingForm: false });
+    }
+  },
+
+  setFormMode: (formMode) => set({ formMode, formDesignTool: formMode === "design" ? "text" : null }),
+  setFormDesignTool: (formDesignTool) => set({ formDesignTool }),
+
+  refreshFormFields: async () => {
+    const { document: doc } = get();
+    if (!doc) return;
+    const client = await getPdfWorkerClient();
+    const fields = await client.listFormFields(await doc.getRawBytes());
+    const values: Record<string, FormFieldValue> = {};
+    for (const field of fields) {
+      if (field.value !== null) values[field.name] = field.value;
+    }
+    // Guard against the user closing form-fill mode (or the doc changing)
+    // before this async fetch resolved.
+    if (get().formFillOpen) {
+      set((s) => ({ formFields: fields, formFieldValues: { ...values, ...s.formFieldValues } }));
     }
   },
 

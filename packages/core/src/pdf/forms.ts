@@ -233,6 +233,28 @@ export async function createRadioGroup(source: Uint8Array, options: CreateRadioG
   return finish(doc);
 }
 
+export interface AddRadioOptionOptions {
+  /** Group name — reuses the existing group if one exists, otherwise creates it (so placing the group's first and Nth option is the same call). */
+  name: string;
+  pageIndex: number;
+  rect: FieldRect;
+  label: string;
+}
+
+export async function addRadioOption(source: Uint8Array, options: AddRadioOptionOptions): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const form = doc.getForm();
+  const page = doc.getPage(options.pageIndex);
+  let field: PDFRadioGroup;
+  try {
+    field = form.getRadioGroup(options.name);
+  } catch {
+    field = form.createRadioGroup(options.name);
+  }
+  field.addOptionToPage(options.label, page, { ...options.rect, borderColor: FIELD_BORDER, borderWidth: 1 });
+  return finish(doc);
+}
+
 export interface CreateDropdownOptions {
   name: string;
   pageIndex: number;

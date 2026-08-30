@@ -24,6 +24,7 @@ export type {
   CreateCheckBoxOptions,
   CreateRadioGroupOptions,
   CreateDropdownOptions,
+  AddRadioOptionOptions,
 } from "./pdf/forms";
 
 export { WebStorageAdapter } from "./storage/web-storage-adapter";
