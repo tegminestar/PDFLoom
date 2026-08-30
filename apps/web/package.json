@@ -31,12 +31,14 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@types/wicg-file-system-access": "^2023.10.7",
     "@vitejs/plugin-react": "^6.1.0",
+    "axe-core": "^4.13.0",
     "oxlint": "^1.79.0",
     "pdf-lib": "^1.17.1",
     "sharp": "^0.35.4",

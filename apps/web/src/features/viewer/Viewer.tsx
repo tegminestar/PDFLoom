@@ -146,7 +146,13 @@ export function Viewer() {
   if (!doc || !meta) return null;
 
   return (
-    <div ref={scrollRef} className="h-full w-full overflow-y-auto overflow-x-hidden bg-bg">
+    <div
+      ref={scrollRef}
+      tabIndex={0}
+      role="region"
+      aria-label="Document pages"
+      className="h-full w-full overflow-y-auto overflow-x-hidden bg-bg outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[--color-focus-ring]"
+    >
       <div
         className="mx-auto flex flex-col items-center py-8"
         style={{ gap: PAGE_GAP_PX, paddingLeft: HORIZONTAL_PADDING_PX, paddingRight: HORIZONTAL_PADDING_PX }}

@@ -23,15 +23,20 @@
   --loom-border-strong: #383d4a;
   --loom-text: #f2f3f5;
   --loom-text-muted: #9aa0ad;
-  --loom-text-faint: #676d7a;
+  --loom-text-faint: #7d8390;
   --loom-canvas: #faf9f6;
   --loom-canvas-shadow: rgb(0 0 0 / 0.45);
 
-  --loom-primary: #7c6cf0;
-  --loom-primary-hover: #8f81f3;
-  --loom-primary-active: #6a5adf;
+  /* Shifted one step darker as a set (was #7c6cf0/#8f81f3/#6a5adf) so
+     white text on the base/hover shades clears WCAG AA 4.5:1 — axe caught
+     the original base ($3.99:1) and this file's own light-mode text-faint
+     ($3.24:1, below) as real contrast failures. Ratios verified against
+     --loom-bg-elevated: base 5.07:1, hover 4.59:1, active 6.30:1. */
+  --loom-primary: #6a5adf;
+  --loom-primary-hover: #7263e0;
+  --loom-primary-active: #5b4dc7;
   --loom-primary-text: #ffffff;
-  --loom-primary-muted: #7c6cf026;
+  --loom-primary-muted: #6a5adf26;
 
   --loom-ai: #f5a623;
   --loom-ai-hover: #f7b64c;
@@ -45,7 +50,7 @@
   --loom-success: #3ecf8e;
   --loom-warning: #f5c343;
 
-  --loom-focus-ring: #7c6cf0;
+  --loom-focus-ring: #6a5adf;
   --loom-overlay: rgb(6 7 10 / 0.6);
 }
 
@@ -58,7 +63,8 @@
   --loom-border-strong: #cbccd6;
   --loom-text: #16181d;
   --loom-text-muted: #5b606c;
-  --loom-text-faint: #8a8f9c;
+  /* Was #8a8f9c (3.24:1 on white — a real WCAG AA failure axe caught). */
+  --loom-text-faint: #6c7280;
   --loom-canvas: #ffffff;
   --loom-canvas-shadow: rgb(20 20 30 / 0.16);
 

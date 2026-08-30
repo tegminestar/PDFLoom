@@ -454,7 +454,8 @@ export function App() {
         </Rail>
       )}
       {imagePicker.input}
-      <div className="flex min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col">
+        <h1 className="sr-only">PDFLoom</h1>
         {meta &&
           mainView === "read" &&
           (formFillOpen ? (
@@ -511,7 +512,7 @@ export function App() {
             )}
           </div>
         </div>
-      </div>
+      </main>
       <CommandPalette groups={commandGroups} />
       <SelectionMarkupToolbar />
       <ExplainSelectionToolbar />

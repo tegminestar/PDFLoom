@@ -24,6 +24,7 @@ export function PageNumberField() {
   return (
     <div className="flex items-center gap-1.5 text-sm text-text-muted">
       <input
+        aria-label="Current page"
         value={pageInput}
         onChange={(e) => setPageInput(e.target.value)}
         onBlur={commit}
