@@ -2,7 +2,6 @@
   "name": "@pdfloom/api",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "main": "dist/functions/*.js",
   "scripts": {
     "build": "tsc -b",
