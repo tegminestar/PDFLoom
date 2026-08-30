@@ -100,6 +100,31 @@ export class PdfDocument {
     return { x: pdfX, y: pdfY };
   }
 
+  /**
+   * The inverse of screenPointToPdfPoint, for a whole rect — converts a PDF
+   * points rect (bottom-left origin, as returned by form field widgets)
+   * into a CSS-pixel rect (top-left origin) for positioning an HTML overlay
+   * over the rendered page. Uses both diagonal corners rather than just
+   * width/height deltas so it stays correct under rotation.
+   */
+  async pdfRectToScreenRect(
+    pageNumber: number,
+    scale: number,
+    rotation: number,
+    rect: { x: number; y: number; width: number; height: number },
+  ): Promise<{ x: number; y: number; width: number; height: number }> {
+    const page = await this.getPage(pageNumber);
+    const viewport = page.getViewport({ scale, rotation });
+    const [x1, y1] = viewport.convertToViewportPoint(rect.x, rect.y) as [number, number];
+    const [x2, y2] = viewport.convertToViewportPoint(rect.x + rect.width, rect.y + rect.height) as [number, number];
+    return {
+      x: Math.min(x1, x2),
+      y: Math.min(y1, y2),
+      width: Math.abs(x2 - x1),
+      height: Math.abs(y2 - y1),
+    };
+  }
+
   async getPageDimensions(pageNumber: number): Promise<PageDimensions> {
     const page = await this.getPage(pageNumber);
     const viewport = page.getViewport({ scale: 1 });

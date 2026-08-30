@@ -1,6 +1,7 @@
 import type { PdfDocument, TextLayer } from "@pdfloom/core";
 import { useEffect, useRef, useState } from "react";
 import { AnnotationDrawOverlay } from "../annotate/AnnotationDrawOverlay";
+import { FormFieldOverlay } from "../forms/FormFieldOverlay";
 
 export interface PageCanvasProps {
   doc: PdfDocument;
@@ -107,6 +108,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
         {isVisible && <canvas ref={canvasRef} className="block" />}
         {isVisible && <div ref={textLayerRef} className="loom-text-layer" />}
         {isVisible && <AnnotationDrawOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
+        {isVisible && <FormFieldOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
       </div>
       {!hasRendered && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-text-faint">

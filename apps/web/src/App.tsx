@@ -4,6 +4,7 @@ import {
   BookOpen,
   FileStack,
   FolderOpen,
+  FormInput,
   Hash,
   Highlighter,
   LayoutGrid,
@@ -22,6 +23,7 @@ import { useLoomStore } from "./app/store";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
+import { FormsToolbar } from "./features/forms/FormsToolbar";
 import { OrganizeView } from "./features/organize/OrganizeView";
 import { HeaderFooterDialog } from "./features/stamps/HeaderFooterDialog";
 import { PageNumbersDialog } from "./features/stamps/PageNumbersDialog";
@@ -40,6 +42,8 @@ export function App() {
   const setMainView = useLoomStore((s) => s.setMainView);
   const annotateOpen = useLoomStore((s) => s.annotateOpen);
   const setAnnotateOpen = useLoomStore((s) => s.setAnnotateOpen);
+  const formFillOpen = useLoomStore((s) => s.formFillOpen);
+  const setFormFillOpen = useLoomStore((s) => s.setFormFillOpen);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
   const toggleActivePanel = useLoomStore((s) => s.toggleActivePanel);
   const zoomIn = useLoomStore((s) => s.zoomIn);
@@ -123,6 +127,15 @@ export function App() {
                     setAnnotateOpen(!(mainView === "read" && annotateOpen));
                   },
                 },
+                {
+                  id: "mode-fill-form",
+                  label: mainView === "read" && formFillOpen ? "Exit form-fill mode" : "Fill form…",
+                  icon: <FormInput />,
+                  onSelect: () => {
+                    setMainView("read");
+                    void setFormFillOpen(!(mainView === "read" && formFillOpen));
+                  },
+                },
                 { id: "watermark", label: "Add watermark…", icon: <PenTool />, onSelect: () => setWatermarkOpen(true) },
                 { id: "header-footer", label: "Add header & footer…", icon: <FileStack />, onSelect: () => setHeaderFooterOpen(true) },
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
@@ -160,6 +173,8 @@ export function App() {
       setMainView,
       annotateOpen,
       setAnnotateOpen,
+      formFillOpen,
+      setFormFillOpen,
       openViaPicker,
       toggleActivePanel,
       zoomIn,
@@ -200,6 +215,15 @@ export function App() {
               setAnnotateOpen(!(mainView === "read" && annotateOpen));
             }}
           />
+          <RailItem
+            icon={<FormInput />}
+            label="Fill form"
+            active={mainView === "read" && formFillOpen}
+            onClick={() => {
+              setMainView("read");
+              void setFormFillOpen(!(mainView === "read" && formFillOpen));
+            }}
+          />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Stamp />} label="Page design" active={watermarkOpen || headerFooterOpen || pageNumbersOpen} />}
@@ -212,11 +236,13 @@ export function App() {
         </Rail>
       )}
       <div className="flex min-h-0 flex-1 flex-col">
-        {meta && mainView === "read" && (annotateOpen ? <AnnotateToolbar /> : <Toolbar />)}
+        {meta &&
+          mainView === "read" &&
+          (formFillOpen ? <FormsToolbar /> : annotateOpen ? <AnnotateToolbar /> : <Toolbar />)}
         <div className="flex min-h-0 flex-1">
-          {meta && mainView === "read" && !annotateOpen && activePanel === "thumbnails" && <ThumbnailsPanel />}
-          {meta && mainView === "read" && !annotateOpen && activePanel === "outline" && <OutlinePanel />}
-          {meta && mainView === "read" && !annotateOpen && activePanel === "search" && <SearchPanel />}
+          {meta && mainView === "read" && !annotateOpen && !formFillOpen && activePanel === "thumbnails" && <ThumbnailsPanel />}
+          {meta && mainView === "read" && !annotateOpen && !formFillOpen && activePanel === "outline" && <OutlinePanel />}
+          {meta && mainView === "read" && !annotateOpen && !formFillOpen && activePanel === "search" && <SearchPanel />}
           <div className="min-w-0 flex-1">
             {!meta ? <WelcomeScreen /> : mainView === "organize" ? <OrganizeView /> : <Viewer />}
           </div>

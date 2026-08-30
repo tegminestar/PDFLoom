@@ -32,6 +32,14 @@ export interface FormFieldInfo {
   multiline?: boolean;
   required?: boolean;
   readOnly?: boolean;
+  /**
+   * For radio groups (one FormFieldInfo per widget/option): the specific
+   * option value THIS widget represents — e.g. the "large" in a
+   * small/large radio group — needed to render each option distinctly and
+   * select it correctly. Without this, every widget in a group would be
+   * indistinguishable from the others.
+   */
+  widgetOnValue?: string;
 }
 
 function classifyField(field: PDFField): FormFieldType {
@@ -85,10 +93,21 @@ export async function listFormFields(source: Uint8Array): Promise<FormFieldInfo[
     const required = field.isRequired();
     const readOnly = field.isReadOnly();
 
-    for (const widget of field.acroField.getWidgets()) {
+    // Radio widgets' AP appearance-state ("0", "1", ...) is an internal
+    // index, not the option label ("small", "large") — the real label lives
+    // in the field's /Opt export values, positionally matched to
+    // getWidgets() (this mirrors PDFRadioGroup.getOptions()'s own logic),
+    // falling back to the appearance state only when /Opt is absent.
+    const exportValues = field instanceof PDFRadioGroup ? field.acroField.getExportValues() : undefined;
+
+    const widgets = field.acroField.getWidgets();
+    for (let widgetIndex = 0; widgetIndex < widgets.length; widgetIndex++) {
+      const widget = widgets[widgetIndex]!;
       const pageRef = widget.P();
       const pageIndex = pageRef ? pageIndexForRef(pages, pageRef) : -1;
       if (pageIndex === -1) continue; // orphaned widget with no resolvable page; skip rather than guess
+      const widgetOnValue =
+        type === "radio" ? (exportValues?.[widgetIndex]?.decodeText() ?? widget.getOnValue()?.decodeText()) : undefined;
       results.push({
         name,
         type,
@@ -99,6 +118,7 @@ export async function listFormFields(source: Uint8Array): Promise<FormFieldInfo[
         ...(multiline !== undefined ? { multiline } : {}),
         required,
         readOnly,
+        ...(widgetOnValue !== undefined ? { widgetOnValue } : {}),
       });
     }
   }

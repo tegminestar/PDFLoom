@@ -1,7 +1,10 @@
 import {
   PdfDocument,
   WebStorageAdapter,
+  getPdfWorkerClient,
   recentsStore,
+  type FormFieldInfo,
+  type FormFieldValue,
   type OpenedFile,
   type OutlineNode,
   type RgbColor,
@@ -63,6 +66,11 @@ interface LoomState {
   annotateColor: RgbColor;
   annotateStampPreset: StampPreset;
 
+  formFillOpen: boolean;
+  formFields: FormFieldInfo[];
+  formFieldValues: Record<string, FormFieldValue>;
+  isSavingForm: boolean;
+
   searchQuery: string;
   searchResults: SearchMatch[];
   isSearching: boolean;
@@ -79,6 +87,12 @@ interface LoomState {
   setAnnotateTool: (tool: AnnotateTool) => void;
   setAnnotateColor: (color: RgbColor) => void;
   setAnnotateStampPreset: (preset: StampPreset) => void;
+
+  /** Enters/exits form-fill mode; opening fetches the document's fields and seeds `formFieldValues` from their current values. */
+  setFormFillOpen: (open: boolean) => Promise<void>;
+  setFormFieldValue: (name: string, value: FormFieldValue) => void;
+  /** Writes `formFieldValues` back into the document via fillFormFields, optionally flattening, then exits form-fill mode. */
+  saveFormValues: (flatten: boolean) => Promise<void>;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -127,6 +141,11 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   annotateColor: ANNOTATE_COLOR_PRESETS[0]!,
   annotateStampPreset: "approved",
 
+  formFillOpen: false,
+  formFields: [],
+  formFieldValues: {},
+  isSavingForm: false,
+
   searchQuery: "",
   searchResults: [],
   isSearching: false,
@@ -159,6 +178,10 @@ export const useLoomStore = create<LoomState>((set, get) => ({
         searchResults: [],
         activeSearchIndex: -1,
         mainView: "read",
+        annotateOpen: false,
+        formFillOpen: false,
+        formFields: [],
+        formFieldValues: {},
       }));
       void recentsStore.record(
         {
@@ -200,14 +223,53 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       activePanel: null,
       mainView: "read",
       annotateOpen: false,
+      formFillOpen: false,
+      formFields: [],
+      formFieldValues: {},
     });
   },
 
-  setMainView: (mainView) => set({ mainView, annotateOpen: false }),
-  setAnnotateOpen: (annotateOpen) => set({ annotateOpen }),
+  setMainView: (mainView) => set({ mainView, annotateOpen: false, formFillOpen: false }),
+  setAnnotateOpen: (annotateOpen) => set({ annotateOpen, formFillOpen: false }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
+
+  setFormFillOpen: async (open) => {
+    if (!open) {
+      set({ formFillOpen: false, formFields: [], formFieldValues: {} });
+      return;
+    }
+    const { document: doc } = get();
+    if (!doc) return;
+    set({ formFillOpen: true, annotateOpen: false });
+    const client = await getPdfWorkerClient();
+    const fields = await client.listFormFields(await doc.getRawBytes());
+    const values: Record<string, FormFieldValue> = {};
+    for (const field of fields) {
+      if (field.value !== null) values[field.name] = field.value;
+    }
+    // Guard against the user closing form-fill mode (or the doc changing)
+    // before this async fetch resolved.
+    if (get().formFillOpen) set({ formFields: fields, formFieldValues: values });
+  },
+
+  setFormFieldValue: (name, value) => set((s) => ({ formFieldValues: { ...s.formFieldValues, [name]: value } })),
+
+  saveFormValues: async (flatten) => {
+    const { document: doc, formFieldValues, applyPdfMutation: apply } = get();
+    if (!doc) return;
+    set({ isSavingForm: true });
+    try {
+      const client = await getPdfWorkerClient();
+      let bytes = await client.fillFormFields(await doc.getRawBytes(), formFieldValues);
+      if (flatten) bytes = await client.flattenForm(bytes);
+      await apply(bytes);
+      set({ formFillOpen: false, formFields: [], formFieldValues: {} });
+    } finally {
+      set({ isSavingForm: false });
+    }
+  },
 
   applyPdfMutation: async (newBytes) => {
     const { document: oldDoc, meta } = get();
