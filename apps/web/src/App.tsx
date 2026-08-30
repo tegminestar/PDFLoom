@@ -5,6 +5,7 @@ import {
   BookOpen,
   Edit3,
   FileDown,
+  FilePlus2,
   FileStack,
   FileUp,
   FolderOpen,
@@ -30,6 +31,7 @@ import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
 import { CompressDialog } from "./features/convert/CompressDialog";
+import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
@@ -72,6 +74,7 @@ export function App() {
   const [pageNumbersOpen, setPageNumbersOpen] = useState(false);
   const [exportImagesOpen, setExportImagesOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
+  const [createFromTextOpen, setCreateFromTextOpen] = useState(false);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
 
   const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
@@ -182,6 +185,7 @@ export function App() {
                 { id: "header-footer", label: "Add header & footer…", icon: <FileStack />, onSelect: () => setHeaderFooterOpen(true) },
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
                 { id: "insert-images", label: "Insert images as pages…", icon: <ImagePlus />, onSelect: () => imagePicker.open() },
+                { id: "add-text", label: "Add pages from Markdown/HTML…", icon: <FilePlus2 />, onSelect: () => setCreateFromTextOpen(true) },
                 { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
                 { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
               ],
@@ -234,6 +238,7 @@ export function App() {
       setPageNumbersOpen,
       setExportImagesOpen,
       setCompressOpen,
+      setCreateFromTextOpen,
       imagePicker.open,
     ],
   );
@@ -294,7 +299,7 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen || compressOpen} />}
+            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen || compressOpen || createFromTextOpen} />}
             items={[
               {
                 id: "insert-images",
@@ -303,6 +308,7 @@ export function App() {
                 disabled: isInsertingImages,
                 onSelect: () => imagePicker.open(),
               },
+              { id: "add-text", label: "Add pages from Markdown/HTML…", icon: <FilePlus2 />, onSelect: () => setCreateFromTextOpen(true) },
               { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
               { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
             ]}
@@ -332,6 +338,7 @@ export function App() {
           <PageNumbersDialog open={pageNumbersOpen} onOpenChange={setPageNumbersOpen} />
           <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
           <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
+          <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
         </>
       )}
     </div>

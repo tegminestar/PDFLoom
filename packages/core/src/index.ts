@@ -29,6 +29,7 @@ export type {
 export type { ReplaceImageAreaOptions } from "./pdf/edit";
 export type { SourceImage, ImagePageSizing } from "./pdf/convert";
 export type { RasterizedPage } from "./pdf/compress";
+export type { InlineRun, DocBlock, CreateDocumentOptions } from "./pdf/create-document";
 
 export { WebStorageAdapter } from "./storage/web-storage-adapter";
 export { recentsStore } from "./storage/recents-store";

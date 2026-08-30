@@ -2,8 +2,10 @@ import * as Comlink from "comlink";
 import * as annotations from "../pdf/annotations";
 import * as compress from "../pdf/compress";
 import * as convert from "../pdf/convert";
+import * as createDocument from "../pdf/create-document";
 import * as edit from "../pdf/edit";
 import * as forms from "../pdf/forms";
+import * as markdown from "../pdf/markdown";
 import * as organize from "../pdf/organize";
 import * as stamps from "../pdf/stamps";
 
@@ -11,7 +13,7 @@ import * as stamps from "../pdf/stamps";
 // mutation operations (merge/split/reorder/rotate/annotate/etc.) can take a
 // noticeable amount of CPU on large documents — offloading them here keeps
 // the main thread, and the viewer's own scroll/render loop, responsive.
-const api = { ...organize, ...annotations, ...stamps, ...forms, ...edit, ...convert, ...compress };
+const api = { ...organize, ...annotations, ...stamps, ...forms, ...edit, ...convert, ...compress, ...createDocument, ...markdown };
 export type PdfWorkerApi = typeof api;
 
 Comlink.expose(api);

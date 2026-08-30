@@ -4,6 +4,7 @@ import {
   Cpu,
   FileCheck,
   FileLock2,
+  FilePlus2,
   FileText,
   FolderOpen,
   Home,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 import { useLoomStore } from "../app/store";
+import { CreateFromTextDialog } from "../features/convert/CreateFromTextDialog";
 import { useImageFilePicker } from "../features/convert/useImageFilePicker";
 
 const TRUST_BADGES = [
@@ -81,6 +83,7 @@ export function WelcomeScreen() {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [recents, setRecents] = useState<RecentFileEntry[]>([]);
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
+  const [createFromTextOpen, setCreateFromTextOpen] = useState(false);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
   const openOpenedFile = useLoomStore((s) => s.openOpenedFile);
   const storage = useLoomStore((s) => s.storage);
@@ -208,6 +211,10 @@ export function WelcomeScreen() {
                 <ImagePlus className="h-4 w-4" />
                 From images
               </Button>
+              <Button variant="secondary" size="lg" onClick={() => setCreateFromTextOpen(true)} disabled={isLoading}>
+                <FilePlus2 className="h-4 w-4" />
+                From text
+              </Button>
             </div>
             {imagePicker.input}
           </div>
@@ -270,6 +277,7 @@ export function WelcomeScreen() {
           )}
         </div>
       </div>
+      <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
     </div>
   );
 }
