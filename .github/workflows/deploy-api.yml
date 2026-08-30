@@ -21,19 +21,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          # Some org/account-level npm config on this runner otherwise
-          # points package installs at an authenticated registry this repo
-          # has no token for (npm E401) — force the public registry
-          # explicitly rather than rely on whatever's ambient.
-          registry-url: "https://registry.npmjs.org"
 
       # A real typecheck gate before anything gets provisioned or deployed —
       # apps/api is a self-contained package (no workspace: deps), so a
       # plain npm install is enough here without the rest of the monorepo.
+      # --registry is explicit and bypasses any ambient/org npm config this
+      # runner might otherwise pick up (hit a real npm E401 without it —
+      # note setup-node's own `registry-url` input makes this *worse*, not
+      # better: it injects always-auth plus a placeholder NODE_AUTH_TOKEN
+      # that itself gets rejected when no real token secret is configured).
       - name: Typecheck apps/api
         working-directory: apps/api
+        env:
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+          NPM_CONFIG_ALWAYS_AUTH: "false"
         run: |
-          npm install
+          npm install --registry=https://registry.npmjs.org/
           npm run typecheck
 
       - uses: azure/login@v2
