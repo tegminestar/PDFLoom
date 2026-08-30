@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "pnpm --filter @pdfloom/web dev",
     "build": "pnpm --filter @pdfloom/core build && pnpm --filter @pdfloom/ui build && pnpm --filter @pdfloom/web build",
+    "dev:desktop": "pnpm --filter @pdfloom/desktop dev",
+    "build:desktop": "pnpm --filter @pdfloom/desktop build",
     "test": "pnpm -r --if-present test",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck"
