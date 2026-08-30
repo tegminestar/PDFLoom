@@ -12,6 +12,7 @@ import {
   FileUp,
   FolderOpen,
   FormInput,
+  GitCompare,
   Hash,
   Highlighter,
   ImagePlus,
@@ -31,11 +32,13 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useLoomStore } from "./app/store";
+import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
+import { CompareDialog } from "./features/compare/CompareDialog";
+import { CompareView } from "./features/compare/CompareView";
 import { CompressDialog } from "./features/convert/CompressDialog";
 import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
@@ -93,7 +96,15 @@ export function App() {
   const [ocrOpen, setOcrOpen] = useState(false);
   const [exportOfficeOpen, setExportOfficeOpen] = useState(false);
   const [protectOpen, setProtectOpen] = useState(false);
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
+  const compareTarget = useLoomStore((s) => s.compareTarget);
+  const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
+
+  const handleComparePicked = (nextTarget: CompareTarget) => {
+    setCompareTarget(nextTarget);
+    setMainView("compare");
+  };
 
   const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
     if (!document_) return;
@@ -227,6 +238,12 @@ export function App() {
                 { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
                 { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
                 { id: "protect", label: "Protect…", icon: <Lock />, onSelect: () => setProtectOpen(true) },
+                {
+                  id: "compare",
+                  label: mainView === "compare" ? "Back to reading" : "Compare against another PDF…",
+                  icon: <GitCompare />,
+                  onSelect: () => (mainView === "compare" ? setMainView("read") : compareTarget ? setMainView("compare") : setCompareDialogOpen(true)),
+                },
               ],
             },
             {
@@ -285,6 +302,8 @@ export function App() {
       setOcrOpen,
       setExportOfficeOpen,
       setProtectOpen,
+      compareTarget,
+      setCompareDialogOpen,
       imagePicker.open,
     ],
   );
@@ -353,6 +372,12 @@ export function App() {
             }}
           />
           <RailItem icon={<Lock />} label="Protect" active={protectOpen} onClick={() => setProtectOpen(true)} />
+          <RailItem
+            icon={<GitCompare />}
+            label="Compare"
+            active={mainView === "compare"}
+            onClick={() => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true))}
+          />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Stamp />} label="Page design" active={watermarkOpen || headerFooterOpen || pageNumbersOpen} />}
@@ -431,7 +456,19 @@ export function App() {
             !signOpen &&
             activePanel === "search" && <SearchPanel />}
           <div className="min-w-0 flex-1">
-            {!meta ? <WelcomeScreen /> : mainView === "organize" ? <OrganizeView /> : <Viewer />}
+            {!meta ? (
+              <WelcomeScreen />
+            ) : mainView === "organize" ? (
+              <OrganizeView />
+            ) : mainView === "compare" && compareTarget ? (
+              <CompareView
+                target={compareTarget}
+                onClose={() => setMainView("read")}
+                onChooseDifferentFile={() => setCompareDialogOpen(true)}
+              />
+            ) : (
+              <Viewer />
+            )}
           </div>
         </div>
       </div>
@@ -449,6 +486,7 @@ export function App() {
           <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />
           <ProtectDialog open={protectOpen} onOpenChange={setProtectOpen} />
+          <CompareDialog open={compareDialogOpen} onOpenChange={setCompareDialogOpen} onPicked={handleComparePicked} />
         </>
       )}
     </div>

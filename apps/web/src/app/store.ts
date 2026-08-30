@@ -16,7 +16,7 @@ import { create } from "zustand";
 
 export type FitMode = "width" | "page" | "custom";
 export type PanelId = "thumbnails" | "outline" | "search" | null;
-export type MainView = "read" | "organize";
+export type MainView = "read" | "organize" | "compare";
 export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "square" | "circle" | "line" | "text" | "stamp";
 export type FormMode = "fill" | "design";
 export type FieldDesignTool = "text" | "checkbox" | "radio" | "dropdown";
@@ -51,6 +51,12 @@ export interface DocumentMeta {
   sizeBytes: number;
   pageCount: number;
   handle: FileSystemFileHandle | null;
+}
+
+/** A second, independent document loaded purely for Compare mode — never touches the primary document/storage state. */
+export interface CompareTarget {
+  doc: PdfDocument;
+  name: string;
 }
 
 interface LoomState {
@@ -119,12 +125,17 @@ interface LoomState {
   isSearching: boolean;
   activeSearchIndex: number;
 
+  /** The second document being compared against, in Compare mode — set via setCompareTarget, released whenever the primary document closes or a different comparison file is picked. */
+  compareTarget: CompareTarget | null;
+
   openOpenedFile: (opened: OpenedFile) => Promise<void>;
   /** Retries opening the file currently held in pendingOpenFile with the given password. */
   submitPassword: (password: string) => Promise<void>;
   cancelPasswordPrompt: () => void;
   openViaPicker: () => Promise<void>;
   closeDocument: () => void;
+  /** Replaces the Compare-mode target, destroying the previous one's pdf.js resources first (a no-op if there wasn't one). Pass null to just release the current target. */
+  setCompareTarget: (next: CompareTarget | null) => void;
   setMainView: (view: MainView) => void;
   /** Reloads the working document from newly mutated bytes (organize/edit operations) — updates page count, clamps the current page, and re-derives the outline. */
   applyPdfMutation: (newBytes: Uint8Array) => Promise<void>;
@@ -189,7 +200,11 @@ const ZOOM_STEP = 0.1;
 type LoomSetter = (partial: Partial<LoomState> | ((s: LoomState) => Partial<LoomState>)) => void;
 
 /** Shared success path for openOpenedFile and submitPassword — resetting view state and recording the file in Recents is identical whether or not a password was needed. */
-async function finishOpeningDocument(set: LoomSetter, opened: OpenedFile, doc: PdfDocument): Promise<void> {
+async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, opened: OpenedFile, doc: PdfDocument): Promise<void> {
+  // A brand-new primary document makes any prior comparison target stale
+  // (it was being compared against the document that's now being replaced).
+  get().compareTarget?.doc.destroy();
+
   const meta: DocumentMeta = {
     id: opened.id,
     name: opened.name,
@@ -221,6 +236,7 @@ async function finishOpeningDocument(set: LoomSetter, opened: OpenedFile, doc: P
     redactBoxes: [],
     signOpen: false,
     signPlacementKind: null,
+    compareTarget: null,
   }));
   void recentsStore.record(
     {
@@ -288,12 +304,14 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   isSearching: false,
   activeSearchIndex: -1,
 
+  compareTarget: null,
+
   openOpenedFile: async (opened) => {
     get().document?.destroy();
     set({ isLoading: true, loadError: null, document: null, meta: null, passwordPromptOpen: false, pendingOpenFile: null, passwordError: null });
     try {
       const doc = await PdfDocument.load(opened.bytes);
-      await finishOpeningDocument(set, opened, doc);
+      await finishOpeningDocument(set, get, opened, doc);
     } catch (error) {
       if (error instanceof Error && error.name === "PasswordException") {
         set({ isLoading: false, passwordPromptOpen: true, pendingOpenFile: opened, passwordError: null });
@@ -311,7 +329,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     try {
       const doc = await PdfDocument.load(opened.bytes, password);
       set({ passwordPromptOpen: false, pendingOpenFile: null });
-      await finishOpeningDocument(set, opened, doc);
+      await finishOpeningDocument(set, get, opened, doc);
     } catch (error) {
       if (error instanceof Error && error.name === "PasswordException") {
         set({ isLoading: false, passwordError: "Incorrect password. Try again." });
@@ -329,8 +347,14 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     if (opened) await get().openOpenedFile(opened);
   },
 
+  setCompareTarget: (next) => {
+    get().compareTarget?.doc.destroy();
+    set({ compareTarget: next });
+  },
+
   closeDocument: () => {
     get().document?.destroy();
+    get().compareTarget?.doc.destroy();
     set({
       document: null,
       meta: null,
@@ -341,6 +365,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       activeSearchIndex: -1,
       activePanel: null,
       mainView: "read",
+      compareTarget: null,
       annotateOpen: false,
       formFillOpen: false,
       formFields: [],
