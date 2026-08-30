@@ -1,6 +1,7 @@
 import type { PdfDocument, TextLayer } from "@pdfloom/core";
 import { useEffect, useRef, useState } from "react";
 import { AnnotationDrawOverlay } from "../annotate/AnnotationDrawOverlay";
+import { EditOverlay } from "../edit/EditOverlay";
 import { FieldDesignerOverlay } from "../forms/FieldDesignerOverlay";
 import { FormFieldOverlay } from "../forms/FormFieldOverlay";
 
@@ -24,6 +25,7 @@ export interface PageCanvasProps {
  */
 export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchResult }: PageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState<{ widthPt: number; heightPt: number } | null>(null);
@@ -103,6 +105,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
       style={{ width: widthPt * scale, height: heightPt * scale }}
     >
       <div
+        ref={pageRef}
         className="relative bg-canvas shadow-[0_1px_2px_var(--loom-canvas-shadow),0_18px_36px_-12px_var(--loom-canvas-shadow)]"
         style={{ width: widthPt * scale, height: heightPt * scale }}
       >
@@ -111,6 +114,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
         {isVisible && <AnnotationDrawOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FormFieldOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FieldDesignerOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
+        {isVisible && <EditOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} pageContainerRef={pageRef} />}
       </div>
       {!hasRendered && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-text-faint">

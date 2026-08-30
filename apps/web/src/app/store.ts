@@ -19,6 +19,7 @@ export type MainView = "read" | "organize";
 export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "square" | "circle" | "line" | "text" | "stamp";
 export type FormMode = "fill" | "design";
 export type FieldDesignTool = "text" | "checkbox" | "radio" | "dropdown";
+export type EditTool = "text" | "image";
 
 export const ANNOTATE_COLOR_PRESETS: RgbColor[] = [
   { r: 1, g: 0.86, b: 0.2 }, // amber/yellow — default highlight
@@ -76,6 +77,10 @@ interface LoomState {
   formMode: FormMode;
   formDesignTool: FieldDesignTool | null;
 
+  /** Best-effort content edit mode: covers existing text/images with new content rather than truly rewriting the page's content stream. */
+  editOpen: boolean;
+  editTool: EditTool;
+
   searchQuery: string;
   searchResults: SearchMatch[];
   isSearching: boolean;
@@ -102,6 +107,9 @@ interface LoomState {
   setFormDesignTool: (tool: FieldDesignTool | null) => void;
   /** Re-fetches `formFields` from the current document (and seeds any newly-discovered field into `formFieldValues`) — called after the field designer places a new field, so the fill overlay/count reflect it immediately. */
   refreshFormFields: () => Promise<void>;
+
+  setEditOpen: (open: boolean) => void;
+  setEditTool: (tool: EditTool) => void;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -157,6 +165,9 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   formMode: "fill",
   formDesignTool: null,
 
+  editOpen: false,
+  editTool: "text",
+
   searchQuery: "",
   searchResults: [],
   isSearching: false,
@@ -193,6 +204,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
         formFillOpen: false,
         formFields: [],
         formFieldValues: {},
+        editOpen: false,
       }));
       void recentsStore.record(
         {
@@ -239,11 +251,14 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formFieldValues: {},
       formMode: "fill",
       formDesignTool: null,
+      editOpen: false,
     });
   },
 
-  setMainView: (mainView) => set({ mainView, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null }),
-  setAnnotateOpen: (annotateOpen) => set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null }),
+  setMainView: (mainView) =>
+    set({ mainView, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false }),
+  setAnnotateOpen: (annotateOpen) =>
+    set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
@@ -255,7 +270,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     }
     const { document: doc } = get();
     if (!doc) return;
-    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null });
+    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null, editOpen: false });
     await get().refreshFormFields();
   },
 
@@ -278,6 +293,9 @@ export const useLoomStore = create<LoomState>((set, get) => ({
 
   setFormMode: (formMode) => set({ formMode, formDesignTool: formMode === "design" ? "text" : null }),
   setFormDesignTool: (formDesignTool) => set({ formDesignTool }),
+
+  setEditOpen: (editOpen) => set({ editOpen, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null }),
+  setEditTool: (editTool) => set({ editTool }),
 
   refreshFormFields: async () => {
     const { document: doc } = get();

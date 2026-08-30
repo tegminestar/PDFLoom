@@ -26,6 +26,7 @@ export type {
   CreateDropdownOptions,
   AddRadioOptionOptions,
 } from "./pdf/forms";
+export type { ReplaceImageAreaOptions } from "./pdf/edit";
 
 export { WebStorageAdapter } from "./storage/web-storage-adapter";
 export { recentsStore } from "./storage/recents-store";
