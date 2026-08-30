@@ -47,7 +47,7 @@ jobs:
             if [ -f "$f" ]; then echo "FOUND: $f"; cat "$f"; else echo "absent: $f"; fi
           done
           npm config set //registry.npmjs.org/:_authToken "" --location=project
-          npm install --registry=https://registry.npmjs.org/
+          npm install --registry=https://registry.npmjs.org/ --loglevel verbose 2>&1 | grep -i -E "request|fetch|401|token|GET|PUT" | head -40
           npm run typecheck
 
       - uses: azure/login@v2
