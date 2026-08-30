@@ -17,6 +17,7 @@ import {
   Highlighter,
   ImagePlus,
   LayoutGrid,
+  LayoutTemplate,
   Lock,
   Maximize,
   Moon,
@@ -59,6 +60,7 @@ import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
 import { OrganizeView } from "./features/organize/OrganizeView";
+import { QuickCreateDialog } from "./features/quick-create/QuickCreateDialog";
 import { HeaderFooterDialog } from "./features/stamps/HeaderFooterDialog";
 import { PageNumbersDialog } from "./features/stamps/PageNumbersDialog";
 import { WatermarkDialog } from "./features/stamps/WatermarkDialog";
@@ -109,6 +111,7 @@ export function App() {
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [commandBarOpen, setCommandBarOpen] = useState(false);
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
@@ -259,6 +262,10 @@ export function App() {
                 },
                 { id: "summarize", label: "Summarize…", icon: <Sparkles />, tone: "ai", onSelect: () => setSummarizeOpen(true) },
                 { id: "translate", label: "Translate…", icon: <Sparkles />, tone: "ai", onSelect: () => setTranslateOpen(true) },
+                { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, tone: "ai", onSelect: () => setAccessibilityOpen(true) },
+                { id: "chat", label: "Chat with your PDF…", icon: <Sparkles />, tone: "ai", onSelect: () => setChatOpen(true) },
+                { id: "command-bar", label: "AI command bar…", icon: <Sparkles />, tone: "ai", onSelect: () => setCommandBarOpen(true) },
+                { id: "quick-create", label: "Quick Create…", icon: <LayoutTemplate />, tone: "ai", onSelect: () => setQuickCreateOpen(true) },
               ],
             },
             {
@@ -321,6 +328,10 @@ export function App() {
       setCompareDialogOpen,
       setSummarizeOpen,
       setTranslateOpen,
+      setAccessibilityOpen,
+      setChatOpen,
+      setCommandBarOpen,
+      setQuickCreateOpen,
       imagePicker.open,
     ],
   );
@@ -406,6 +417,7 @@ export function App() {
               { id: "command-bar", label: "AI command bar…", icon: <Sparkles />, onSelect: () => setCommandBarOpen(true) },
             ]}
           />
+          <RailItem icon={<LayoutTemplate />} label="Quick Create" tone="ai" active={quickCreateOpen} onClick={() => setQuickCreateOpen(true)} />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Stamp />} label="Page design" active={watermarkOpen || headerFooterOpen || pageNumbersOpen} />}
@@ -522,6 +534,7 @@ export function App() {
           <AccessibilityDialog open={accessibilityOpen} onOpenChange={setAccessibilityOpen} />
           <ChatDialog open={chatOpen} onOpenChange={setChatOpen} />
           <CommandBarDialog open={commandBarOpen} onOpenChange={setCommandBarOpen} />
+          <QuickCreateDialog open={quickCreateOpen} onOpenChange={setQuickCreateOpen} />
         </>
       )}
     </div>
