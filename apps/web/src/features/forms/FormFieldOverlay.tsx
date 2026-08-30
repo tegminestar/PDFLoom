@@ -10,13 +10,18 @@ export interface FormFieldOverlayProps {
   rotation: 0 | 90 | 180 | 270;
 }
 
-// Fixed (not theme-dependent) dark text on a light indigo tint: the page
-// canvas underneath is always white/paper-colored regardless of app theme,
-// so using the theme's `text-text` token here would go near-white-on-light
-// in dark mode — illegible. This is styling *content drawn on the page*,
-// not app chrome.
+// Fixed (not theme-dependent), fully OPAQUE light-indigo background with
+// dark text: the page canvas underneath is always white/paper-colored
+// regardless of app theme, so using the theme's `text-text` token (or a
+// translucent tint like `bg-primary-muted`) here would either go
+// near-white-on-light in dark mode or let the canvas's own baked-in field
+// appearance (pdf.js renders each widget's default/current value straight
+// into the canvas pixels) show through and ghost behind this live input —
+// visible as doubled-up text whenever a field has a non-empty default
+// value. Must stay opaque. This is styling *content drawn on the page*, not
+// app chrome.
 const inputClass = cn(
-  "absolute rounded-[2px] border border-primary/50 bg-primary-muted px-1 text-[#16181d] outline-none",
+  "absolute rounded-[2px] border border-primary/50 bg-[#eef0ff] px-1 text-[#16181d] outline-none",
   "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]",
 );
 
