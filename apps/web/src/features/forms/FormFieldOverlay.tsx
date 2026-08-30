@@ -70,6 +70,7 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
           return field.multiline ? (
             <textarea
               key={`${field.name}-${i}`}
+              data-field-name={field.name}
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
               disabled={field.readOnly}
@@ -79,6 +80,7 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
           ) : (
             <input
               key={`${field.name}-${i}`}
+              data-field-name={field.name}
               type="text"
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}

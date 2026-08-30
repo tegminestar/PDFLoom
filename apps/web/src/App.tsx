@@ -38,6 +38,7 @@ import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
+import { VoiceToFillButton } from "./features/forms/VoiceToFillButton";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
 import { TranslateDialog } from "./features/ai/TranslateDialog";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
@@ -496,6 +497,7 @@ export function App() {
       <CommandPalette groups={commandGroups} />
       <SelectionMarkupToolbar />
       <ExplainSelectionToolbar />
+      <VoiceToFillButton />
       <PasswordPromptDialog />
       {meta && (
         <>
