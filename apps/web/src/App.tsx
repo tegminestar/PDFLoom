@@ -15,6 +15,7 @@ import {
   Highlighter,
   ImagePlus,
   LayoutGrid,
+  Lock,
   Maximize,
   Moon,
   PenTool,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLoomStore } from "./app/store";
+import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
@@ -37,6 +39,7 @@ import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
 import { ExportOfficeDialog } from "./features/convert/ExportOfficeDialog";
 import { OcrDialog } from "./features/convert/OcrDialog";
+import { ProtectDialog } from "./features/protect/ProtectDialog";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
@@ -81,6 +84,7 @@ export function App() {
   const [createFromTextOpen, setCreateFromTextOpen] = useState(false);
   const [ocrOpen, setOcrOpen] = useState(false);
   const [exportOfficeOpen, setExportOfficeOpen] = useState(false);
+  const [protectOpen, setProtectOpen] = useState(false);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
 
   const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
@@ -196,6 +200,7 @@ export function App() {
                 { id: "export-office", label: "Export to Word/Excel/PowerPoint…", icon: <FileOutput />, onSelect: () => setExportOfficeOpen(true) },
                 { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
                 { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
+                { id: "protect", label: "Protect…", icon: <Lock />, onSelect: () => setProtectOpen(true) },
               ],
             },
             {
@@ -249,6 +254,7 @@ export function App() {
       setCreateFromTextOpen,
       setOcrOpen,
       setExportOfficeOpen,
+      setProtectOpen,
       imagePicker.open,
     ],
   );
@@ -298,6 +304,7 @@ export function App() {
               setEditOpen(!(mainView === "read" && editOpen));
             }}
           />
+          <RailItem icon={<Lock />} label="Protect" active={protectOpen} onClick={() => setProtectOpen(true)} />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Stamp />} label="Page design" active={watermarkOpen || headerFooterOpen || pageNumbersOpen} />}
@@ -349,6 +356,7 @@ export function App() {
       </div>
       <CommandPalette groups={commandGroups} />
       <SelectionMarkupToolbar />
+      <PasswordPromptDialog />
       {meta && (
         <>
           <WatermarkDialog open={watermarkOpen} onOpenChange={setWatermarkOpen} />
@@ -359,6 +367,7 @@ export function App() {
           <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
           <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />
+          <ProtectDialog open={protectOpen} onOpenChange={setProtectOpen} />
         </>
       )}
     </div>

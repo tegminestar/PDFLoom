@@ -31,6 +31,7 @@ export type { SourceImage, ImagePageSizing } from "./pdf/convert";
 export type { RasterizedPage } from "./pdf/compress";
 export type { InlineRun, DocBlock, CreateDocumentOptions } from "./pdf/create-document";
 export type { OcrWordPlacement } from "./pdf/ocr-overlay";
+export type { PdfPermissions, EncryptOptions, DecryptResult } from "./pdf/crypto/standard-security-handler";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

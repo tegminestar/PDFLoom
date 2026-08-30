@@ -48,11 +48,14 @@ export class PdfDocument {
 
   static async load(source: ArrayBuffer | Uint8Array, password?: string): Promise<PdfDocument> {
     const pdfjsLib = await loadPdfjs();
-    const loadingTask = pdfjsLib.getDocument({
-      data: source instanceof Uint8Array ? source : new Uint8Array(source),
-      password,
-      useSystemFonts: true,
-    });
+    // pdf.js transfers (detaches) the underlying ArrayBuffer to its worker
+    // via postMessage rather than copying it — passing the caller's own
+    // buffer straight through would silently zero it out from under them,
+    // breaking any retry that reuses the same bytes (e.g. re-attempting
+    // after a wrong password). Slicing always hands pdf.js a fresh,
+    // disposable copy instead.
+    const data = source instanceof Uint8Array ? source.slice() : new Uint8Array(source.slice(0));
+    const loadingTask = pdfjsLib.getDocument({ data, password, useSystemFonts: true });
     const proxy = await loadingTask.promise;
     return new PdfDocument(proxy, loadingTask);
   }

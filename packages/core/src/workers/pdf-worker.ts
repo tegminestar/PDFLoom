@@ -4,6 +4,7 @@ import * as compress from "../pdf/compress";
 import * as convert from "../pdf/convert";
 import * as createDocument from "../pdf/create-document";
 import * as edit from "../pdf/edit";
+import * as security from "../pdf/crypto/standard-security-handler";
 import * as forms from "../pdf/forms";
 import * as markdown from "../pdf/markdown";
 import * as ocrOverlay from "../pdf/ocr-overlay";
@@ -25,6 +26,7 @@ const api = {
   ...createDocument,
   ...markdown,
   ...ocrOverlay,
+  ...security,
 };
 export type PdfWorkerApi = typeof api;
 

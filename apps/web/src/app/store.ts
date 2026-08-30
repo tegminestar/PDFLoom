@@ -44,6 +44,10 @@ interface LoomState {
   meta: DocumentMeta | null;
   isLoading: boolean;
   loadError: string | null;
+  /** Set when opening a file throws pdf.js's PasswordException — the file is held here (not opened yet) until submitPassword/cancelPasswordPrompt resolves it. */
+  passwordPromptOpen: boolean;
+  pendingOpenFile: OpenedFile | null;
+  passwordError: string | null;
 
   currentPage: number;
   /**
@@ -87,6 +91,9 @@ interface LoomState {
   activeSearchIndex: number;
 
   openOpenedFile: (opened: OpenedFile) => Promise<void>;
+  /** Retries opening the file currently held in pendingOpenFile with the given password. */
+  submitPassword: (password: string) => Promise<void>;
+  cancelPasswordPrompt: () => void;
   openViaPicker: () => Promise<void>;
   closeDocument: () => void;
   setMainView: (view: MainView) => void;
@@ -135,12 +142,60 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.1;
 
+type LoomSetter = (partial: Partial<LoomState> | ((s: LoomState) => Partial<LoomState>)) => void;
+
+/** Shared success path for openOpenedFile and submitPassword — resetting view state and recording the file in Recents is identical whether or not a password was needed. */
+async function finishOpeningDocument(set: LoomSetter, opened: OpenedFile, doc: PdfDocument): Promise<void> {
+  const meta: DocumentMeta = {
+    id: opened.id,
+    name: opened.name,
+    sizeBytes: opened.sizeBytes,
+    pageCount: doc.pageCount,
+    handle: opened.handle,
+  };
+  const outline = await doc.getOutline();
+  set((s) => ({
+    document: doc,
+    meta,
+    outline,
+    isLoading: false,
+    currentPage: 1,
+    pageNavigationNonce: s.pageNavigationNonce + 1,
+    zoom: 1,
+    fitMode: "width",
+    viewRotation: 0,
+    searchQuery: "",
+    searchResults: [],
+    activeSearchIndex: -1,
+    mainView: "read",
+    annotateOpen: false,
+    formFillOpen: false,
+    formFields: [],
+    formFieldValues: {},
+    editOpen: false,
+  }));
+  void recentsStore.record(
+    {
+      id: meta.id,
+      name: meta.name,
+      sizeBytes: meta.sizeBytes,
+      pageCount: meta.pageCount,
+      lastOpenedAt: Date.now(),
+      hasFileHandle: meta.handle !== null,
+    },
+    meta.handle,
+  );
+}
+
 export const useLoomStore = create<LoomState>((set, get) => ({
   storage: new WebStorageAdapter(),
   document: null,
   meta: null,
   isLoading: false,
   loadError: null,
+  passwordPromptOpen: false,
+  pendingOpenFile: null,
+  passwordError: null,
 
   currentPage: 1,
   pageNavigationNonce: 0,
@@ -175,58 +230,39 @@ export const useLoomStore = create<LoomState>((set, get) => ({
 
   openOpenedFile: async (opened) => {
     get().document?.destroy();
-    set({ isLoading: true, loadError: null, document: null, meta: null });
+    set({ isLoading: true, loadError: null, document: null, meta: null, passwordPromptOpen: false, pendingOpenFile: null, passwordError: null });
     try {
       const doc = await PdfDocument.load(opened.bytes);
-      const meta: DocumentMeta = {
-        id: opened.id,
-        name: opened.name,
-        sizeBytes: opened.sizeBytes,
-        pageCount: doc.pageCount,
-        handle: opened.handle,
-      };
-      const outline = await doc.getOutline();
-      set((s) => ({
-        document: doc,
-        meta,
-        outline,
-        isLoading: false,
-        currentPage: 1,
-        pageNavigationNonce: s.pageNavigationNonce + 1,
-        zoom: 1,
-        fitMode: "width",
-        viewRotation: 0,
-        searchQuery: "",
-        searchResults: [],
-        activeSearchIndex: -1,
-        mainView: "read",
-        annotateOpen: false,
-        formFillOpen: false,
-        formFields: [],
-        formFieldValues: {},
-        editOpen: false,
-      }));
-      void recentsStore.record(
-        {
-          id: meta.id,
-          name: meta.name,
-          sizeBytes: meta.sizeBytes,
-          pageCount: meta.pageCount,
-          lastOpenedAt: Date.now(),
-          hasFileHandle: meta.handle !== null,
-        },
-        meta.handle,
-      );
+      await finishOpeningDocument(set, opened, doc);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.name === "PasswordException"
-            ? "This PDF is password-protected. Password support is coming in a later milestone."
-            : error.message
-          : "Failed to open this file.";
+      if (error instanceof Error && error.name === "PasswordException") {
+        set({ isLoading: false, passwordPromptOpen: true, pendingOpenFile: opened, passwordError: null });
+        return;
+      }
+      const message = error instanceof Error ? error.message : "Failed to open this file.";
       set({ isLoading: false, loadError: message });
     }
   },
+
+  submitPassword: async (password) => {
+    const opened = get().pendingOpenFile;
+    if (!opened) return;
+    set({ isLoading: true, passwordError: null });
+    try {
+      const doc = await PdfDocument.load(opened.bytes, password);
+      set({ passwordPromptOpen: false, pendingOpenFile: null });
+      await finishOpeningDocument(set, opened, doc);
+    } catch (error) {
+      if (error instanceof Error && error.name === "PasswordException") {
+        set({ isLoading: false, passwordError: "Incorrect password. Try again." });
+      } else {
+        const message = error instanceof Error ? error.message : "Failed to open this file.";
+        set({ isLoading: false, passwordPromptOpen: false, pendingOpenFile: null, loadError: message });
+      }
+    }
+  },
+
+  cancelPasswordPrompt: () => set({ passwordPromptOpen: false, pendingOpenFile: null, passwordError: null }),
 
   openViaPicker: async () => {
     const opened = await get().storage.openFilePicker();
