@@ -34,8 +34,13 @@ jobs:
         working-directory: apps/api
         env:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-          NPM_CONFIG_ALWAYS_AUTH: "false"
+          # Something at the org level appears to auto-inject a
+          # NODE_AUTH_TOKEN into every Actions run's npm config regardless
+          # of registry — confirmed via the masked token showing up in a
+          # run that never referenced it. Shadow it empty for this step.
+          NODE_AUTH_TOKEN: ""
         run: |
+          npm config set //registry.npmjs.org/:_authToken "" --location=project
           npm install --registry=https://registry.npmjs.org/
           npm run typecheck
 
