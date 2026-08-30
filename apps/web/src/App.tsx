@@ -4,6 +4,7 @@ import {
   BookMarked,
   BookOpen,
   Edit3,
+  EyeOff,
   FileDown,
   FileOutput,
   FilePlus2,
@@ -40,6 +41,7 @@ import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
 import { ExportOfficeDialog } from "./features/convert/ExportOfficeDialog";
 import { OcrDialog } from "./features/convert/OcrDialog";
 import { ProtectDialog } from "./features/protect/ProtectDialog";
+import { RedactToolbar } from "./features/protect/RedactToolbar";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
@@ -65,6 +67,8 @@ export function App() {
   const setFormFillOpen = useLoomStore((s) => s.setFormFillOpen);
   const editOpen = useLoomStore((s) => s.editOpen);
   const setEditOpen = useLoomStore((s) => s.setEditOpen);
+  const redactOpen = useLoomStore((s) => s.redactOpen);
+  const setRedactOpen = useLoomStore((s) => s.setRedactOpen);
   const document_ = useLoomStore((s) => s.document);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
@@ -191,6 +195,15 @@ export function App() {
                     setEditOpen(!(mainView === "read" && editOpen));
                   },
                 },
+                {
+                  id: "mode-redact",
+                  label: mainView === "read" && redactOpen ? "Exit redact mode" : "Redact…",
+                  icon: <EyeOff />,
+                  onSelect: () => {
+                    setMainView("read");
+                    setRedactOpen(!(mainView === "read" && redactOpen));
+                  },
+                },
                 { id: "watermark", label: "Add watermark…", icon: <PenTool />, onSelect: () => setWatermarkOpen(true) },
                 { id: "header-footer", label: "Add header & footer…", icon: <FileStack />, onSelect: () => setHeaderFooterOpen(true) },
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
@@ -239,6 +252,8 @@ export function App() {
       setFormFillOpen,
       editOpen,
       setEditOpen,
+      redactOpen,
+      setRedactOpen,
       openViaPicker,
       toggleActivePanel,
       zoomIn,
@@ -304,6 +319,15 @@ export function App() {
               setEditOpen(!(mainView === "read" && editOpen));
             }}
           />
+          <RailItem
+            icon={<EyeOff />}
+            label="Redact"
+            active={mainView === "read" && redactOpen}
+            onClick={() => {
+              setMainView("read");
+              setRedactOpen(!(mainView === "read" && redactOpen));
+            }}
+          />
           <RailItem icon={<Lock />} label="Protect" active={protectOpen} onClick={() => setProtectOpen(true)} />
           <DropdownMenu
             align="start"
@@ -344,11 +368,39 @@ export function App() {
       <div className="flex min-h-0 flex-1 flex-col">
         {meta &&
           mainView === "read" &&
-          (formFillOpen ? <FormsToolbar /> : annotateOpen ? <AnnotateToolbar /> : editOpen ? <EditToolbar /> : <Toolbar />)}
+          (formFillOpen ? (
+            <FormsToolbar />
+          ) : annotateOpen ? (
+            <AnnotateToolbar />
+          ) : editOpen ? (
+            <EditToolbar />
+          ) : redactOpen ? (
+            <RedactToolbar />
+          ) : (
+            <Toolbar />
+          ))}
         <div className="flex min-h-0 flex-1">
-          {meta && mainView === "read" && !annotateOpen && !formFillOpen && !editOpen && activePanel === "thumbnails" && <ThumbnailsPanel />}
-          {meta && mainView === "read" && !annotateOpen && !formFillOpen && !editOpen && activePanel === "outline" && <OutlinePanel />}
-          {meta && mainView === "read" && !annotateOpen && !formFillOpen && !editOpen && activePanel === "search" && <SearchPanel />}
+          {meta &&
+            mainView === "read" &&
+            !annotateOpen &&
+            !formFillOpen &&
+            !editOpen &&
+            !redactOpen &&
+            activePanel === "thumbnails" && <ThumbnailsPanel />}
+          {meta &&
+            mainView === "read" &&
+            !annotateOpen &&
+            !formFillOpen &&
+            !editOpen &&
+            !redactOpen &&
+            activePanel === "outline" && <OutlinePanel />}
+          {meta &&
+            mainView === "read" &&
+            !annotateOpen &&
+            !formFillOpen &&
+            !editOpen &&
+            !redactOpen &&
+            activePanel === "search" && <SearchPanel />}
           <div className="min-w-0 flex-1">
             {!meta ? <WelcomeScreen /> : mainView === "organize" ? <OrganizeView /> : <Viewer />}
           </div>

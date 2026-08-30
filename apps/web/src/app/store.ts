@@ -7,6 +7,7 @@ import {
   type FormFieldValue,
   type OpenedFile,
   type OutlineNode,
+  type Rect,
   type RgbColor,
   type SearchMatch,
   type StampPreset,
@@ -20,6 +21,10 @@ export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "sq
 export type FormMode = "fill" | "design";
 export type FieldDesignTool = "text" | "checkbox" | "radio" | "dropdown";
 export type EditTool = "text" | "image";
+export interface PendingRedaction {
+  pageIndex: number;
+  rect: Rect;
+}
 
 export const ANNOTATE_COLOR_PRESETS: RgbColor[] = [
   { r: 1, g: 0.86, b: 0.2 }, // amber/yellow — default highlight
@@ -85,6 +90,11 @@ interface LoomState {
   editOpen: boolean;
   editTool: EditTool;
 
+  /** True redaction mode: draw boxes across any pages, then apply — each affected page is rasterized and replaced wholesale (see redact.ts) so nothing under a box survives. */
+  redactOpen: boolean;
+  redactBoxes: PendingRedaction[];
+  isApplyingRedactions: boolean;
+
   searchQuery: string;
   searchResults: SearchMatch[];
   isSearching: boolean;
@@ -117,6 +127,13 @@ interface LoomState {
 
   setEditOpen: (open: boolean) => void;
   setEditTool: (tool: EditTool) => void;
+
+  setRedactOpen: (open: boolean) => void;
+  addRedactBox: (pageIndex: number, rect: Rect) => void;
+  removeRedactBox: (index: number) => void;
+  clearRedactBoxes: () => void;
+  /** Rasterizes every page with pending boxes (needs a real <canvas>, so the actual rendering is done by the caller/UI and passed in) and applies the redaction, replacing the open document. */
+  applyRedactions: (renderedPages: Map<number, { widthPt: number; heightPt: number; jpegBytes: Uint8Array }>) => Promise<void>;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -173,6 +190,8 @@ async function finishOpeningDocument(set: LoomSetter, opened: OpenedFile, doc: P
     formFields: [],
     formFieldValues: {},
     editOpen: false,
+    redactOpen: false,
+    redactBoxes: [],
   }));
   void recentsStore.record(
     {
@@ -222,6 +241,10 @@ export const useLoomStore = create<LoomState>((set, get) => ({
 
   editOpen: false,
   editTool: "text",
+
+  redactOpen: false,
+  redactBoxes: [],
+  isApplyingRedactions: false,
 
   searchQuery: "",
   searchResults: [],
@@ -288,13 +311,23 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formMode: "fill",
       formDesignTool: null,
       editOpen: false,
+      redactOpen: false,
+      redactBoxes: [],
     });
   },
 
   setMainView: (mainView) =>
-    set({ mainView, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false }),
+    set({
+      mainView,
+      annotateOpen: false,
+      formFillOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      editOpen: false,
+      redactOpen: false,
+    }),
   setAnnotateOpen: (annotateOpen) =>
-    set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false }),
+    set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false, redactOpen: false }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
@@ -306,7 +339,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     }
     const { document: doc } = get();
     if (!doc) return;
-    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null, editOpen: false });
+    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null, editOpen: false, redactOpen: false });
     await get().refreshFormFields();
   },
 
@@ -330,8 +363,48 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   setFormMode: (formMode) => set({ formMode, formDesignTool: formMode === "design" ? "text" : null }),
   setFormDesignTool: (formDesignTool) => set({ formDesignTool }),
 
-  setEditOpen: (editOpen) => set({ editOpen, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null }),
+  setEditOpen: (editOpen) =>
+    set({ editOpen, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null, redactOpen: false }),
   setEditTool: (editTool) => set({ editTool }),
+
+  setRedactOpen: (redactOpen) =>
+    set({
+      redactOpen,
+      annotateOpen: false,
+      formFillOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      editOpen: false,
+      ...(redactOpen ? {} : { redactBoxes: [] }),
+    }),
+  addRedactBox: (pageIndex, rect) => set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }] })),
+  removeRedactBox: (index) => set((s) => ({ redactBoxes: s.redactBoxes.filter((_, i) => i !== index) })),
+  clearRedactBoxes: () => set({ redactBoxes: [] }),
+
+  applyRedactions: async (renderedPages) => {
+    const { document: doc, redactBoxes, applyPdfMutation: apply } = get();
+    if (!doc || redactBoxes.length === 0) return;
+    set({ isApplyingRedactions: true });
+    try {
+      const byPage = new Map<number, Rect[]>();
+      for (const box of redactBoxes) {
+        const list = byPage.get(box.pageIndex) ?? [];
+        list.push(box.rect);
+        byPage.set(box.pageIndex, list);
+      }
+      const client = await getPdfWorkerClient();
+      const pages = [...byPage.entries()].map(([pageIndex, boxes]) => {
+        const rendered = renderedPages.get(pageIndex);
+        if (!rendered) throw new Error(`Missing rendered page for page index ${pageIndex}`);
+        return { pageIndex, widthPt: rendered.widthPt, heightPt: rendered.heightPt, jpegBytes: rendered.jpegBytes, boxes };
+      });
+      const bytes = await client.redactPages(await doc.getRawBytes(), pages);
+      await apply(bytes);
+      set({ redactBoxes: [], redactOpen: false });
+    } finally {
+      set({ isApplyingRedactions: false });
+    }
+  },
 
   refreshFormFields: async () => {
     const { document: doc } = get();

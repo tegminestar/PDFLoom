@@ -4,6 +4,7 @@ import { AnnotationDrawOverlay } from "../annotate/AnnotationDrawOverlay";
 import { EditOverlay } from "../edit/EditOverlay";
 import { FieldDesignerOverlay } from "../forms/FieldDesignerOverlay";
 import { FormFieldOverlay } from "../forms/FormFieldOverlay";
+import { RedactOverlay } from "../protect/RedactOverlay";
 
 export interface PageCanvasProps {
   doc: PdfDocument;
@@ -115,6 +116,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
         {isVisible && <FormFieldOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FieldDesignerOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <EditOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} pageContainerRef={pageRef} />}
+        {isVisible && <RedactOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
       </div>
       {!hasRendered && (
         <div className="absolute inset-0 flex items-center justify-center text-xs text-text-faint">
