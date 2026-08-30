@@ -35,6 +35,7 @@ export type { PdfPermissions, EncryptOptions, DecryptResult } from "./pdf/crypto
 export type { RedactPageInput } from "./pdf/redact";
 export type { TypedSignatureOptions, SignedTimestampOptions } from "./pdf/signature";
 export type { SanitizeOptions, SanitizeReport } from "./pdf/sanitize";
+export type { PageImageInfo, ImageAltTextUpdate } from "./pdf/accessibility";
 export { diffPageText, summarizeTextComparison, diffPixelsRgba } from "./pdf/compare";
 export type { WordDiffOp, WordDiffOpType, PageTextDiffResult, PageComparisonSummary, ComparisonSummary, PixelDiffResult } from "./pdf/compare";
 
@@ -53,6 +54,8 @@ export { translateText, TRANSLATION_LANGUAGES } from "./ai/translate";
 export type { TranslationLanguage, TranslateStage, TranslateOptions, TranslateResult } from "./ai/translate";
 export { explainClause } from "./ai/explain-clause";
 export type { ExplainClauseStage, ExplainClauseOptions } from "./ai/explain-clause";
+export { captionImage } from "./ai/caption-image";
+export type { CaptionImageOptions } from "./ai/caption-image";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

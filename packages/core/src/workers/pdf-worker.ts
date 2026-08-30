@@ -1,4 +1,5 @@
 import * as Comlink from "comlink";
+import * as accessibility from "../pdf/accessibility";
 import * as annotations from "../pdf/annotations";
 import * as compress from "../pdf/compress";
 import * as convert from "../pdf/convert";
@@ -19,6 +20,7 @@ import * as stamps from "../pdf/stamps";
 // noticeable amount of CPU on large documents — offloading them here keeps
 // the main thread, and the viewer's own scroll/render loop, responsive.
 const api = {
+  ...accessibility,
   ...organize,
   ...annotations,
   ...stamps,

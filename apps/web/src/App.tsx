@@ -36,6 +36,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
 import { TranslateDialog } from "./features/ai/TranslateDialog";
@@ -102,6 +103,7 @@ export function App() {
   const [protectOpen, setProtectOpen] = useState(false);
   const [summarizeOpen, setSummarizeOpen] = useState(false);
   const [translateOpen, setTranslateOpen] = useState(false);
+  const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
@@ -390,10 +392,11 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen} />}
+            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen} />}
             items={[
               { id: "summarize", label: "Summarize…", icon: <Sparkles />, onSelect: () => setSummarizeOpen(true) },
               { id: "translate", label: "Translate…", icon: <Sparkles />, onSelect: () => setTranslateOpen(true) },
+              { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, onSelect: () => setAccessibilityOpen(true) },
             ]}
           />
           <DropdownMenu
@@ -508,6 +511,7 @@ export function App() {
           <CompareDialog open={compareDialogOpen} onOpenChange={setCompareDialogOpen} onPicked={handleComparePicked} />
           <SummarizeDialog open={summarizeOpen} onOpenChange={setSummarizeOpen} />
           <TranslateDialog open={translateOpen} onOpenChange={setTranslateOpen} />
+          <AccessibilityDialog open={accessibilityOpen} onOpenChange={setAccessibilityOpen} />
         </>
       )}
     </div>
