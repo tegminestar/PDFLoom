@@ -8,14 +8,15 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test:e2e": "playwright test",
     "generate:templates": "node scripts/generate-templates.mjs"
   },
   "dependencies": {
+    "@fontsource/caveat": "^5.3.0",
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@pdfloom/core": "workspace:*",
     "@pdfloom/ui": "workspace:*",
-    "@fontsource/caveat": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "docx": "^9.7.1",
     "exceljs": "^4.4.0",
@@ -30,6 +31,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
