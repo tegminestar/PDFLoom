@@ -9,6 +9,3 @@ allowBuilds:
   protobufjs: false
   sharp: false
   tesseract.js: true
-  # Downloads the actual `func` CLI binary used to run Azure Functions
-  # locally (apps/api's dev-only tooling, not shipped anywhere).
-  azure-functions-core-tools: true
