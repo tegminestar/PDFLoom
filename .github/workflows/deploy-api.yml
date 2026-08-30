@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       # A real typecheck gate before anything gets provisioned or deployed —
       # apps/api is a self-contained package (no workspace: deps), so a
@@ -62,7 +62,7 @@ jobs:
               --storage-account "$AZURE_STORAGE_ACCOUNT" \
               --consumption-plan-location "$AZURE_LOCATION" \
               --runtime node \
-              --runtime-version 20 \
+              --runtime-version 24 \
               --functions-version 4 \
               --os-type Linux \
               --output none
