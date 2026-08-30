@@ -1,4 +1,4 @@
-import { recentsStore, type RecentFileEntry } from "@pdfloom/core";
+import { getPdfWorkerClient, recentsStore, type RecentFileEntry } from "@pdfloom/core";
 import { Button, Mark, cn, toast } from "@pdfloom/ui";
 import {
   Cpu,
@@ -7,6 +7,7 @@ import {
   FileText,
   FolderOpen,
   Home,
+  ImagePlus,
   Landmark,
   Receipt,
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
 import { useLoomStore } from "../app/store";
+import { useImageFilePicker } from "../features/convert/useImageFilePicker";
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, label: "100% local & private" },
@@ -105,6 +107,19 @@ export function WelcomeScreen() {
     await openOpenedFile(opened);
   };
 
+  const handleCreateFromImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
+    try {
+      const client = await getPdfWorkerClient();
+      const bytes = await client.imagesToPdf(images, { mode: "auto" });
+      const file = new File([bytes as BlobPart], "Untitled from images.pdf", { type: "application/pdf" });
+      const opened = await storage.openFromFile(file);
+      await openOpenedFile(opened);
+    } catch (error) {
+      toast.error("Couldn't create a PDF from those images", error instanceof Error ? error.message : undefined);
+    }
+  };
+  const imagePicker = useImageFilePicker((images) => void handleCreateFromImages(images));
+
   const handleOpenTemplate = async (template: TemplateInfo) => {
     setLoadingTemplate(template.file);
     try {
@@ -184,10 +199,17 @@ export function WelcomeScreen() {
               Drop a PDF here, or open one from your device. Everything runs locally in your browser — nothing is
               ever uploaded.
             </p>
-            <Button variant="primary" size="lg" onClick={() => void openViaPicker()} disabled={isLoading}>
-              <FolderOpen className="h-4 w-4" />
-              {isLoading ? "Opening…" : "Open a PDF"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="primary" size="lg" onClick={() => void openViaPicker()} disabled={isLoading}>
+                <FolderOpen className="h-4 w-4" />
+                {isLoading ? "Opening…" : "Open a PDF"}
+              </Button>
+              <Button variant="secondary" size="lg" onClick={() => imagePicker.open()} disabled={isLoading}>
+                <ImagePlus className="h-4 w-4" />
+                From images
+              </Button>
+            </div>
+            {imagePicker.input}
           </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 px-1">

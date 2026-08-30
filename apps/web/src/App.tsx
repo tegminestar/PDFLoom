@@ -1,13 +1,17 @@
-import { CommandPalette, DropdownMenu, Mark, Rail, RailItem, type CommandPaletteGroup } from "@pdfloom/ui";
+import { getPdfWorkerClient } from "@pdfloom/core";
+import { CommandPalette, DropdownMenu, Mark, Rail, RailItem, toast, type CommandPaletteGroup } from "@pdfloom/ui";
 import {
   BookMarked,
   BookOpen,
   Edit3,
+  FileDown,
   FileStack,
+  FileUp,
   FolderOpen,
   FormInput,
   Hash,
   Highlighter,
+  ImagePlus,
   LayoutGrid,
   Maximize,
   Moon,
@@ -24,6 +28,8 @@ import { useLoomStore } from "./app/store";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
+import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
+import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
 import { OrganizeView } from "./features/organize/OrganizeView";
@@ -48,6 +54,8 @@ export function App() {
   const setFormFillOpen = useLoomStore((s) => s.setFormFillOpen);
   const editOpen = useLoomStore((s) => s.editOpen);
   const setEditOpen = useLoomStore((s) => s.setEditOpen);
+  const document_ = useLoomStore((s) => s.document);
+  const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
   const toggleActivePanel = useLoomStore((s) => s.toggleActivePanel);
   const zoomIn = useLoomStore((s) => s.zoomIn);
@@ -60,6 +68,24 @@ export function App() {
   const [watermarkOpen, setWatermarkOpen] = useState(false);
   const [headerFooterOpen, setHeaderFooterOpen] = useState(false);
   const [pageNumbersOpen, setPageNumbersOpen] = useState(false);
+  const [exportImagesOpen, setExportImagesOpen] = useState(false);
+  const [isInsertingImages, setIsInsertingImages] = useState(false);
+
+  const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
+    if (!document_) return;
+    setIsInsertingImages(true);
+    try {
+      const client = await getPdfWorkerClient();
+      const bytes = await client.insertImagePages(await document_.getRawBytes(), document_.pageCount, images, { mode: "auto" });
+      await applyPdfMutation(bytes);
+      toast.success(`Inserted ${images.length} page${images.length === 1 ? "" : "s"} from images`, "Added to the end of the document.");
+    } catch (error) {
+      toast.error("Couldn't insert images", error instanceof Error ? error.message : undefined);
+    } finally {
+      setIsInsertingImages(false);
+    }
+  };
+  const imagePicker = useImageFilePicker((images) => void handleInsertImages(images));
 
   // Global keyboard shortcuts. These are the same actions advertised in the
   // toolbar tooltips and the command palette — every shortcut shown to the
@@ -152,6 +178,8 @@ export function App() {
                 { id: "watermark", label: "Add watermark…", icon: <PenTool />, onSelect: () => setWatermarkOpen(true) },
                 { id: "header-footer", label: "Add header & footer…", icon: <FileStack />, onSelect: () => setHeaderFooterOpen(true) },
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
+                { id: "insert-images", label: "Insert images as pages…", icon: <ImagePlus />, onSelect: () => imagePicker.open() },
+                { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
               ],
             },
             {
@@ -200,6 +228,8 @@ export function App() {
       setWatermarkOpen,
       setHeaderFooterOpen,
       setPageNumbersOpen,
+      setExportImagesOpen,
+      imagePicker.open,
     ],
   );
 
@@ -257,8 +287,23 @@ export function App() {
               { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
             ]}
           />
+          <DropdownMenu
+            align="start"
+            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen} />}
+            items={[
+              {
+                id: "insert-images",
+                label: isInsertingImages ? "Inserting…" : "Insert images as pages…",
+                icon: <ImagePlus />,
+                disabled: isInsertingImages,
+                onSelect: () => imagePicker.open(),
+              },
+              { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
+            ]}
+          />
         </Rail>
       )}
+      {imagePicker.input}
       <div className="flex min-h-0 flex-1 flex-col">
         {meta &&
           mainView === "read" &&
@@ -279,6 +324,7 @@ export function App() {
           <WatermarkDialog open={watermarkOpen} onOpenChange={setWatermarkOpen} />
           <HeaderFooterDialog open={headerFooterOpen} onOpenChange={setHeaderFooterOpen} />
           <PageNumbersDialog open={pageNumbersOpen} onOpenChange={setPageNumbersOpen} />
+          <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
         </>
       )}
     </div>
