@@ -21,6 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          # Some org/account-level npm config on this runner otherwise
+          # points package installs at an authenticated registry this repo
+          # has no token for (npm E401) — force the public registry
+          # explicitly rather than rely on whatever's ambient.
+          registry-url: "https://registry.npmjs.org"
 
       # A real typecheck gate before anything gets provisioned or deployed —
       # apps/api is a self-contained package (no workspace: deps), so a
