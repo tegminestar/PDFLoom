@@ -43,16 +43,23 @@ jobs:
       - name: Typecheck apps/api
         run: pnpm --filter @pdfloom/api run typecheck
 
-      # Build a standalone, ready-to-run deploy package — `pnpm deploy`
-      # resolves the workspace's symlinked node_modules into a real, flat
-      # layout (required for any non-pnpm-aware runtime), production
-      # dependencies only. --legacy: apps/api has no workspace: deps of its
-      # own to inject, so pnpm's newer injected-workspace mode isn't needed.
+      # Build a standalone, ready-to-run deploy package. `pnpm deploy`'s
+      # default output still uses pnpm's own .pnpm virtual store internally
+      # even with --legacy (symlinks node_modules/<pkg> -> .pnpm/<pkg>@ver);
+      # --config.node-linker=hoisted forces genuine flat, real-file copies
+      # instead — required here since the deploy package gets zipped and
+      # unzipped by Azure's pipeline, and most zip/unzip tools don't
+      # reliably preserve symlinks (the prime suspect for the container's
+      # exit-code-1 crash: `require('express')` failing on a broken link
+      # would explain a startup-time crash this fast).
       - name: Build apps/api and package it for deployment
         run: |
           pnpm --filter @pdfloom/api run build
-          pnpm --filter @pdfloom/api deploy --prod --legacy ./api-deploy-package
+          pnpm --filter @pdfloom/api deploy --prod --legacy --config.node-linker=hoisted ./api-deploy-package
           ls -la ./api-deploy-package ./api-deploy-package/dist
+          echo "--- node_modules top level (checking for symlinks: 'l' in the permissions column) ---"
+          ls -la ./api-deploy-package/node_modules | head -20
+          node -e "console.log(require.resolve('express', {paths:['./api-deploy-package/node_modules']}))"
 
       - uses: azure/login@v2
         with:
