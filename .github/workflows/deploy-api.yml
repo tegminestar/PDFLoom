@@ -135,6 +135,12 @@ jobs:
       - name: Wait, then check health and pull recent application logs
         run: |
           sleep 30
+          echo "--- downloaded log zip contents ---"
+          az webapp log download --name "$AZURE_WEBAPP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --log-file logs.zip 2>&1 || true
+          if [ -f logs.zip ]; then
+            unzip -o -q logs.zip -d logs_unzipped
+            find logs_unzipped -type f -name "*docker*" -exec sh -c 'echo "=== {} ==="; cat "{}"' \;
+          fi
           echo "--- health check ---"
           curl -s -w "\nSTATUS:%{http_code}\n" "https://$AZURE_WEBAPP_NAME.azurewebsites.net/api/health" --max-time 30 || true
           echo "--- recent log stream (15s) ---"
