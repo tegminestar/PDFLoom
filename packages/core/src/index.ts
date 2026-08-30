@@ -45,6 +45,10 @@ export { loadPipeline } from "./ai/model-loader";
 export type { ModelLoadStage, ModelLoadProgressCallback, LoadPipelineOptions } from "./ai/model-loader";
 export { summarizeText } from "./ai/summarize";
 export type { SummarizeStage, SummarizeOptions, SummarizeResult } from "./ai/summarize";
+export { detectStructuredPii } from "./ai/pii-detect";
+export type { PiiType, PiiMatch } from "./ai/pii-detect";
+export { detectPii } from "./ai/smart-redact";
+export type { NamedEntityType, SmartRedactOptions, SmartRedactMatch } from "./ai/smart-redact";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

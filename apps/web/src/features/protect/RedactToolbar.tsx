@@ -1,7 +1,10 @@
 import { TopBar, TopBarSection, Button as ToolbarButton, Separator, toast } from "@pdfloom/ui";
+import { Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
+import { SmartRedactDialog } from "./SmartRedactDialog";
 
 const REDACT_DPI = 200;
 
@@ -12,6 +15,7 @@ export function RedactToolbar() {
   const setRedactOpen = useLoomStore((s) => s.setRedactOpen);
   const clearRedactBoxes = useLoomStore((s) => s.clearRedactBoxes);
   const applyRedactions = useLoomStore((s) => s.applyRedactions);
+  const [smartDetectOpen, setSmartDetectOpen] = useState(false);
 
   const pageIndices = [...new Set(redactBoxes.map((b) => b.pageIndex))];
 
@@ -58,6 +62,10 @@ export function RedactToolbar() {
       </TopBarSection>
 
       <TopBarSection align="end">
+        <ToolbarButton variant="ai" size="sm" onClick={() => setSmartDetectOpen(true)} disabled={isApplying}>
+          <Sparkles className="h-4 w-4" />
+          Smart detect
+        </ToolbarButton>
         {redactBoxes.length > 0 && (
           <ToolbarButton variant="ghost" size="sm" onClick={clearRedactBoxes} disabled={isApplying}>
             Clear
@@ -70,6 +78,7 @@ export function RedactToolbar() {
           {isApplying ? "Applying…" : "Apply redactions"}
         </ToolbarButton>
       </TopBarSection>
+      <SmartRedactDialog open={smartDetectOpen} onOpenChange={setSmartDetectOpen} />
     </TopBar>
   );
 }

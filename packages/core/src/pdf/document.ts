@@ -1,6 +1,7 @@
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PDFPageProxy, RenderTask, TextLayer } from "pdfjs-dist";
 import { loadPdfjs } from "./worker-setup";
 import type { OutlineNode, SearchMatch } from "../types";
+import type { Rect } from "./annotations";
 
 export interface RenderPageOptions {
   scale: number;
@@ -22,10 +23,20 @@ export interface PageDimensions {
   heightPt: number;
 }
 
+interface CachedTextItem {
+  str: string;
+  /** PDF point space (bottom-left origin, unscaled — same convention as screenPointToPdfPoint/pdfRectToScreenRect at scale 1). */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface CachedPageText {
   fullText: string;
-  /** Start offset of each text item within fullText, parallel to the pdf.js text-content items array. */
+  /** Start offset of each text item within fullText, parallel to `items`. */
   itemStarts: number[];
+  items: CachedTextItem[];
 }
 
 /**
@@ -254,19 +265,62 @@ export class PdfDocument {
     const content = await page.getTextContent();
     let fullText = "";
     const itemStarts: number[] = [];
+    const items: CachedTextItem[] = [];
     for (const item of content.items) {
       if (!("str" in item)) continue;
       itemStarts.push(fullText.length);
+      items.push({ str: item.str, x: item.transform[4], y: item.transform[5], width: item.width, height: item.height });
       fullText += item.str;
       if (item.hasEOL) fullText += "\n";
     }
-    const entry: CachedPageText = { fullText, itemStarts };
+    const entry: CachedPageText = { fullText, itemStarts, items };
     this.textCache.set(pageNumber, entry);
     return entry;
   }
 
   async getFullPageText(pageNumber: number): Promise<string> {
     return (await this.getPageText(pageNumber)).fullText;
+  }
+
+  /**
+   * Maps a [startIndex, endIndex) character range within a page's full text
+   * (as returned by getFullPageText — same indexing) back to one or more
+   * on-page rects in PDF point space, one per text item the range touches.
+   * Used to turn a detected PII/search match into a redaction box without
+   * needing the page actually rendered (unlike selection-driven annotation,
+   * which reads real DOM span rects — this works across the whole document
+   * in one pass, the same way search() does).
+   *
+   * A rect only ever *over*-covers its item's glyphs slightly (a small
+   * vertical margin beyond the raw ascent/descent, since item.height isn't
+   * pixel-exact across fonts) — safe for redaction specifically, where
+   * over-covering is harmless and under-covering would defeat the point.
+   */
+  async findTextRects(pageNumber: number, startIndex: number, endIndex: number): Promise<Rect[]> {
+    const { itemStarts, items } = await this.getPageText(pageNumber);
+    const rects: Rect[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]!;
+      const itemStart = itemStarts[i]!;
+      const itemEnd = itemStart + item.str.length;
+      const overlapStart = Math.max(startIndex, itemStart);
+      const overlapEnd = Math.min(endIndex, itemEnd);
+      if (overlapStart >= overlapEnd || item.str.length === 0) continue;
+
+      // Proportional sub-item interpolation (assumes roughly even glyph
+      // width within one item) — adequate for a redaction box, not meant
+      // to be pixel-exact.
+      const fracStart = (overlapStart - itemStart) / item.str.length;
+      const fracEnd = (overlapEnd - itemStart) / item.str.length;
+      const x = item.x + item.width * fracStart;
+      const width = item.width * (fracEnd - fracStart);
+      const verticalMargin = item.height * 0.15;
+
+      rects.push({ x, y: item.y - verticalMargin, width, height: item.height + verticalMargin * 2 });
+    }
+
+    return rects;
   }
 
   /** Case-insensitive full-text search across every page. Streams results as it goes via onPageSearched. */
