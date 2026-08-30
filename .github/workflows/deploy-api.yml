@@ -49,7 +49,7 @@ jobs:
       - name: Build apps/api and package it for deployment
         run: |
           pnpm --filter @pdfloom/api run build
-          pnpm --filter @pdfloom/api deploy --prod ./api-deploy-package
+          pnpm --filter @pdfloom/api deploy --prod --legacy ./api-deploy-package
           ls -la ./api-deploy-package ./api-deploy-package/dist/functions
 
       - uses: azure/login@v2
