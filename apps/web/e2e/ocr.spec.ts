@@ -18,7 +18,7 @@ test.afterEach(async ({ page }) => {
 
 test("build an image-only PDF, OCR it, and confirm it becomes searchable", async ({ page }) => {
   test.setTimeout(200_000);
-  await page.goto("/");
+  await page.goto("/app");
   await page.waitForSelector("text=PDFLoom");
 
   const [fileChooser] = await Promise.all([

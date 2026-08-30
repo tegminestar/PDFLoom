@@ -20,7 +20,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test("merge another file in, then export a page from the merged result and verify its bytes", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
 
   await page.getByLabel("Organize pages", { exact: true }).click();

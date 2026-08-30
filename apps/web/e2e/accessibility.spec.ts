@@ -37,22 +37,29 @@ test.afterEach(async ({ page }) => {
   expect(errors, `console/page errors: ${errors.join("\n")}`).toEqual([]);
 });
 
-test("welcome screen has no WCAG violations", async ({ page }) => {
+test("marketing landing page has no WCAG violations", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByText("Weave every page.")).toBeVisible();
+  const results = await scan(page);
+  expect(results.violations, describeViolations(results)).toEqual([]);
+});
+
+test("app welcome screen has no WCAG violations", async ({ page }) => {
+  await page.goto("/app");
   await expect(page.getByText("PDFLoom").first()).toBeVisible();
   const results = await scan(page);
   expect(results.violations, describeViolations(results)).toEqual([]);
 });
 
 test("open document + reading view has no WCAG violations", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
   const results = await scan(page);
   expect(results.violations, describeViolations(results)).toEqual([]);
 });
 
 test("Organize pages view has no WCAG violations", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
   await page.getByLabel("Organize pages", { exact: true }).click();
   await expect(page.getByText("8 pages")).toBeVisible({ timeout: 10000 });
@@ -61,7 +68,7 @@ test("Organize pages view has no WCAG violations", async ({ page }) => {
 });
 
 test("a modal dialog (Protect) has no WCAG violations and traps focus", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
   await page.getByLabel("Protect", { exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5000 });
@@ -86,7 +93,7 @@ test("a modal dialog (Protect) has no WCAG violations and traps focus", async ({
 });
 
 test("AI tools dropdown menu has no WCAG violations, and background focus is truly trapped", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
   await page.getByLabel("AI tools", { exact: true }).click();
   await expect(page.getByText("Summarize…", { exact: true })).toBeVisible({ timeout: 5000 });

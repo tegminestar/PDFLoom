@@ -17,7 +17,7 @@ test.afterEach(async ({ page }) => {
 
 test("summarize a page with the real local AI model (no API key, no mock)", async ({ page }) => {
   test.setTimeout(300_000);
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
 
   await page.getByLabel("AI tools", { exact: true }).click();

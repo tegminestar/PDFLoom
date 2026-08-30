@@ -16,7 +16,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test("annotate a page (highlight + shape), committed marks change the rendered pixels", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
 
   await page.getByLabel("Annotate", { exact: true }).click();

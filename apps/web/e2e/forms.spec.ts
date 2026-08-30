@@ -16,7 +16,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test("fill an AcroForm, save, and confirm values persist on reopen", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "test-form.pdf");
 
   await page.getByLabel("Fill form", { exact: true }).click();

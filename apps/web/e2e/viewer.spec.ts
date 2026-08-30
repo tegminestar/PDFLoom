@@ -16,7 +16,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test("open, thumbnails, search, zoom, and page navigation", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await expect(page.getByText("PDFLoom").first()).toBeVisible();
 
   await openPdf(page, "sample.pdf");
@@ -47,7 +47,7 @@ test("open, thumbnails, search, zoom, and page navigation", async ({ page }) => 
 });
 
 test("theme toggle switches dark/light", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await openPdf(page, "sample.pdf");
 
   const before = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
