@@ -118,6 +118,25 @@ jobs:
           package: ./api-deploy-package
           scm-do-build-during-deployment: false
 
+      - name: On deploy failure, pull the real Kudu deployment log
+        if: failure()
+        run: |
+          az functionapp log deployment show \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            2>&1 || true
+          echo "--- app settings (values redacted by az itself) ---"
+          az functionapp config appsettings list \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "[?name=='FUNCTIONS_WORKER_RUNTIME' || name=='FUNCTIONS_EXTENSION_VERSION' || name=='WEBSITE_NODE_DEFAULT_VERSION' || name=='WEBSITE_RUN_FROM_PACKAGE'].{name:name, value:value}" \
+            --output table 2>&1 || true
+          echo "--- function list on the app right now ---"
+          az functionapp function list \
+            --name "$AZURE_FUNCTIONAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --output table 2>&1 || true
+
       - name: Print the deployed URL
         run: |
           echo "Function App URL: https://$AZURE_FUNCTIONAPP_NAME.azurewebsites.net"
