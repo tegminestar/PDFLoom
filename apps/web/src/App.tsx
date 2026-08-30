@@ -5,6 +5,7 @@ import {
   BookOpen,
   Edit3,
   FileDown,
+  FileOutput,
   FilePlus2,
   FileStack,
   FileUp,
@@ -18,6 +19,7 @@ import {
   Moon,
   PenTool,
   RotateCw,
+  ScanText,
   Search,
   Shrink,
   Stamp,
@@ -33,6 +35,8 @@ import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolb
 import { CompressDialog } from "./features/convert/CompressDialog";
 import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
+import { ExportOfficeDialog } from "./features/convert/ExportOfficeDialog";
+import { OcrDialog } from "./features/convert/OcrDialog";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
@@ -75,6 +79,8 @@ export function App() {
   const [exportImagesOpen, setExportImagesOpen] = useState(false);
   const [compressOpen, setCompressOpen] = useState(false);
   const [createFromTextOpen, setCreateFromTextOpen] = useState(false);
+  const [ocrOpen, setOcrOpen] = useState(false);
+  const [exportOfficeOpen, setExportOfficeOpen] = useState(false);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
 
   const handleInsertImages = async (images: { bytes: Uint8Array; type: "png" | "jpg" }[]) => {
@@ -187,6 +193,8 @@ export function App() {
                 { id: "insert-images", label: "Insert images as pages…", icon: <ImagePlus />, onSelect: () => imagePicker.open() },
                 { id: "add-text", label: "Add pages from Markdown/HTML…", icon: <FilePlus2 />, onSelect: () => setCreateFromTextOpen(true) },
                 { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
+                { id: "export-office", label: "Export to Word/Excel/PowerPoint…", icon: <FileOutput />, onSelect: () => setExportOfficeOpen(true) },
+                { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
                 { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
               ],
             },
@@ -239,6 +247,8 @@ export function App() {
       setExportImagesOpen,
       setCompressOpen,
       setCreateFromTextOpen,
+      setOcrOpen,
+      setExportOfficeOpen,
       imagePicker.open,
     ],
   );
@@ -299,7 +309,13 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<FileUp />} label="Convert" active={exportImagesOpen || compressOpen || createFromTextOpen} />}
+            trigger={
+              <RailItem
+                icon={<FileUp />}
+                label="Convert"
+                active={exportImagesOpen || compressOpen || createFromTextOpen || ocrOpen || exportOfficeOpen}
+              />
+            }
             items={[
               {
                 id: "insert-images",
@@ -310,6 +326,8 @@ export function App() {
               },
               { id: "add-text", label: "Add pages from Markdown/HTML…", icon: <FilePlus2 />, onSelect: () => setCreateFromTextOpen(true) },
               { id: "export-images", label: "Export pages as images…", icon: <FileDown />, onSelect: () => setExportImagesOpen(true) },
+              { id: "export-office", label: "Export to Word/Excel/PowerPoint…", icon: <FileOutput />, onSelect: () => setExportOfficeOpen(true) },
+              { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
               { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
             ]}
           />
@@ -339,6 +357,8 @@ export function App() {
           <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
           <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
           <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
+          <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
+          <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />
         </>
       )}
     </div>
