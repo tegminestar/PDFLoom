@@ -37,6 +37,21 @@ jobs:
       - name: Typecheck apps/api
         run: pnpm --filter @pdfloom/api run typecheck
 
+      # Build a standalone, ready-to-run deploy package rather than
+      # trusting Azure's remote Oryx build: the first real deploy attempt
+      # failed at "sync triggers" with an explicit WEBSITE_RUN_FROM_PACKAGE
+      # complaint — Linux Consumption Function Apps default to expecting
+      # an already-built, self-contained package, not source that needs a
+      # build step after upload. `pnpm deploy` resolves the workspace's
+      # symlinked node_modules into a real, flat layout (required — the
+      # Azure Node runtime can't follow pnpm's symlinks/virtual store),
+      # production dependencies only.
+      - name: Build apps/api and package it for deployment
+        run: |
+          pnpm --filter @pdfloom/api run build
+          pnpm --filter @pdfloom/api deploy --prod ./api-deploy-package
+          ls -la ./api-deploy-package ./api-deploy-package/dist/functions
+
       - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -96,15 +111,12 @@ jobs:
             --allowed-origins "${{ secrets.APP_URL }}" \
             --output none || true
 
-      # Lets Azure's own build service (Oryx) run `npm install` + `npm run
-      # build` remotely from the checked-out apps/api source — no need to
-      # pre-build or bundle node_modules into the deploy package ourselves.
       - name: Deploy
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: apps/api
-          scm-do-build-during-deployment: true
+          package: ./api-deploy-package
+          scm-do-build-during-deployment: false
 
       - name: Print the deployed URL
         run: |
