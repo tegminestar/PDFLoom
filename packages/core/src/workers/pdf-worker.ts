@@ -10,6 +10,7 @@ import * as markdown from "../pdf/markdown";
 import * as ocrOverlay from "../pdf/ocr-overlay";
 import * as organize from "../pdf/organize";
 import * as redact from "../pdf/redact";
+import * as sanitize from "../pdf/sanitize";
 import * as signature from "../pdf/signature";
 import * as stamps from "../pdf/stamps";
 
@@ -31,6 +32,7 @@ const api = {
   ...security,
   ...redact,
   ...signature,
+  ...sanitize,
 };
 export type PdfWorkerApi = typeof api;
 

@@ -34,6 +34,7 @@ export type { OcrWordPlacement } from "./pdf/ocr-overlay";
 export type { PdfPermissions, EncryptOptions, DecryptResult } from "./pdf/crypto/standard-security-handler";
 export type { RedactPageInput } from "./pdf/redact";
 export type { TypedSignatureOptions, SignedTimestampOptions } from "./pdf/signature";
+export type { SanitizeOptions, SanitizeReport } from "./pdf/sanitize";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

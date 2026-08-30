@@ -85,16 +85,19 @@ function wrapRuns(runs: InlineRun[], fonts: Fonts, size: number, maxWidth: numbe
 
 /** Simple top-down page/cursor tracker shared by every block-drawing function below. */
 class Cursor {
-  constructor(
-    private readonly doc: PDFDocument,
-    private readonly pageSize: { width: number; height: number },
-    private readonly margin: number,
-  ) {
+  private readonly doc: PDFDocument;
+  private readonly pageSize: { width: number; height: number };
+  private readonly margin: number;
+  page: PDFPage;
+  y: number;
+
+  constructor(doc: PDFDocument, pageSize: { width: number; height: number }, margin: number) {
+    this.doc = doc;
+    this.pageSize = pageSize;
+    this.margin = margin;
     this.page = doc.addPage([pageSize.width, pageSize.height]);
     this.y = pageSize.height - margin;
   }
-  page: PDFPage;
-  y: number;
 
   get contentWidth(): number {
     return this.pageSize.width - this.margin * 2;

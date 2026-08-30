@@ -1,9 +1,9 @@
-import { getPdfWorkerClient, type PdfPermissions } from "@pdfloom/core";
+import { getPdfWorkerClient, type PdfPermissions, type SanitizeOptions, type SanitizeReport } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 
-type Tab = "add" | "remove";
+type Tab = "add" | "remove" | "sanitize";
 
 const PERMISSION_TOGGLES: { key: keyof PdfPermissions; label: string }[] = [
   { key: "printing", label: "Printing" },
@@ -12,6 +12,13 @@ const PERMISSION_TOGGLES: { key: keyof PdfPermissions; label: string }[] = [
   { key: "annotating", label: "Annotations & comments" },
   { key: "fillingForms", label: "Filling forms" },
   { key: "documentAssembly", label: "Inserting/deleting pages" },
+];
+
+const SANITIZE_TOGGLES: { key: keyof SanitizeOptions; label: string; hint: string }[] = [
+  { key: "clearInfoMetadata", label: "Document info", hint: "Title, author, subject, keywords, creator" },
+  { key: "removeXmpMetadata", label: "XMP metadata", hint: "A separate metadata copy some tools leave behind" },
+  { key: "removeEmbeddedFiles", label: "Embedded files", hint: "Any attachments hidden inside the document" },
+  { key: "removeJavaScript", label: "Embedded scripts", hint: "Document-level JavaScript, including any auto-run-on-open action" },
 ];
 
 /**
@@ -48,6 +55,15 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [removePassword, setRemovePassword] = useState("");
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
+
+  const [sanitizeOptions, setSanitizeOptions] = useState<SanitizeOptions>({
+    clearInfoMetadata: true,
+    removeXmpMetadata: true,
+    removeEmbeddedFiles: true,
+    removeJavaScript: true,
+  });
+  const [isSanitizing, setIsSanitizing] = useState(false);
+  const [sanitizeReport, setSanitizeReport] = useState<SanitizeReport | null>(null);
 
   const togglePermission = (key: keyof PdfPermissions) => setPermissions((prev) => ({ ...prev, [key]: prev[key] === false ? undefined : false }));
 
@@ -97,6 +113,24 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     }
   };
 
+  const handleSanitize = async () => {
+    if (!doc) return;
+    setIsSanitizing(true);
+    setSanitizeReport(null);
+    try {
+      const client = await getPdfWorkerClient();
+      const { bytes, report } = await client.sanitizeDocument(await doc.getRawBytes(), sanitizeOptions);
+      await applyPdfMutation(new Uint8Array(bytes));
+      setSanitizeReport(report);
+      const nothingFound = !report.clearedInfoMetadata && !report.removedXmpMetadata && report.removedEmbeddedFileCount === 0 && !report.removedJavaScript;
+      toast[nothingFound ? "info" : "success"](nothingFound ? "Nothing to remove" : "Document cleaned", nothingFound ? "No hidden data matched what you selected." : undefined);
+    } catch (error) {
+      toast.error("Couldn't clean this document", error instanceof Error ? error.message : undefined);
+    } finally {
+      setIsSanitizing(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -114,13 +148,27 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               {isProtecting ? "Protecting…" : "Save protected copy"}
             </Button>
           </>
-        ) : (
+        ) : tab === "remove" ? (
           <>
             <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)} disabled={isRemoving}>
               Cancel
             </Button>
             <Button variant="primary" size="sm" disabled={!removePassword || isRemoving} onClick={() => void handleRemoveProtection()}>
               {isRemoving ? "Unlocking…" : "Remove protection"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant="secondary" size="sm" onClick={() => onOpenChange(false)} disabled={isSanitizing}>
+              {sanitizeReport ? "Close" : "Cancel"}
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isSanitizing || !Object.values(sanitizeOptions).some(Boolean)}
+              onClick={() => void handleSanitize()}
+            >
+              {isSanitizing ? "Cleaning…" : "Clean document"}
             </Button>
           </>
         )
@@ -141,6 +189,13 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${tab === "remove" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Remove protection
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("sanitize")}
+            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${tab === "sanitize" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+          >
+            Clean metadata
           </button>
         </div>
 
@@ -176,7 +231,7 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               </div>
             </div>
           </>
-        ) : (
+        ) : tab === "remove" ? (
           <>
             <label className="flex flex-col gap-1.5 text-sm text-text">
               Password
@@ -193,6 +248,44 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             </label>
             {removeError && <p className="text-xs text-danger">{removeError}</p>}
             <p className="text-xs text-text-faint">Either the open password or the owner password works.</p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-text-faint">
+              Removes hidden data the visible page content doesn't show — useful before sharing a document outside
+              your organization.
+            </p>
+            <div className="flex flex-col gap-2">
+              {SANITIZE_TOGGLES.map((t) => (
+                <label key={t.key} className="flex items-start gap-2 text-sm text-text">
+                  <input
+                    type="checkbox"
+                    checked={!!sanitizeOptions[t.key]}
+                    onChange={(e) => setSanitizeOptions((prev) => ({ ...prev, [t.key]: e.target.checked }))}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    {t.label}
+                    <span className="block text-xs text-text-faint">{t.hint}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {sanitizeReport && (
+              <div className="rounded-[--radius-sm] border border-border bg-bg-elevated/60 p-3 text-xs text-text-muted">
+                <p className="mb-1 font-medium text-text">Result</p>
+                <ul className="flex flex-col gap-0.5">
+                  <li>{sanitizeReport.clearedInfoMetadata ? "✓ Document info cleared" : "– No document info to clear"}</li>
+                  <li>{sanitizeReport.removedXmpMetadata ? "✓ XMP metadata removed" : "– No XMP metadata found"}</li>
+                  <li>
+                    {sanitizeReport.removedEmbeddedFileCount > 0
+                      ? `✓ ${sanitizeReport.removedEmbeddedFileCount} embedded file${sanitizeReport.removedEmbeddedFileCount === 1 ? "" : "s"} removed`
+                      : "– No embedded files found"}
+                  </li>
+                  <li>{sanitizeReport.removedJavaScript ? "✓ Embedded scripts removed" : "– No embedded scripts found"}</li>
+                </ul>
+              </div>
+            )}
           </>
         )}
       </div>
