@@ -26,6 +26,16 @@ export interface PendingRedaction {
   rect: Rect;
 }
 
+export type SignPlacementKind = "signature" | "initials" | "date" | "timestamp";
+export interface SignatureAsset {
+  kind: "typed" | "image";
+  text?: string;
+  imageBytes?: Uint8Array;
+  imageType?: "png" | "jpg";
+  /** width/height, for image assets — used to size a sensible default placement rect. */
+  aspectRatio?: number;
+}
+
 export const ANNOTATE_COLOR_PRESETS: RgbColor[] = [
   { r: 1, g: 0.86, b: 0.2 }, // amber/yellow — default highlight
   { r: 0.95, g: 0.35, b: 0.35 }, // red
@@ -95,6 +105,15 @@ interface LoomState {
   redactBoxes: PendingRedaction[];
   isApplyingRedactions: boolean;
 
+  /** E-signature mode: create a signature/initials once (draw/type/upload), then click anywhere to stamp it — or place a date/signed-timestamp mark directly, no creation step needed. */
+  signOpen: boolean;
+  signPlacementKind: SignPlacementKind | null;
+  activeSignature: SignatureAsset | null;
+  activeInitials: SignatureAsset | null;
+  signerName: string;
+  includeIntegrityHash: boolean;
+  isPlacingSignature: boolean;
+
   searchQuery: string;
   searchResults: SearchMatch[];
   isSearching: boolean;
@@ -134,6 +153,14 @@ interface LoomState {
   clearRedactBoxes: () => void;
   /** Rasterizes every page with pending boxes (needs a real <canvas>, so the actual rendering is done by the caller/UI and passed in) and applies the redaction, replacing the open document. */
   applyRedactions: (renderedPages: Map<number, { widthPt: number; heightPt: number; jpegBytes: Uint8Array }>) => Promise<void>;
+
+  setSignOpen: (open: boolean) => void;
+  setSignPlacementKind: (kind: SignPlacementKind | null) => void;
+  saveSignatureAsset: (slot: "signature" | "initials", asset: SignatureAsset) => void;
+  setSignerName: (name: string) => void;
+  setIncludeIntegrityHash: (value: boolean) => void;
+  /** Places whatever signPlacementKind currently is at the given page/rect — dispatches to the matching worker call. */
+  placeSignatureAt: (pageIndex: number, rect: Rect) => Promise<void>;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -192,6 +219,8 @@ async function finishOpeningDocument(set: LoomSetter, opened: OpenedFile, doc: P
     editOpen: false,
     redactOpen: false,
     redactBoxes: [],
+    signOpen: false,
+    signPlacementKind: null,
   }));
   void recentsStore.record(
     {
@@ -245,6 +274,14 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   redactOpen: false,
   redactBoxes: [],
   isApplyingRedactions: false,
+
+  signOpen: false,
+  signPlacementKind: null,
+  activeSignature: null,
+  activeInitials: null,
+  signerName: "",
+  includeIntegrityHash: false,
+  isPlacingSignature: false,
 
   searchQuery: "",
   searchResults: [],
@@ -313,6 +350,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       editOpen: false,
       redactOpen: false,
       redactBoxes: [],
+      signOpen: false,
+      signPlacementKind: null,
     });
   },
 
@@ -325,9 +364,20 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formDesignTool: null,
       editOpen: false,
       redactOpen: false,
+      signOpen: false,
+      signPlacementKind: null,
     }),
   setAnnotateOpen: (annotateOpen) =>
-    set({ annotateOpen, formFillOpen: false, formMode: "fill", formDesignTool: null, editOpen: false, redactOpen: false }),
+    set({
+      annotateOpen,
+      formFillOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      editOpen: false,
+      redactOpen: false,
+      signOpen: false,
+      signPlacementKind: null,
+    }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
@@ -339,7 +389,16 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     }
     const { document: doc } = get();
     if (!doc) return;
-    set({ formFillOpen: true, annotateOpen: false, formMode: "fill", formDesignTool: null, editOpen: false, redactOpen: false });
+    set({
+      formFillOpen: true,
+      annotateOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      editOpen: false,
+      redactOpen: false,
+      signOpen: false,
+      signPlacementKind: null,
+    });
     await get().refreshFormFields();
   },
 
@@ -364,7 +423,16 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   setFormDesignTool: (formDesignTool) => set({ formDesignTool }),
 
   setEditOpen: (editOpen) =>
-    set({ editOpen, annotateOpen: false, formFillOpen: false, formMode: "fill", formDesignTool: null, redactOpen: false }),
+    set({
+      editOpen,
+      annotateOpen: false,
+      formFillOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      redactOpen: false,
+      signOpen: false,
+      signPlacementKind: null,
+    }),
   setEditTool: (editTool) => set({ editTool }),
 
   setRedactOpen: (redactOpen) =>
@@ -375,6 +443,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formMode: "fill",
       formDesignTool: null,
       editOpen: false,
+      signOpen: false,
+      signPlacementKind: null,
       ...(redactOpen ? {} : { redactBoxes: [] }),
     }),
   addRedactBox: (pageIndex, rect) => set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }] })),
@@ -403,6 +473,62 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       set({ redactBoxes: [], redactOpen: false });
     } finally {
       set({ isApplyingRedactions: false });
+    }
+  },
+
+  setSignOpen: (signOpen) =>
+    set({
+      signOpen,
+      annotateOpen: false,
+      formFillOpen: false,
+      formMode: "fill",
+      formDesignTool: null,
+      editOpen: false,
+      redactOpen: false,
+      ...(signOpen ? {} : { signPlacementKind: null }),
+    }),
+  setSignPlacementKind: (signPlacementKind) => set({ signPlacementKind }),
+  saveSignatureAsset: (slot, asset) =>
+    set(
+      slot === "signature"
+        ? { activeSignature: asset, signPlacementKind: "signature" }
+        : { activeInitials: asset, signPlacementKind: "initials" },
+    ),
+  setSignerName: (signerName) => set({ signerName }),
+  setIncludeIntegrityHash: (includeIntegrityHash) => set({ includeIntegrityHash }),
+
+  placeSignatureAt: async (pageIndex, rect) => {
+    const { document: doc, signPlacementKind, activeSignature, activeInitials, signerName, includeIntegrityHash, applyPdfMutation: apply } = get();
+    if (!doc || !signPlacementKind) return;
+    set({ isPlacingSignature: true });
+    try {
+      const client = await getPdfWorkerClient();
+      const bytes = await doc.getRawBytes();
+      let result: Uint8Array;
+
+      if (signPlacementKind === "date") {
+        const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+        result = await client.placeTypedSignature(bytes, pageIndex, rect, today, { color: { r: 0.1, g: 0.1, b: 0.12 } });
+      } else if (signPlacementKind === "timestamp") {
+        const hash = includeIntegrityHash ? await client.computeIntegrityHash(bytes) : undefined;
+        const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+        result = await client.placeSignedTimestamp(bytes, pageIndex, rect, {
+          signerName: signerName.trim() || "Unnamed signer",
+          date: today,
+          ...(hash ? { integrityHashHex: hash } : {}),
+        });
+      } else {
+        const asset = signPlacementKind === "initials" ? activeInitials : activeSignature;
+        if (!asset) return;
+        result =
+          asset.kind === "typed"
+            ? await client.placeTypedSignature(bytes, pageIndex, rect, asset.text ?? "")
+            : await client.placeSignatureImage(bytes, pageIndex, rect, asset.imageBytes!, asset.imageType!);
+      }
+
+      await apply(result);
+    } finally {
+      set({ isPlacingSignature: false });
     }
   },
 

@@ -33,6 +33,7 @@ export type { InlineRun, DocBlock, CreateDocumentOptions } from "./pdf/create-do
 export type { OcrWordPlacement } from "./pdf/ocr-overlay";
 export type { PdfPermissions, EncryptOptions, DecryptResult } from "./pdf/crypto/standard-security-handler";
 export type { RedactPageInput } from "./pdf/redact";
+export type { TypedSignatureOptions, SignedTimestampOptions } from "./pdf/signature";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

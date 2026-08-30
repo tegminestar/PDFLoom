@@ -10,6 +10,7 @@ import * as markdown from "../pdf/markdown";
 import * as ocrOverlay from "../pdf/ocr-overlay";
 import * as organize from "../pdf/organize";
 import * as redact from "../pdf/redact";
+import * as signature from "../pdf/signature";
 import * as stamps from "../pdf/stamps";
 
 // Runs inside a dedicated Worker (see pdf-worker-client.ts). pdf-lib's page
@@ -29,6 +30,7 @@ const api = {
   ...ocrOverlay,
   ...security,
   ...redact,
+  ...signature,
 };
 export type PdfWorkerApi = typeof api;
 

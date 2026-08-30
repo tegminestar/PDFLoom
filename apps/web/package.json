@@ -15,6 +15,7 @@
     "@fontsource/inter": "^5.3.0",
     "@pdfloom/core": "workspace:*",
     "@pdfloom/ui": "workspace:*",
+    "@fontsource/caveat": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "docx": "^9.7.1",
     "exceljs": "^4.4.0",

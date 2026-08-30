@@ -24,6 +24,7 @@ import {
   ScanText,
   Search,
   Shrink,
+  Signature,
   Stamp,
   Sun,
   ZoomIn,
@@ -42,6 +43,7 @@ import { ExportOfficeDialog } from "./features/convert/ExportOfficeDialog";
 import { OcrDialog } from "./features/convert/OcrDialog";
 import { ProtectDialog } from "./features/protect/ProtectDialog";
 import { RedactToolbar } from "./features/protect/RedactToolbar";
+import { SignToolbar } from "./features/sign/SignToolbar";
 import { useImageFilePicker } from "./features/convert/useImageFilePicker";
 import { EditToolbar } from "./features/edit/EditToolbar";
 import { FormsToolbar } from "./features/forms/FormsToolbar";
@@ -69,6 +71,8 @@ export function App() {
   const setEditOpen = useLoomStore((s) => s.setEditOpen);
   const redactOpen = useLoomStore((s) => s.redactOpen);
   const setRedactOpen = useLoomStore((s) => s.setRedactOpen);
+  const signOpen = useLoomStore((s) => s.signOpen);
+  const setSignOpen = useLoomStore((s) => s.setSignOpen);
   const document_ = useLoomStore((s) => s.document);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
@@ -204,6 +208,15 @@ export function App() {
                     setRedactOpen(!(mainView === "read" && redactOpen));
                   },
                 },
+                {
+                  id: "mode-sign",
+                  label: mainView === "read" && signOpen ? "Exit sign mode" : "Sign…",
+                  icon: <Signature />,
+                  onSelect: () => {
+                    setMainView("read");
+                    setSignOpen(!(mainView === "read" && signOpen));
+                  },
+                },
                 { id: "watermark", label: "Add watermark…", icon: <PenTool />, onSelect: () => setWatermarkOpen(true) },
                 { id: "header-footer", label: "Add header & footer…", icon: <FileStack />, onSelect: () => setHeaderFooterOpen(true) },
                 { id: "page-numbers", label: "Page numbers & Bates…", icon: <Hash />, onSelect: () => setPageNumbersOpen(true) },
@@ -254,6 +267,8 @@ export function App() {
       setEditOpen,
       redactOpen,
       setRedactOpen,
+      signOpen,
+      setSignOpen,
       openViaPicker,
       toggleActivePanel,
       zoomIn,
@@ -328,6 +343,15 @@ export function App() {
               setRedactOpen(!(mainView === "read" && redactOpen));
             }}
           />
+          <RailItem
+            icon={<Signature />}
+            label="Sign"
+            active={mainView === "read" && signOpen}
+            onClick={() => {
+              setMainView("read");
+              setSignOpen(!(mainView === "read" && signOpen));
+            }}
+          />
           <RailItem icon={<Lock />} label="Protect" active={protectOpen} onClick={() => setProtectOpen(true)} />
           <DropdownMenu
             align="start"
@@ -376,6 +400,8 @@ export function App() {
             <EditToolbar />
           ) : redactOpen ? (
             <RedactToolbar />
+          ) : signOpen ? (
+            <SignToolbar />
           ) : (
             <Toolbar />
           ))}
@@ -386,6 +412,7 @@ export function App() {
             !formFillOpen &&
             !editOpen &&
             !redactOpen &&
+            !signOpen &&
             activePanel === "thumbnails" && <ThumbnailsPanel />}
           {meta &&
             mainView === "read" &&
@@ -393,6 +420,7 @@ export function App() {
             !formFillOpen &&
             !editOpen &&
             !redactOpen &&
+            !signOpen &&
             activePanel === "outline" && <OutlinePanel />}
           {meta &&
             mainView === "read" &&
@@ -400,6 +428,7 @@ export function App() {
             !formFillOpen &&
             !editOpen &&
             !redactOpen &&
+            !signOpen &&
             activePanel === "search" && <SearchPanel />}
           <div className="min-w-0 flex-1">
             {!meta ? <WelcomeScreen /> : mainView === "organize" ? <OrganizeView /> : <Viewer />}
