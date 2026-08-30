@@ -17,3 +17,5 @@ test-results/
 .vscode/*
 !.vscode/extensions.json
 src-tauri/target/
+local.settings.json
+.azure/

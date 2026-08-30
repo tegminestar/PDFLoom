@@ -1,0 +1,23 @@
+{
+  "name": "@pdfloom/api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/functions/*.js",
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b --watch",
+    "start": "npm run build && func start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.7.4",
+    "@supabase/supabase-js": "^2.58.0",
+    "stripe": "^22.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "azure-functions-core-tools": "^4.4.0",
+    "typescript": "~6.0.2"
+  }
+}

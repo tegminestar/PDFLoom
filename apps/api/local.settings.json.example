@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "STRIPE_SECRET_KEY": "sk_test_...",
+    "STRIPE_WEBHOOK_SECRET": "whsec_...",
+    "STRIPE_PRO_PRICE_ID": "price_...",
+    "SUPABASE_URL": "https://<project-ref>.supabase.co",
+    "SUPABASE_SERVICE_ROLE_KEY": "...",
+    "APP_URL": "http://localhost:5173"
+  },
+  "Host": {
+    "CORS": "http://localhost:5173,https://<your-production-domain>",
+    "CORSCredentials": false
+  }
+}

@@ -41,6 +41,7 @@ import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
 import { CommandBarDialog } from "./features/ai/CommandBarDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
+import { AccountButton } from "./features/account/AccountButton";
 import { VoiceToFillButton } from "./features/forms/VoiceToFillButton";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
 import { TranslateDialog } from "./features/ai/TranslateDialog";
@@ -137,6 +138,20 @@ export function App() {
     }
   };
   const imagePicker = useImageFilePicker((images) => void handleInsertImages(images));
+
+  // Stripe redirects back here after a checkout attempt — the actual Pro
+  // flag comes from the webhook (createCheckoutSession never grants it
+  // directly), so this is purely a confirmation toast, not a trust
+  // boundary; the account button's own state reflects Supabase, not this URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("upgraded")) {
+      toast.success("Welcome to PDFLoom Pro!");
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.has("upgrade_canceled")) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   // Global keyboard shortcuts. These are the same actions advertised in the
   // toolbar tooltips and the command palette — every shortcut shown to the
@@ -517,6 +532,7 @@ export function App() {
       <SelectionMarkupToolbar />
       <ExplainSelectionToolbar />
       <VoiceToFillButton />
+      <AccountButton />
       <PasswordPromptDialog />
       {meta && (
         <>
