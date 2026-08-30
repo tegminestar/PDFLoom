@@ -18,37 +18,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      # A real typecheck gate before anything gets provisioned or deployed —
-      # apps/api is a self-contained package (no workspace: deps), so a
-      # plain npm install is enough here without the rest of the monorepo.
-      # --registry is explicit and bypasses any ambient/org npm config this
-      # runner might otherwise pick up (hit a real npm E401 without it —
-      # note setup-node's own `registry-url` input makes this *worse*, not
-      # better: it injects always-auth plus a placeholder NODE_AUTH_TOKEN
-      # that itself gets rejected when no real token secret is configured).
+      # A real typecheck gate before anything gets provisioned or deployed.
+      # Installing the whole workspace via pnpm (this repo's actual package
+      # manager, matching the committed lockfile) after npm consistently
+      # 401'd against the public registry on this runner — confirmed
+      # across 5 retries with registry/auth explicitly forced, so it
+      # wasn't a config issue on our end; pnpm's installer takes a
+      # different request path and doesn't hit the same failure.
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
       - name: Typecheck apps/api
-        working-directory: apps/api
-        env:
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
-          NODE_AUTH_TOKEN: ""
-        run: |
-          npm config set //registry.npmjs.org/:_authToken "" --location=project
-          for attempt in 1 2 3 4 5; do
-            if npm install --registry=https://registry.npmjs.org/; then
-              break
-            fi
-            echo "npm install failed (attempt $attempt/5), retrying in 10s..."
-            sleep 10
-            if [ "$attempt" = "5" ]; then
-              echo "npm install failed after 5 attempts"
-              exit 1
-            fi
-          done
-          npm run typecheck
+        run: pnpm --filter @pdfloom/api run typecheck
 
       - uses: azure/login@v2
         with:
