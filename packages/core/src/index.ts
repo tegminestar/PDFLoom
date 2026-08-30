@@ -56,6 +56,10 @@ export { explainClause } from "./ai/explain-clause";
 export type { ExplainClauseStage, ExplainClauseOptions } from "./ai/explain-clause";
 export { captionImage } from "./ai/caption-image";
 export type { CaptionImageOptions } from "./ai/caption-image";
+export { chunkPagesForRag, cosineSimilarity, findRelevantChunks, embedChunks, embedQuery, buildRagSystemPrompt } from "./ai/rag";
+export type { DocumentChunk, EmbeddedChunk, EmbedOptions } from "./ai/rag";
+export { isChatAvailable, sendChatMessage } from "./ai/webllm-chat";
+export type { ChatMessage, ChatLoadStage, WebLlmChatOptions } from "./ai/webllm-chat";
 export { recognizeImage, terminateOcrWorker } from "./ocr/ocr-client";
 export type { OcrWord, OcrLanguage, OcrProgress } from "./ocr/ocr-client";
 

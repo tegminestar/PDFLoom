@@ -37,6 +37,7 @@ import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
+import { ChatDialog } from "./features/ai/ChatDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { VoiceToFillButton } from "./features/forms/VoiceToFillButton";
 import { SummarizeDialog } from "./features/ai/SummarizeDialog";
@@ -105,6 +106,7 @@ export function App() {
   const [summarizeOpen, setSummarizeOpen] = useState(false);
   const [translateOpen, setTranslateOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
@@ -393,11 +395,12 @@ export function App() {
           />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen} />}
+            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen} />}
             items={[
               { id: "summarize", label: "Summarize…", icon: <Sparkles />, onSelect: () => setSummarizeOpen(true) },
               { id: "translate", label: "Translate…", icon: <Sparkles />, onSelect: () => setTranslateOpen(true) },
               { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, onSelect: () => setAccessibilityOpen(true) },
+              { id: "chat", label: "Chat with your PDF…", icon: <Sparkles />, onSelect: () => setChatOpen(true) },
             ]}
           />
           <DropdownMenu
@@ -514,6 +517,7 @@ export function App() {
           <SummarizeDialog open={summarizeOpen} onOpenChange={setSummarizeOpen} />
           <TranslateDialog open={translateOpen} onOpenChange={setTranslateOpen} />
           <AccessibilityDialog open={accessibilityOpen} onOpenChange={setAccessibilityOpen} />
+          <ChatDialog open={chatOpen} onOpenChange={setChatOpen} />
         </>
       )}
     </div>
