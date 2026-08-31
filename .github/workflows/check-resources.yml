@@ -20,3 +20,11 @@ jobs:
           az resource list --resource-group pdfloom-rg -o table
           echo "--- App Service plan detail, if it exists ---"
           az appservice plan show --name pdfloom-api-plan --resource-group pdfloom-rg -o json || echo "NOT FOUND"
+
+      - name: Activity log — what deleted pdfloom-api-tegminestar and its plan, and when
+        run: |
+          az monitor activity-log list \
+            --resource-group pdfloom-rg \
+            --start-time $(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ) \
+            --query "[?contains(resourceId, 'pdfloom-api') || contains(resourceId, 'pdfloom-api-plan')].{time:eventTimestamp, op:operationName.value, resource:resourceId, status:status.value, caller:caller}" \
+            -o table
