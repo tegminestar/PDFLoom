@@ -38,10 +38,17 @@ jobs:
       - name: Install workspace deps
         run: pnpm install --frozen-lockfile
 
-      # Root build script sequences core -> ui -> web (web's own `tsc -b`
-      # needs core/ui already built, not raw source) and gates on a real
-      # typecheck before anything gets deployed, matching deploy-api.yml.
-      - name: Typecheck and build apps/web (and its workspace deps)
+      # apps/web's own `tsc -b` only typechecks its own src (packages/core
+      # and packages/ui are consumed as raw TS source via moduleResolution
+      # "bundler", not a separate build), so it alone won't catch a
+      # strict-mode issue (e.g. noUncheckedIndexedAccess) inside those
+      # packages themselves — running each package's own typecheck too
+      # closes that gap, matching this repo's established two-tier
+      # typecheck discipline.
+      - name: Typecheck packages/core and packages/ui
+        run: pnpm run typecheck
+
+      - name: Typecheck and build apps/web
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
