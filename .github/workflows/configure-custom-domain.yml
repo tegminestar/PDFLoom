@@ -1,0 +1,50 @@
+name: Configure Custom Domain
+
+# Manual only, same standing rule as every other deploy/release workflow
+# in this repo. Registers (or shows the current status of) a custom
+# hostname on the Static Web App — the actual DNS records still have to
+# be added at whatever registrar/DNS host owns the domain; this just
+# tells you exactly what Azure wants.
+on:
+  workflow_dispatch:
+    inputs:
+      hostname:
+        description: "Custom domain to add, e.g. pdfloom.app"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: pdfloom-rg
+  AZURE_SWA_NAME: pdfloom-web
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Register the hostname if it isn't already, then show its current status
+        run: |
+          HOSTNAME="${{ github.event.inputs.hostname }}"
+          if ! az staticwebapp hostname show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --hostname "$HOSTNAME" --output none 2>/dev/null; then
+            echo "--- registering $HOSTNAME ---"
+            az staticwebapp hostname set \
+              --name "$AZURE_SWA_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --hostname "$HOSTNAME" \
+              --output none || true
+          fi
+          echo "--- current status ---"
+          az staticwebapp hostname show \
+            --name "$AZURE_SWA_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --hostname "$HOSTNAME" \
+            -o json
+
+      - name: Print the Static Web App's own default hostname (what the apex record should point at)
+        run: |
+          az staticwebapp show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --query "defaultHostname" -o tsv
