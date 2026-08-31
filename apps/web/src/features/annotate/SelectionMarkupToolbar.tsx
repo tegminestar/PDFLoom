@@ -32,9 +32,10 @@ export function SelectionMarkupToolbar() {
   const zoom = useLoomStore((s) => s.zoom);
   const fitMode = useLoomStore((s) => s.fitMode);
   const fitWidthScale = useLoomStore((s) => s.fitWidthScale);
+  const fitPageScale = useLoomStore((s) => s.fitPageScale);
   const viewRotation = useLoomStore((s) => s.viewRotation);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
-  const scale = fitMode === "width" ? fitWidthScale : zoom;
+  const scale = fitMode === "width" ? fitWidthScale : fitMode === "page" ? fitPageScale : zoom;
 
   const [selection, setSelection] = useState<SelectionState | null>(null);
   const isMarkupTool = tool === "highlight" || tool === "underline" || tool === "strikeout";

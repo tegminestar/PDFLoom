@@ -6,6 +6,7 @@ import { FieldDesignerOverlay } from "../forms/FieldDesignerOverlay";
 import { FormFieldOverlay } from "../forms/FormFieldOverlay";
 import { RedactOverlay } from "../protect/RedactOverlay";
 import { SignaturePlaceOverlay } from "../sign/SignaturePlaceOverlay";
+import { SearchHighlightOverlay } from "./SearchHighlightOverlay";
 
 export interface PageCanvasProps {
   doc: PdfDocument;
@@ -119,6 +120,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
       >
         {isVisible && <canvas ref={canvasRef} className="block" />}
         {isVisible && <div ref={textLayerRef} className="loom-text-layer" />}
+        {isVisible && <SearchHighlightOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <AnnotationDrawOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FormFieldOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FieldDesignerOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}

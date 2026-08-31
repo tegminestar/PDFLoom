@@ -1,6 +1,10 @@
-import { IconButton, Separator, TopBar, TopBarSection, useTheme } from "@pdfloom/ui";
+import { DropdownMenu, IconButton, Separator, TopBar, TopBarSection, useTheme } from "@pdfloom/ui";
 import {
   BookMarked,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Columns2,
   FileDown,
   FolderOpen,
   ImageDown,
@@ -8,33 +12,36 @@ import {
   Maximize,
   Minimize,
   Moon,
+  RectangleVertical,
   RotateCw,
+  Rows,
   Search,
   Sun,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLoomStore } from "../../app/store";
+import type { ReactNode } from "react";
+import { useLoomStore, type ScrollMode } from "../../app/store";
 import { PageNumberField } from "./PageNumberField";
+import { useFullscreen } from "./useFullscreen";
 import { ZoomControls } from "./ZoomControls";
 
-function useFullscreen() {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  useEffect(() => {
-    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
-  const toggle = () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void document.documentElement.requestFullscreen();
-  };
-  return { isFullscreen, toggle };
-}
+const SCROLL_MODE_ICON: Record<ScrollMode, ReactNode> = {
+  continuous: <Rows />,
+  single: <RectangleVertical />,
+  "two-page": <Columns2 />,
+};
+const SCROLL_MODE_LABEL: Record<ScrollMode, string> = {
+  continuous: "Continuous scrolling",
+  single: "Single page",
+  "two-page": "Two-page view",
+};
 
 export function Toolbar() {
   const meta = useLoomStore((s) => s.meta);
   const currentPage = useLoomStore((s) => s.currentPage);
+  const setCurrentPage = useLoomStore((s) => s.setCurrentPage);
+  const scrollMode = useLoomStore((s) => s.scrollMode);
+  const setScrollMode = useLoomStore((s) => s.setScrollMode);
   const rotateView = useLoomStore((s) => s.rotateView);
   const activePanel = useLoomStore((s) => s.activePanel);
   const toggleActivePanel = useLoomStore((s) => s.toggleActivePanel);
@@ -45,6 +52,7 @@ export function Toolbar() {
 
   const { theme, toggleTheme } = useTheme();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+  const pageStep = scrollMode === "two-page" ? 2 : 1;
 
   const handleExportImage = async () => {
     if (!document_ || !meta) return;
@@ -106,10 +114,32 @@ export function Toolbar() {
       </TopBarSection>
 
       <TopBarSection align="center">
+        <IconButton
+          icon={<ChevronLeft />}
+          label="Previous page"
+          size="sm"
+          onClick={() => setCurrentPage(currentPage - pageStep)}
+        />
         <PageNumberField />
+        <IconButton
+          icon={<ChevronRight />}
+          label="Next page"
+          size="sm"
+          onClick={() => setCurrentPage(currentPage + pageStep)}
+        />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <ZoomControls />
         <IconButton icon={<RotateCw />} label="Rotate view" onClick={() => rotateView(90)} />
+        <DropdownMenu
+          align="center"
+          trigger={<IconButton icon={SCROLL_MODE_ICON[scrollMode]} label={`View mode: ${SCROLL_MODE_LABEL[scrollMode]}`} />}
+          items={(["continuous", "single", "two-page"] as const).map((mode) => ({
+            id: mode,
+            label: SCROLL_MODE_LABEL[mode],
+            icon: mode === scrollMode ? <Check /> : SCROLL_MODE_ICON[mode],
+            onSelect: () => setScrollMode(mode),
+          }))}
+        />
       </TopBarSection>
 
       <TopBarSection align="end">

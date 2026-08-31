@@ -20,6 +20,7 @@ import {
   LayoutTemplate,
   Lock,
   Maximize,
+  Minimize,
   Moon,
   PenTool,
   RotateCw,
@@ -69,6 +70,7 @@ import { OutlinePanel } from "./features/viewer/OutlinePanel";
 import { SearchPanel } from "./features/viewer/SearchPanel";
 import { ThumbnailsPanel } from "./features/viewer/ThumbnailsPanel";
 import { Toolbar } from "./features/viewer/Toolbar";
+import { useFullscreen } from "./features/viewer/useFullscreen";
 import { Viewer } from "./features/viewer/Viewer";
 import { useTheme } from "@pdfloom/ui";
 
@@ -95,6 +97,7 @@ export function App() {
   const zoomOut = useLoomStore((s) => s.zoomOut);
   const rotateView = useLoomStore((s) => s.rotateView);
   const { theme, toggleTheme } = useTheme();
+  const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
   const setActivePanel = useLoomStore((s) => s.setActivePanel);
   const setFitMode = useLoomStore((s) => s.setFitMode);
 
@@ -292,7 +295,12 @@ export function App() {
                 { id: "zoom-in", label: "Zoom in", icon: <ZoomIn />, shortcut: "Ctrl +", onSelect: zoomIn },
                 { id: "zoom-out", label: "Zoom out", icon: <ZoomOut />, shortcut: "Ctrl -", onSelect: zoomOut },
                 { id: "rotate", label: "Rotate view", icon: <RotateCw />, onSelect: () => rotateView(90) },
-                { id: "fullscreen", label: "Presentation mode", icon: <Maximize />, onSelect: () => void document.documentElement.requestFullscreen() },
+                {
+                  id: "fullscreen",
+                  label: isFullscreen ? "Exit presentation mode" : "Presentation mode",
+                  icon: isFullscreen ? <Minimize /> : <Maximize />,
+                  onSelect: toggleFullscreen,
+                },
               ],
             },
           ] satisfies CommandPaletteGroup[])
@@ -330,6 +338,8 @@ export function App() {
       rotateView,
       theme,
       toggleTheme,
+      isFullscreen,
+      toggleFullscreen,
       setWatermarkOpen,
       setHeaderFooterOpen,
       setPageNumbersOpen,
@@ -469,7 +479,7 @@ export function App() {
         </Rail>
       )}
       {imagePicker.input}
-      <main className="flex min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <h1 className="sr-only">PDFLoom</h1>
         {meta &&
           mainView === "read" &&
@@ -486,7 +496,7 @@ export function App() {
           ) : (
             <Toolbar />
           ))}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1">
           {meta &&
             mainView === "read" &&
             !annotateOpen &&

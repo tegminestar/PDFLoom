@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, type KeyboardEvent } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageCanvas } from "./PageCanvas";
 
 const PAGE_GAP_PX = 24;
 const HORIZONTAL_PADDING_PX = 48;
+const VERTICAL_PADDING_PX = 64; // matches the page list's own `py-8` (2rem top + bottom)
 
 export function Viewer() {
   const doc = useLoomStore((s) => s.document);
@@ -12,8 +13,12 @@ export function Viewer() {
   const fitMode = useLoomStore((s) => s.fitMode);
   const fitWidthScale = useLoomStore((s) => s.fitWidthScale);
   const setFitWidthScale = useLoomStore((s) => s.setFitWidthScale);
+  const fitPageScale = useLoomStore((s) => s.fitPageScale);
+  const setFitPageScale = useLoomStore((s) => s.setFitPageScale);
+  const scrollMode = useLoomStore((s) => s.scrollMode);
   const viewRotation = useLoomStore((s) => s.viewRotation);
   const currentPage = useLoomStore((s) => s.currentPage);
+  const setCurrentPage = useLoomStore((s) => s.setCurrentPage);
   const pageNavigationNonce = useLoomStore((s) => s.pageNavigationNonce);
   const syncVisiblePage = useLoomStore((s) => s.syncVisiblePage);
   const activeSearchResult = useLoomStore((s) =>
@@ -33,17 +38,24 @@ export function Viewer() {
     const recompute = async () => {
       const dims = await doc.getPageDimensions(1);
       const widthPt = viewRotation === 90 || viewRotation === 270 ? dims.heightPt : dims.widthPt;
-      const availableWidth = container.clientWidth - HORIZONTAL_PADDING_PX * 2;
+      const heightPt = viewRotation === 90 || viewRotation === 270 ? dims.widthPt : dims.heightPt;
+      // Two-page mode shows a spread of 2 pages side by side, each getting
+      // half the width (minus the gap between them) — "fit width"/"fit
+      // page" in that mode means fitting the whole spread, not one page.
+      const pagesPerRow = scrollMode === "two-page" ? 2 : 1;
+      const availableWidth = (container.clientWidth - HORIZONTAL_PADDING_PX * 2 - PAGE_GAP_PX * (pagesPerRow - 1)) / pagesPerRow;
+      const availableHeight = container.clientHeight - VERTICAL_PADDING_PX;
       setFitWidthScale(Math.max(0.1, availableWidth / widthPt));
+      setFitPageScale(Math.max(0.1, Math.min(availableWidth / widthPt, availableHeight / heightPt)));
     };
 
     void recompute();
     const resizeObserver = new ResizeObserver(() => void recompute());
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
-  }, [doc, viewRotation, setFitWidthScale]);
+  }, [doc, viewRotation, scrollMode, setFitWidthScale, setFitPageScale]);
 
-  const effectiveScale = fitMode === "width" ? fitWidthScale : zoom;
+  const effectiveScale = fitMode === "width" ? fitWidthScale : fitMode === "page" ? fitPageScale : zoom;
 
   // Determine "current page" directly from scroll geometry — the page
   // whose rendered rect has the greatest overlap with the container's
@@ -125,9 +137,13 @@ export function Viewer() {
   // once the new layout has painted. Trade-off: this snaps to that page's
   // top rather than preserving the exact scroll offset within it — fine
   // for now; a zoom-anchored-to-viewport-center refinement can come later.
-  const lastAnchorKey = useRef(`${viewRotation}:${effectiveScale}`);
+  // Also re-anchors on a scrollMode switch: single/two-page mounts a
+  // different subset of pages than continuous did, so without this the
+  // container's scrollTop would stay wherever it physically was (usually
+  // 0) instead of landing back on the page the user was actually reading.
+  const lastAnchorKey = useRef(`${viewRotation}:${effectiveScale}:${scrollMode}`);
   useEffect(() => {
-    const key = `${viewRotation}:${effectiveScale}`;
+    const key = `${viewRotation}:${effectiveScale}:${scrollMode}`;
     if (lastAnchorKey.current === key) return;
     lastAnchorKey.current = key;
     const raf = requestAnimationFrame(() => scrollToPage(currentPage));
@@ -136,12 +152,34 @@ export function Viewer() {
     // current *before* this change, not a value already updated by a
     // post-reflow scroll-tracking pass.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewRotation, effectiveScale, scrollToPage]);
+  }, [viewRotation, effectiveScale, scrollMode, scrollToPage]);
 
-  const pageNumbers = useMemo(
-    () => (meta ? Array.from({ length: meta.pageCount }, (_, i) => i + 1) : []),
-    [meta],
-  );
+  // Continuous shows every page stacked for free scrolling; single shows
+  // just the current page; two-page pairs (1,2)(3,4)... — whichever member
+  // of the pair `currentPage` currently holds, so scroll-tracking flipping
+  // between the two spread pages can't change which spread is shown.
+  const pageNumbers = useMemo(() => {
+    if (!meta) return [];
+    if (scrollMode === "continuous") return Array.from({ length: meta.pageCount }, (_, i) => i + 1);
+    if (scrollMode === "single") return [currentPage];
+    const spreadStart = currentPage % 2 === 0 ? currentPage - 1 : currentPage;
+    return spreadStart + 1 <= meta.pageCount ? [spreadStart, spreadStart + 1] : [spreadStart];
+  }, [meta, scrollMode, currentPage]);
+
+  const pageStep = scrollMode === "two-page" ? 2 : 1;
+  const handleKeyDown = (e: KeyboardEvent) => {
+    // Continuous mode leaves arrow/page keys to the browser's native
+    // scroll behavior on this focusable region; paged modes have nothing
+    // to scroll to, so they need explicit page-to-page navigation instead.
+    if (scrollMode === "continuous") return;
+    if (e.key === "ArrowRight" || e.key === "PageDown") {
+      e.preventDefault();
+      setCurrentPage(currentPage + pageStep);
+    } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+      e.preventDefault();
+      setCurrentPage(currentPage - pageStep);
+    }
+  };
 
   if (!doc || !meta) return null;
 
@@ -151,10 +189,11 @@ export function Viewer() {
       tabIndex={0}
       role="region"
       aria-label="Document pages"
+      onKeyDown={handleKeyDown}
       className="h-full w-full overflow-y-auto overflow-x-hidden bg-bg outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[--color-focus-ring]"
     >
       <div
-        className="mx-auto flex flex-col items-center py-8"
+        className={`mx-auto flex items-center py-8 ${scrollMode === "two-page" ? "flex-row justify-center" : "flex-col"}`}
         style={{ gap: PAGE_GAP_PX, paddingLeft: HORIZONTAL_PADDING_PX, paddingRight: HORIZONTAL_PADDING_PX }}
       >
         {pageNumbers.map((pageNumber) => (

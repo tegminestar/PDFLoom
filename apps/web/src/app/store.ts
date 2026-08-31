@@ -15,6 +15,7 @@ import {
 import { create } from "zustand";
 
 export type FitMode = "width" | "page" | "custom";
+export type ScrollMode = "continuous" | "single" | "two-page";
 export type PanelId = "thumbnails" | "outline" | "search" | null;
 export type MainView = "read" | "organize" | "compare";
 export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "square" | "circle" | "line" | "text" | "stamp";
@@ -97,7 +98,10 @@ interface LoomState {
   zoom: number;
   /** Scale computed by the Viewer from the container width when fitMode is "width"; the source of truth for display whenever fitMode !== "custom". */
   fitWidthScale: number;
+  /** Scale computed by the Viewer so the whole page (width AND height) fits in the container, for fitMode "page". */
+  fitPageScale: number;
   fitMode: FitMode;
+  scrollMode: ScrollMode;
   viewRotation: 0 | 90 | 180 | 270;
 
   activePanel: PanelId;
@@ -210,6 +214,8 @@ interface LoomState {
   setZoom: (zoom: number) => void;
   setFitMode: (mode: FitMode) => void;
   setFitWidthScale: (scale: number) => void;
+  setFitPageScale: (scale: number) => void;
+  setScrollMode: (mode: ScrollMode) => void;
   zoomIn: () => void;
   zoomOut: () => void;
   rotateView: (delta: 90 | -90) => void;
@@ -334,7 +340,9 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   pageNavigationNonce: 0,
   zoom: 1,
   fitWidthScale: 1,
+  fitPageScale: 1,
   fitMode: "width",
+  scrollMode: "continuous",
   viewRotation: 0,
 
   activePanel: null,
@@ -735,16 +743,22 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   },
 
   setZoom: (zoom) => set({ zoom: Math.min(Math.max(MIN_ZOOM, zoom), MAX_ZOOM), fitMode: "custom" }),
-  setFitMode: (fitMode) => set((s) => ({ fitMode, zoom: fitMode === "custom" ? s.zoom : s.fitWidthScale })),
+  setFitMode: (fitMode) =>
+    set((s) => ({
+      fitMode,
+      zoom: fitMode === "custom" ? s.zoom : fitMode === "page" ? s.fitPageScale : s.fitWidthScale,
+    })),
   setFitWidthScale: (fitWidthScale) => set({ fitWidthScale }),
+  setFitPageScale: (fitPageScale) => set({ fitPageScale }),
+  setScrollMode: (scrollMode) => set({ scrollMode }),
   zoomIn: () =>
     set((s) => {
-      const current = s.fitMode === "custom" ? s.zoom : s.fitWidthScale;
+      const current = s.fitMode === "custom" ? s.zoom : s.fitMode === "page" ? s.fitPageScale : s.fitWidthScale;
       return { zoom: Math.min(MAX_ZOOM, current + ZOOM_STEP), fitMode: "custom" };
     }),
   zoomOut: () =>
     set((s) => {
-      const current = s.fitMode === "custom" ? s.zoom : s.fitWidthScale;
+      const current = s.fitMode === "custom" ? s.zoom : s.fitMode === "page" ? s.fitPageScale : s.fitWidthScale;
       return { zoom: Math.max(MIN_ZOOM, current - ZOOM_STEP), fitMode: "custom" };
     }),
   rotateView: (delta) =>
