@@ -1,0 +1,22 @@
+name: Check Azure Resources
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: List everything in pdfloom-rg
+        run: |
+          az resource list --resource-group pdfloom-rg -o table
+          echo "--- App Service plan detail, if it exists ---"
+          az appservice plan show --name pdfloom-api-plan --resource-group pdfloom-rg -o json || echo "NOT FOUND"
