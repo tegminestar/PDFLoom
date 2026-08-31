@@ -25,12 +25,21 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      # RELEASE_TAG comes in via env, not interpolated directly into the
+      # script — a workflow_dispatch input substituted straight into a
+      # run: block (`"${{ github.event.inputs.tag }}"`) is text-spliced
+      # into the script *before* the shell parses it, so a crafted input
+      # (quotes/backticks/`;`) could break out and run arbitrary commands
+      # with this job's AZURE_CREDENTIALS/GITHUB_TOKEN access. Routing
+      # through env: makes it a real environment variable instead, which
+      # the shell can't misinterpret as script syntax.
       - name: Download the release's installers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.inputs.tag }}
         run: |
           mkdir -p ./release-assets
-          gh release download "${{ github.event.inputs.tag }}" --repo "${{ github.repository }}" --dir ./release-assets --clobber
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --dir ./release-assets --clobber
           ls -la ./release-assets
 
       - uses: azure/login@v2

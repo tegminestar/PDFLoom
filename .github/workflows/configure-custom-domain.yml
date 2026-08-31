@@ -28,6 +28,15 @@ jobs:
     # what generates the token to put in it) — the `timeout` wrapper below
     # is the primary fix, this is a hard backstop in case that's not enough.
     timeout-minutes: 5
+    # Job-level so every step below can reference $HOSTNAME as a real env
+    # var rather than each one re-splicing the workflow_dispatch input
+    # straight into its own script text — a `"${{ github.event.inputs.x }}"`
+    # interpolated directly into a run: block is substituted *before* the
+    # shell parses the line, so a crafted input (embedded quotes/`;`/
+    # backticks) could break out and run arbitrary commands with this job's
+    # AZURE_CREDENTIALS access. Going through env: closes that off.
+    env:
+      HOSTNAME: ${{ github.event.inputs.hostname }}
     steps:
       - uses: azure/login@v2
         with:
@@ -46,7 +55,6 @@ jobs:
       # and reading it back via a separate `hostname show` is safe.
       - name: Register the hostname if it isn't already
         run: |
-          HOSTNAME="${{ github.event.inputs.hostname }}"
           if ! az staticwebapp hostname show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --hostname "$HOSTNAME" --output none 2>/dev/null; then
             echo "--- registering $HOSTNAME (TXT validation) ---"
             timeout 60 az staticwebapp hostname set \
@@ -64,7 +72,7 @@ jobs:
           az staticwebapp hostname show \
             --name "$AZURE_SWA_NAME" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --hostname "${{ github.event.inputs.hostname }}" \
+            --hostname "$HOSTNAME" \
             -o json
 
       - name: Print the Static Web App's own default hostname (what the apex record should point at)
