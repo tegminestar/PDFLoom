@@ -1,8 +1,0 @@
-# Cargo's build-script output paths nest deeply (target/debug/build/<crate>-<hash>/out/...),
-# and this repo already lives under a long OneDrive path — combined, that can exceed
-# Windows' 260-character path limit for some of Tauri's own dependencies (tao/wry pull in
-# a lot of transitive crates). Redirecting the target dir to a short path outside OneDrive
-# sidesteps it entirely, the same fix used elsewhere in this repo for the same class of
-# Windows path-length issue (see packages/core's AI model-cache repro scripts).
-[build]
-target-dir = "C:/cargo-target/pdfloom-desktop"

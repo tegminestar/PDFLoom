@@ -13,6 +13,13 @@ on:
         required: true
         default: "0.1.0"
 
+# The default GITHUB_TOKEN's contents permission is read-only on this repo,
+# which failed the very first real create-release call with "Resource not
+# accessible by integration" — needs write explicitly for tauri-action to
+# create the tag/release and upload installers to it.
+permissions:
+  contents: write
+
 env:
   # Same live backend the web deploy points at — the desktop build's
   # account/billing UI needs this baked in at build time (Vite inlines
