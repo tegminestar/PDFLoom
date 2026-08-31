@@ -33,6 +33,13 @@ app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// A pure backend — there's no page to serve here, just so a visit to the
+// bare URL (e.g. someone checking the deployment in a browser) doesn't
+// look like it's broken.
+app.get("/", (_req, res) => {
+  res.status(200).json({ service: "PDFLoom API", ok: true, health: "/api/health" });
+});
+
 app.post("/api/checkout", (req, res) => {
   createCheckoutSession(req, res).catch((error: unknown) => {
     console.error("Unhandled error in createCheckoutSession", error);
