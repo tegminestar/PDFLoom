@@ -2,6 +2,7 @@ import { extractHighlights, getPdfWorkerClient } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useEffect, useRef, useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { ensureDocumentText } from "../ai/ensureDocumentText";
 import { buildImagePptx, canvasToPngBlob } from "./export";
 import { COLOR_SCHEMES, drawTemplate, TEMPLATES, type ColorScheme, type TemplateId } from "./templates";
 
@@ -52,14 +53,14 @@ export function QuickCreateDialog({ open, onOpenChange }: { open: boolean; onOpe
     if (!doc || !meta) return;
     setIsExtracting(true);
     try {
-      let fullText = "";
-      for (let pageNumber = 1; pageNumber <= meta.pageCount; pageNumber++) {
-        setStatus(`Reading page ${pageNumber} of ${meta.pageCount}…`);
-        fullText += `${await doc.getFullPageText(pageNumber)}\n\n`;
-      }
+      const pageNumbers = Array.from({ length: meta.pageCount }, (_, i) => i + 1);
+      const { text: fullText, ranOcr } = await ensureDocumentText(pageNumbers, setStatus);
       if (!fullText.trim()) {
-        toast.warning("No extractable text", "This document doesn't have selectable text to summarize — it may be a scanned image.");
+        toast.warning("No extractable text", "OCR ran automatically but didn't recognize any text in this document — it may be blank or too low-quality to read.");
         return;
+      }
+      if (ranOcr) {
+        toast.success("Ran OCR automatically", "This document had no selectable text, so it was recognized (English) before extracting highlights.");
       }
       const highlights = await extractHighlights(fullText, title || meta.name.replace(/\.pdf$/i, ""), {
         onProgress: (info) => {

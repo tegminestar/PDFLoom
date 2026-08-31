@@ -3,6 +3,7 @@ import { Button, Dialog, toast } from "@pdfloom/ui";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { ensureDocumentText } from "./ensureDocumentText";
 
 type RangeMode = "all" | "current";
 
@@ -31,15 +32,14 @@ export function TranslateDialog({ open, onOpenChange }: { open: boolean; onOpenC
     setCopied(false);
     try {
       const pageNumbers = range === "all" ? Array.from({ length: meta.pageCount }, (_, i) => i + 1) : [currentPage];
-      let fullText = "";
-      for (const pageNumber of pageNumbers) {
-        setStatus(pageNumbers.length > 1 ? `Reading page ${pageNumber} of ${meta.pageCount}…` : "Reading page…");
-        fullText += `${await doc.getFullPageText(pageNumber)}\n\n`;
-      }
+      const { text: fullText, ranOcr } = await ensureDocumentText(pageNumbers, setStatus);
 
       if (!fullText.trim()) {
-        toast.warning("No extractable text", "This page doesn't have selectable text to translate — it may be a scanned image. Try running OCR first.");
+        toast.warning("No extractable text", "OCR ran automatically but didn't recognize any text on this page — it may be blank or too low-quality to read.");
         return;
+      }
+      if (ranOcr) {
+        toast.success("Ran OCR automatically", "This page had no selectable text, so it was recognized (English) before translating.");
       }
 
       setStatus("Preparing the AI model…");

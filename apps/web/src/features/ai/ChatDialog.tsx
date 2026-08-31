@@ -13,6 +13,7 @@ import { Button, Dialog, toast } from "@pdfloom/ui";
 import { Send, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { ensureDocumentText } from "./ensureDocumentText";
 
 interface DisplayMessage {
   role: "user" | "assistant";
@@ -78,13 +79,22 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     if (indexRef.current) return indexRef.current;
     if (!doc || !meta) throw new Error("No document is open.");
 
+    const allPageNumbers = Array.from({ length: meta.pageCount }, (_, i) => i + 1);
+    const { ranOcr } = await ensureDocumentText(allPageNumbers, setStatus);
+    if (ranOcr) toast.success("Ran OCR automatically", "This document had no selectable text, so it was recognized (English) before indexing.");
+
+    // Re-read from the store, not the `doc` closure — applyPdfMutation
+    // (invoked inside ensureDocumentText when OCR actually ran) destroys
+    // the old PdfDocument instance and swaps in a new one.
+    const freshDoc = useLoomStore.getState().document;
+    if (!freshDoc) throw new Error("No document is open.");
     const pageTexts: { pageNumber: number; text: string }[] = [];
-    for (let pageNumber = 1; pageNumber <= meta.pageCount; pageNumber++) {
+    for (const pageNumber of allPageNumbers) {
       setStatus(`Reading page ${pageNumber} of ${meta.pageCount}…`);
-      pageTexts.push({ pageNumber, text: await doc.getFullPageText(pageNumber) });
+      pageTexts.push({ pageNumber, text: await freshDoc.getFullPageText(pageNumber) });
     }
     const chunks = chunkPagesForRag(pageTexts);
-    if (chunks.length === 0) throw new Error("This document doesn't have extractable text to search — it may be a scanned image. Try running OCR first.");
+    if (chunks.length === 0) throw new Error("OCR ran automatically but didn't recognize any text in this document — it may be blank or too low-quality to read.");
 
     const embedded = await embedChunks(chunks, {
       onProgress: (info) => {
