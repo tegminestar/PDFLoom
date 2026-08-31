@@ -71,12 +71,17 @@ test("a redaction box can be moved and resized before applying, and the adjusted
   // draw spot: "Lorem ipsum" appears on every page of this fixture, so a
   // correct redaction removes just page 1's match from the search results
   // while every other page's match stays findable (proving search itself
-  // still works, not just coincidentally empty).
+  // still works, not just coincidentally empty). Scoped to the search
+  // panel's own result *buttons* (SearchPanel.tsx renders each as "Page N"
+  // + a context snippet) rather than a page-wide text search — the
+  // fixture's own page content literally contains the string "Page 2 of 8"
+  // too (pdf.js text-layer spans, not buttons), so a page-wide getByText
+  // can flakily match whichever page happens to be scrolled into view.
   await page.keyboard.press("Control+f");
   const searchInput = page.locator('input[type="search"], input[placeholder*="Search" i]').first();
   await searchInput.fill("Lorem ipsum");
-  await expect(page.getByText("Page 2 of 8")).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText("Page 1 of 8")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Page 2\b/ })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole("button", { name: /^Page 1\b/ })).toHaveCount(0);
 });
 
 test("clicking an existing box selects it for adjustment, and Escape deselects without deleting it", async ({ page }) => {

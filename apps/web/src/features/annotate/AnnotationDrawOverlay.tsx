@@ -1,4 +1,4 @@
-import { getPdfWorkerClient, type PdfDocument } from "@pdfloom/core";
+import { getPdfWorkerClient, type PdfDocument, type StampPreset } from "@pdfloom/core";
 import { toast } from "@pdfloom/ui";
 import { Check, GripHorizontal, X } from "lucide-react";
 import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -22,11 +22,26 @@ interface ScreenRect extends ScreenPoint {
 interface PendingTextBox extends ScreenRect {
   value: string;
 }
+interface PendingStamp extends ScreenRect {
+  preset: StampPreset;
+}
+
+// Mirrors packages/core/src/pdf/annotations.ts's STAMP_PRESETS exactly, so
+// the live preview matches what addStamp actually draws — labels differ
+// from AnnotateToolbar's picker labels ("Approved" there vs "APPROVED"
+// here) because the real stamp text is uppercase.
+const STAMP_PREVIEW: Record<StampPreset, { label: string; color: string }> = {
+  approved: { label: "APPROVED", color: "rgb(27 158 107)" },
+  draft: { label: "DRAFT", color: "rgb(140 140 148)" },
+  confidential: { label: "CONFIDENTIAL", color: "rgb(214 61 61)" },
+  rejected: { label: "REJECTED", color: "rgb(214 61 61)" },
+};
 
 const DRAW_TOOLS: AnnotateTool[] = ["ink", "square", "circle", "line"];
 const DEFAULT_TEXT_BOX = { width: 220, height: 70 };
 const DEFAULT_STAMP_BOX = { width: 160, height: 56 };
 const MIN_TEXT_BOX = { width: 60, height: 28 };
+const MIN_STAMP_BOX = { width: 60, height: 24 };
 const SNAP_PX = 6;
 
 // Free-resize only (a comment box has no aspect ratio to preserve, unlike
@@ -94,6 +109,9 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   const [textBox, setTextBox] = useState<PendingTextBox | null>(null);
   const [textBoxDragMode, setTextBoxDragMode] = useState<DragMode | null>(null);
   const [textBoxSnapGuides, setTextBoxSnapGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+  const [pendingStamp, setPendingStamp] = useState<PendingStamp | null>(null);
+  const [stampDragMode, setStampDragMode] = useState<DragMode | null>(null);
+  const [stampSnapGuides, setStampSnapGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
 
   const localPoint = useCallback((e: ReactPointerEvent<HTMLDivElement>): ScreenPoint => {
     const rect = overlayRef.current!.getBoundingClientRect();
@@ -147,20 +165,137 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   );
 
   const commitStamp = useCallback(
-    async (point: ScreenPoint) => {
+    async (box: PendingStamp) => {
+      setPendingStamp(null);
       try {
-        const p1 = await toPdf({ x: point.x - DEFAULT_STAMP_BOX.width / 2, y: point.y - DEFAULT_STAMP_BOX.height / 2 });
-        const p2 = await toPdf({ x: point.x + DEFAULT_STAMP_BOX.width / 2, y: point.y + DEFAULT_STAMP_BOX.height / 2 });
+        const p1 = await toPdf({ x: box.x, y: box.y });
+        const p2 = await toPdf({ x: box.x + box.width, y: box.y + box.height });
         const rect = { x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y), width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y) };
         const client = await getPdfWorkerClient();
-        const bytes = await client.addStamp(await doc.getRawBytes(), pageNumber - 1, rect, stampPreset);
+        const bytes = await client.addStamp(await doc.getRawBytes(), pageNumber - 1, rect, box.preset);
         await applyPdfMutation(bytes);
         toast.success("Added stamp");
       } catch (error) {
         toast.error("Couldn't add stamp", error instanceof Error ? error.message : undefined);
       }
     },
-    [applyPdfMutation, doc, pageNumber, stampPreset, toPdf],
+    [applyPdfMutation, doc, pageNumber, toPdf],
+  );
+
+  // Move: drag the box's own body (no separate grip needed — unlike the
+  // comment box, a stamp has no editable child content whose normal click
+  // behavior would conflict). Resize: drag any of the 8 handles. Both work
+  // purely in local screen-space, converted to a PDF rect only once, at
+  // commitStamp time.
+  const beginStampMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (!pendingStamp) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setStampDragMode({ kind: "move", startPointer: localPoint(e), startRect: pendingStamp });
+    },
+    [localPoint, pendingStamp],
+  );
+
+  const beginStampResize = useCallback(
+    (handle: HandleId) => (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (!pendingStamp) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setStampDragMode({ kind: "resize", handle, startPointer: localPoint(e), startRect: pendingStamp });
+    },
+    [localPoint, pendingStamp],
+  );
+
+  const handleStampDragMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (!stampDragMode) return;
+      e.preventDefault();
+      const p = localPoint(e);
+      const dx = p.x - stampDragMode.startPointer.x;
+      const dy = p.y - stampDragMode.startPointer.y;
+      const bounds = overlayRef.current!.getBoundingClientRect();
+      const EDGE_MARGIN = 10;
+      const visibleMinX = Math.max(0, -bounds.left) + EDGE_MARGIN;
+      const visibleMaxX = Math.min(bounds.width, window.innerWidth - bounds.left) - EDGE_MARGIN;
+      const visibleMinY = Math.max(0, -bounds.top) + EDGE_MARGIN;
+      const visibleMaxY = Math.min(bounds.height, window.innerHeight - bounds.top) - EDGE_MARGIN;
+
+      if (stampDragMode.kind === "move") {
+        let x = stampDragMode.startRect.x + dx;
+        let y = stampDragMode.startRect.y + dy;
+        x = Math.min(Math.max(visibleMinX, x), Math.max(visibleMinX, visibleMaxX - stampDragMode.startRect.width));
+        y = Math.min(Math.max(visibleMinY, y), Math.max(visibleMinY, visibleMaxY - stampDragMode.startRect.height));
+
+        const centerX = x + stampDragMode.startRect.width / 2;
+        const centerY = y + stampDragMode.startRect.height / 2;
+        const pageCenterX = bounds.width / 2;
+        const pageCenterY = bounds.height / 2;
+        let snapX: number | null = null;
+        let snapY: number | null = null;
+        if (Math.abs(centerX - pageCenterX) < SNAP_PX) {
+          x = pageCenterX - stampDragMode.startRect.width / 2;
+          snapX = pageCenterX;
+        }
+        if (Math.abs(centerY - pageCenterY) < SNAP_PX) {
+          y = pageCenterY - stampDragMode.startRect.height / 2;
+          snapY = pageCenterY;
+        }
+        setStampSnapGuides({ x: snapX, y: snapY });
+        setPendingStamp((prev) => (prev ? { ...prev, x, y } : prev));
+        return;
+      }
+
+      const spec = HANDLE_SPEC[stampDragMode.handle];
+      let x = stampDragMode.startRect.x;
+      let y = stampDragMode.startRect.y;
+      let width = stampDragMode.startRect.width;
+      let height = stampDragMode.startRect.height;
+      if (spec.left) {
+        x = stampDragMode.startRect.x + dx;
+        width = stampDragMode.startRect.width - dx;
+      }
+      if (spec.right) width = stampDragMode.startRect.width + dx;
+      if (spec.top) {
+        y = stampDragMode.startRect.y + dy;
+        height = stampDragMode.startRect.height - dy;
+      }
+      if (spec.bottom) height = stampDragMode.startRect.height + dy;
+
+      if (width < MIN_STAMP_BOX.width) {
+        if (spec.left) x -= MIN_STAMP_BOX.width - width;
+        width = MIN_STAMP_BOX.width;
+      }
+      if (height < MIN_STAMP_BOX.height) {
+        if (spec.top) y -= MIN_STAMP_BOX.height - height;
+        height = MIN_STAMP_BOX.height;
+      }
+      if (x < visibleMinX) {
+        width -= visibleMinX - x;
+        x = visibleMinX;
+      }
+      if (y < visibleMinY) {
+        height -= visibleMinY - y;
+        y = visibleMinY;
+      }
+      if (x + width > visibleMaxX) width = visibleMaxX - x;
+      if (y + height > visibleMaxY) height = visibleMaxY - y;
+
+      setPendingStamp((prev) => (prev ? { ...prev, x, y, width, height } : prev));
+    },
+    [localPoint, stampDragMode],
+  );
+
+  const handleStampDragEnd = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (!stampDragMode) return;
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      setStampDragMode(null);
+      setStampSnapGuides({ x: null, y: null });
+    },
+    [stampDragMode],
   );
 
   const commitText = useCallback(
@@ -335,9 +470,20 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
           void commitText(textBox);
           return;
         }
+        if (pendingStamp) {
+          // Same "click elsewhere finalizes it" rule as the comment box.
+          void commitStamp(pendingStamp);
+          return;
+        }
         const p = localPoint(e);
         if (tool === "stamp") {
-          void commitStamp(p);
+          setPendingStamp({
+            x: p.x - DEFAULT_STAMP_BOX.width / 2,
+            y: p.y - DEFAULT_STAMP_BOX.height / 2,
+            width: DEFAULT_STAMP_BOX.width,
+            height: DEFAULT_STAMP_BOX.height,
+            preset: stampPreset,
+          });
           return;
         }
         if (tool === "text") {
@@ -481,6 +627,83 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 onPointerCancel={handleTextBoxDragEnd}
                 className={`absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white shadow ${HANDLE_CURSOR[h]}`}
                 style={{ left: HANDLE_POSITION[h].left, top: HANDLE_POSITION[h].top, borderColor: colorHex(color) }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {pendingStamp && (
+        <>
+          {stampSnapGuides.x !== null && (
+            <div className="pointer-events-none absolute inset-y-0 w-px bg-primary" style={{ left: stampSnapGuides.x }} />
+          )}
+          {stampSnapGuides.y !== null && (
+            <div className="pointer-events-none absolute inset-x-0 h-px bg-primary" style={{ top: stampSnapGuides.y }} />
+          )}
+
+          <div
+            onPointerDown={beginStampMove}
+            onPointerMove={handleStampDragMove}
+            onPointerUp={handleStampDragEnd}
+            onPointerCancel={handleStampDragEnd}
+            tabIndex={0}
+            ref={(el) => el?.focus()}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setPendingStamp(null);
+              else if (e.key === "Enter") void commitStamp(pendingStamp);
+            }}
+            className="absolute flex cursor-move items-center justify-center border-[3px] bg-white/90 outline-none"
+            style={{
+              left: pendingStamp.x,
+              top: pendingStamp.y,
+              width: pendingStamp.width,
+              height: pendingStamp.height,
+              borderColor: STAMP_PREVIEW[pendingStamp.preset].color,
+            }}
+          >
+            <span
+              className="pointer-events-none select-none truncate px-1 font-bold"
+              style={{ color: STAMP_PREVIEW[pendingStamp.preset].color, fontSize: Math.max(12, pendingStamp.height * 0.4) }}
+            >
+              {STAMP_PREVIEW[pendingStamp.preset].label}
+            </span>
+
+            <div
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-[--shadow-floating]"
+              style={{ top: pendingStamp.y > 40 ? -38 : pendingStamp.height + 6 }}
+            >
+              <button
+                type="button"
+                onClick={() => void commitStamp(pendingStamp)}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-text hover:opacity-90"
+                aria-label="Place stamp"
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingStamp(null)}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-bg text-text-muted hover:text-text"
+                aria-label="Discard stamp"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            {RESIZE_HANDLES.map((h) => (
+              <div
+                key={h}
+                onPointerDown={beginStampResize(h)}
+                onPointerMove={handleStampDragMove}
+                onPointerUp={handleStampDragEnd}
+                onPointerCancel={handleStampDragEnd}
+                className={`absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white shadow ${HANDLE_CURSOR[h]}`}
+                style={{ left: HANDLE_POSITION[h].left, top: HANDLE_POSITION[h].top, borderColor: STAMP_PREVIEW[pendingStamp.preset].color }}
               />
             ))}
           </div>

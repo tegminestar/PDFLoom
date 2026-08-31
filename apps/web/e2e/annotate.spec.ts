@@ -146,3 +146,65 @@ test("comment (text) box: stays adjustable while editing, then move + resize + c
     .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
     .not.toBe(canvasAfterDiscardDataUrl);
 });
+
+test("stamp: stays adjustable before placing, and Escape discards it without touching the document", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await page.getByLabel("Stamp", { exact: true }).click();
+
+  const canvasBeforeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  const pageBox = await page.locator("[data-page-number='1']").boundingBox();
+  const viewport = page.viewportSize();
+  if (!pageBox || !viewport) throw new Error("page or viewport not found");
+  const clickX = pageBox.x + pageBox.width * 0.3;
+  const clickY = pageBox.y + Math.min(pageBox.height * 0.55, viewport.height * 0.45);
+  await page.mouse.click(clickX, clickY);
+
+  const handles = page.locator(".cursor-nwse-resize, .cursor-nesw-resize, .cursor-ns-resize, .cursor-ew-resize");
+  await expect(handles).toHaveCount(8);
+  // Nothing is baked in yet, just from placing the draft.
+  const canvasWhilePlacingDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasWhilePlacingDataUrl).toBe(canvasBeforeDataUrl);
+
+  const draftBox = page.locator(".border-\\[3px\\]");
+  const rectBefore = await draftBox.boundingBox();
+  if (!rectBefore) throw new Error("stamp draft not found");
+
+  // Move it by dragging its own body.
+  await page.mouse.move(rectBefore.x + rectBefore.width / 2, rectBefore.y + rectBefore.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(rectBefore.x + rectBefore.width / 2 + 70, rectBefore.y + rectBefore.height / 2 + 50, { steps: 8 });
+  await page.mouse.up();
+
+  // Resize via the SE handle (DOM order [nw,n,ne,w,e,sw,s,se] -> index 7).
+  const seHandle = handles.nth(7);
+  const seBox = await seHandle.boundingBox();
+  if (!seBox) throw new Error("resize handle not found");
+  await page.mouse.move(seBox.x + seBox.width / 2, seBox.y + seBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(seBox.x + 40, seBox.y + 20, { steps: 8 });
+  await page.mouse.up();
+
+  const rectAfter = await draftBox.boundingBox();
+  if (!rectAfter) throw new Error("stamp draft not found after adjustment");
+  expect(Math.abs(rectAfter.x - rectBefore.x)).toBeGreaterThan(30);
+  expect(rectAfter.width).toBeGreaterThan(rectBefore.width + 10);
+
+  // Commit via the checkmark — the adjusted stamp actually bakes in.
+  await page.getByRole("button", { name: "Place stamp" }).click();
+  await expect
+    .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
+    .not.toBe(canvasBeforeDataUrl);
+  const canvasAfterCommitDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  // A second stamp, discarded via Escape, must not touch the document.
+  await page.mouse.click(clickX, clickY + 150);
+  await expect(handles).toHaveCount(8);
+  await page.keyboard.press("Escape");
+  await expect(handles).toHaveCount(0);
+  const canvasAfterEscapeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasAfterEscapeDataUrl).toBe(canvasAfterCommitDataUrl);
+});
