@@ -17,12 +17,6 @@ env:
   AZURE_LOCATION: eastus
   AZURE_APP_LOCATION: westus2
   AZURE_PLAN_NAME: pdfloom-api-plan
-  # Left over from an earlier Azure Functions attempt (see git history) —
-  # Functions needed a storage account and its own Dynamic/Consumption
-  # plan; a plain Express app on App Service needs neither, so this
-  # workflow tears those down the first time it runs.
-  LEGACY_FUNCTIONAPP_NAME: pdfloom-api-tegminestar
-  LEGACY_STORAGE_ACCOUNT: pdfloomapitegminestar
 
 jobs:
   deploy:
@@ -64,17 +58,6 @@ jobs:
       - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Remove leftover Azure Functions resources from an earlier attempt
-        run: |
-          az functionapp delete --name "$LEGACY_FUNCTIONAPP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" 2>/dev/null || true
-          az storage account delete --name "$LEGACY_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP" --yes 2>/dev/null || true
-          # The Function App's auto-created Consumption plan — safe to
-          # delete once nothing references it; ignored if already gone or
-          # still in use by something else.
-          for plan in $(az appservice plan list --resource-group "$AZURE_RESOURCE_GROUP" --query "[?sku.tier=='Dynamic'].name" -o tsv 2>/dev/null || true); do
-            az appservice plan delete --name "$plan" --resource-group "$AZURE_RESOURCE_GROUP" --yes 2>/dev/null || true
-          done
 
       - name: Ensure resource group exists
         run: |
