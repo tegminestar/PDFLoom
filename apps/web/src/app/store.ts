@@ -36,6 +36,21 @@ export interface SignatureAsset {
   aspectRatio?: number;
 }
 
+/**
+ * A placement that's been clicked into existence but not yet baked into the
+ * PDF — lets the user drag/resize/align it first, matching Acrobat's Fill &
+ * Sign (place, adjust, then it's final) instead of this app's older
+ * click-once-and-it's-permanent behavior. `kind`/`asset` are captured at
+ * placement time so switching tools mid-adjustment can't retroactively
+ * change what an in-progress placement will become.
+ */
+export interface PendingSignaturePlacement {
+  pageIndex: number;
+  rect: Rect;
+  kind: SignPlacementKind;
+  asset: SignatureAsset | null;
+}
+
 export const ANNOTATE_COLOR_PRESETS: RgbColor[] = [
   { r: 1, g: 0.86, b: 0.2 }, // amber/yellow — default highlight
   { r: 0.95, g: 0.35, b: 0.35 }, // red
@@ -119,6 +134,8 @@ interface LoomState {
   signerName: string;
   includeIntegrityHash: boolean;
   isPlacingSignature: boolean;
+  /** Set the instant a placement gesture starts, cleared on commit/cancel — see PendingSignaturePlacement. */
+  pendingSignaturePlacement: PendingSignaturePlacement | null;
 
   searchQuery: string;
   searchResults: SearchMatch[];
@@ -170,8 +187,16 @@ interface LoomState {
   saveSignatureAsset: (slot: "signature" | "initials", asset: SignatureAsset) => void;
   setSignerName: (name: string) => void;
   setIncludeIntegrityHash: (value: boolean) => void;
-  /** Places whatever signPlacementKind currently is at the given page/rect — dispatches to the matching worker call. */
+  /** Immediately places whatever signPlacementKind currently is at the given page/rect — no adjustment step. Kept for callers that want a direct one-shot placement; the interactive UI now goes through startSignaturePlacement/commitSignaturePlacement instead, which share the same underlying worker-call logic. */
   placeSignatureAt: (pageIndex: number, rect: Rect) => Promise<void>;
+  /** Starts a new adjustable placement at a default rect — does NOT touch the PDF yet. */
+  startSignaturePlacement: (pageIndex: number, rect: Rect) => void;
+  /** Persists the rect at the end of a drag/resize gesture — the overlay tracks the live rect itself in local screen-space state while a gesture is in flight and calls this once it ends, rather than round-tripping through the store on every pointermove. */
+  updatePendingSignatureRect: (rect: Rect) => void;
+  /** Bakes the pending placement into the PDF at its current (adjusted) rect, then clears it. */
+  commitSignaturePlacement: () => Promise<void>;
+  /** Discards the pending placement without touching the PDF. */
+  cancelSignaturePlacement: () => void;
 
   /** Explicit navigation — e.g. from the page-number field, thumbnails, outline, or a search jump. Bumps `pageNavigationNonce`. */
   setCurrentPage: (page: number) => void;
@@ -236,6 +261,7 @@ async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, open
     redactBoxes: [],
     signOpen: false,
     signPlacementKind: null,
+    pendingSignaturePlacement: null,
     compareTarget: null,
   }));
   void recentsStore.record(
@@ -249,6 +275,43 @@ async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, open
     },
     meta.handle,
   );
+}
+
+/**
+ * Shared by placeSignatureAt (one-shot) and commitSignaturePlacement
+ * (adjustable-then-commit) so the two call sites can't drift on how each
+ * kind is actually drawn. Returns null when there's nothing to place
+ * (e.g. a signature/initials kind with no asset saved yet) rather than
+ * throwing, so callers can silently no-op the same way the original
+ * inline logic did.
+ */
+async function buildSignaturePlacementBytes(
+  client: Awaited<ReturnType<typeof getPdfWorkerClient>>,
+  bytes: Uint8Array,
+  pageIndex: number,
+  rect: Rect,
+  kind: SignPlacementKind,
+  asset: SignatureAsset | null,
+  signerName: string,
+  includeIntegrityHash: boolean,
+): Promise<Uint8Array | null> {
+  if (kind === "date") {
+    const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    return client.placeTypedSignature(bytes, pageIndex, rect, today, { color: { r: 0.1, g: 0.1, b: 0.12 } });
+  }
+  if (kind === "timestamp") {
+    const hash = includeIntegrityHash ? await client.computeIntegrityHash(bytes) : undefined;
+    const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    return client.placeSignedTimestamp(bytes, pageIndex, rect, {
+      signerName: signerName.trim() || "Unnamed signer",
+      date: today,
+      ...(hash ? { integrityHashHex: hash } : {}),
+    });
+  }
+  if (!asset) return null;
+  return asset.kind === "typed"
+    ? client.placeTypedSignature(bytes, pageIndex, rect, asset.text ?? "")
+    : client.placeSignatureImage(bytes, pageIndex, rect, asset.imageBytes!, asset.imageType!);
 }
 
 export const useLoomStore = create<LoomState>((set, get) => ({
@@ -298,6 +361,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   signerName: "",
   includeIntegrityHash: false,
   isPlacingSignature: false,
+  pendingSignaturePlacement: null,
 
   searchQuery: "",
   searchResults: [],
@@ -377,6 +441,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       redactBoxes: [],
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
     });
   },
 
@@ -391,6 +456,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       redactOpen: false,
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
     }),
   setAnnotateOpen: (annotateOpen) =>
     set({
@@ -402,6 +468,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       redactOpen: false,
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
     }),
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
@@ -423,6 +490,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       redactOpen: false,
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
     });
     await get().refreshFormFields();
   },
@@ -457,6 +525,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       redactOpen: false,
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
     }),
   setEditTool: (editTool) => set({ editTool }),
 
@@ -470,6 +539,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       editOpen: false,
       signOpen: false,
       signPlacementKind: null,
+      pendingSignaturePlacement: null,
       ...(redactOpen ? {} : { redactBoxes: [] }),
     }),
   addRedactBox: (pageIndex, rect) => set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }] })),
@@ -510,9 +580,11 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       formDesignTool: null,
       editOpen: false,
       redactOpen: false,
-      ...(signOpen ? {} : { signPlacementKind: null }),
+      ...(signOpen ? {} : { signPlacementKind: null, pendingSignaturePlacement: null }),
     }),
-  setSignPlacementKind: (signPlacementKind) => set({ signPlacementKind }),
+  // Switching sub-tool mid-adjustment abandons any pending draft rather than
+  // leaving it on screen with a tool selection that no longer matches it.
+  setSignPlacementKind: (signPlacementKind) => set({ signPlacementKind, pendingSignaturePlacement: null }),
   saveSignatureAsset: (slot, asset) =>
     set(
       slot === "signature"
@@ -529,33 +601,64 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     try {
       const client = await getPdfWorkerClient();
       const bytes = await doc.getRawBytes();
-      let result: Uint8Array;
-
-      if (signPlacementKind === "date") {
-        const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-        result = await client.placeTypedSignature(bytes, pageIndex, rect, today, { color: { r: 0.1, g: 0.1, b: 0.12 } });
-      } else if (signPlacementKind === "timestamp") {
-        const hash = includeIntegrityHash ? await client.computeIntegrityHash(bytes) : undefined;
-        const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-        result = await client.placeSignedTimestamp(bytes, pageIndex, rect, {
-          signerName: signerName.trim() || "Unnamed signer",
-          date: today,
-          ...(hash ? { integrityHashHex: hash } : {}),
-        });
-      } else {
-        const asset = signPlacementKind === "initials" ? activeInitials : activeSignature;
-        if (!asset) return;
-        result =
-          asset.kind === "typed"
-            ? await client.placeTypedSignature(bytes, pageIndex, rect, asset.text ?? "")
-            : await client.placeSignatureImage(bytes, pageIndex, rect, asset.imageBytes!, asset.imageType!);
-      }
-
+      const asset = signPlacementKind === "initials" ? activeInitials : activeSignature;
+      const result = await buildSignaturePlacementBytes(
+        client,
+        bytes,
+        pageIndex,
+        rect,
+        signPlacementKind,
+        asset,
+        signerName,
+        includeIntegrityHash,
+      );
+      if (!result) return;
       await apply(result);
     } finally {
       set({ isPlacingSignature: false });
     }
   },
+
+  startSignaturePlacement: (pageIndex, rect) => {
+    const { signPlacementKind, activeSignature, activeInitials } = get();
+    if (!signPlacementKind) return;
+    const asset = signPlacementKind === "initials" ? activeInitials : activeSignature;
+    set({ pendingSignaturePlacement: { pageIndex, rect, kind: signPlacementKind, asset } });
+  },
+
+  updatePendingSignatureRect: (rect) => {
+    const { pendingSignaturePlacement: pending } = get();
+    if (!pending) return;
+    set({ pendingSignaturePlacement: { ...pending, rect } });
+  },
+
+  commitSignaturePlacement: async () => {
+    const { document: doc, pendingSignaturePlacement: pending, signerName, includeIntegrityHash, applyPdfMutation: apply } = get();
+    if (!doc || !pending) {
+      set({ pendingSignaturePlacement: null });
+      return;
+    }
+    set({ isPlacingSignature: true });
+    try {
+      const client = await getPdfWorkerClient();
+      const bytes = await doc.getRawBytes();
+      const result = await buildSignaturePlacementBytes(
+        client,
+        bytes,
+        pending.pageIndex,
+        pending.rect,
+        pending.kind,
+        pending.asset,
+        signerName,
+        includeIntegrityHash,
+      );
+      if (result) await apply(result);
+    } finally {
+      set({ isPlacingSignature: false, pendingSignaturePlacement: null });
+    }
+  },
+
+  cancelSignaturePlacement: () => set({ pendingSignaturePlacement: null }),
 
   refreshFormFields: async () => {
     const { document: doc } = get();

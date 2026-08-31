@@ -26,7 +26,14 @@ export function AccountButton() {
 
   return (
     <>
-      <div className="fixed right-3 top-3 z-[150]">
+      {/* top-16, not top-3: every in-document toolbar (Toolbar, SignToolbar,
+          RedactToolbar, etc.) is a normal-flow h-14 header claiming the same
+          top-right corner for its own rightmost button (Close document, Exit
+          sign mode, ...) — at top-3 this floating button's high z-index sat
+          on top of and silently ate those clicks. Sitting just below the
+          toolbar row instead avoids the collision in every mode, not just
+          the welcome screen where the conflict wasn't obvious. */}
+      <div className="fixed right-3 top-16 z-[150]">
         <IconButton
           icon={isPro ? <Sparkles /> : <User />}
           label={user ? (isPro ? "Account (Pro)" : "Account") : "Sign in"}
