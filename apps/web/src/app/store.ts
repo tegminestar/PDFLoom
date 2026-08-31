@@ -125,6 +125,7 @@ interface LoomState {
   redactOpen: boolean;
   redactBoxes: PendingRedaction[];
   isApplyingRedactions: boolean;
+  selectedRedactBoxIndex: number | null;
 
   /** E-signature mode: create a signature/initials once (draw/type/upload), then click anywhere to stamp it — or place a date/signed-timestamp mark directly, no creation step needed. */
   signOpen: boolean;
@@ -177,8 +178,12 @@ interface LoomState {
 
   setRedactOpen: (open: boolean) => void;
   addRedactBox: (pageIndex: number, rect: Rect) => void;
+  /** Replaces an existing box's rect in place (by its index in redactBoxes) — used to let a box be resized/repositioned after being drawn, instead of only delete-and-redraw. */
+  updateRedactBox: (index: number, rect: Rect) => void;
   removeRedactBox: (index: number) => void;
   clearRedactBoxes: () => void;
+  /** Selects which box (index into redactBoxes) is currently showing resize/move handles — at most one at a time, across all pages. */
+  setSelectedRedactBoxIndex: (index: number | null) => void;
   /** Rasterizes every page with pending boxes (needs a real <canvas>, so the actual rendering is done by the caller/UI and passed in) and applies the redaction, replacing the open document. */
   applyRedactions: (renderedPages: Map<number, { widthPt: number; heightPt: number; jpegBytes: Uint8Array }>) => Promise<void>;
 
@@ -259,6 +264,7 @@ async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, open
     editOpen: false,
     redactOpen: false,
     redactBoxes: [],
+    selectedRedactBoxIndex: null,
     signOpen: false,
     signPlacementKind: null,
     pendingSignaturePlacement: null,
@@ -353,6 +359,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   redactOpen: false,
   redactBoxes: [],
   isApplyingRedactions: false,
+  selectedRedactBoxIndex: null,
 
   signOpen: false,
   signPlacementKind: null,
@@ -439,6 +446,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       editOpen: false,
       redactOpen: false,
       redactBoxes: [],
+      selectedRedactBoxIndex: null,
       signOpen: false,
       signPlacementKind: null,
       pendingSignaturePlacement: null,
@@ -540,11 +548,33 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       signOpen: false,
       signPlacementKind: null,
       pendingSignaturePlacement: null,
+      // redactBoxes itself deliberately survives switching to a different
+      // mode and back (the user may be marking redactions across several
+      // tool visits) — only cleared when redact mode is closed outright, a
+      // new document loads, or the boxes are actually applied. The
+      // selected/adjustable box is narrower-scoped: nothing should still
+      // look "mid-edit" after the editing surface itself has unmounted.
+      selectedRedactBoxIndex: null,
       ...(redactOpen ? {} : { redactBoxes: [] }),
     }),
-  addRedactBox: (pageIndex, rect) => set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }] })),
-  removeRedactBox: (index) => set((s) => ({ redactBoxes: s.redactBoxes.filter((_, i) => i !== index) })),
-  clearRedactBoxes: () => set({ redactBoxes: [] }),
+  addRedactBox: (pageIndex, rect) =>
+    set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }], selectedRedactBoxIndex: s.redactBoxes.length })),
+  updateRedactBox: (index, rect) =>
+    set((s) => ({ redactBoxes: s.redactBoxes.map((b, i) => (i === index ? { ...b, rect } : b)) })),
+  removeRedactBox: (index) =>
+    set((s) => ({
+      redactBoxes: s.redactBoxes.filter((_, i) => i !== index),
+      selectedRedactBoxIndex:
+        s.selectedRedactBoxIndex === null
+          ? null
+          : s.selectedRedactBoxIndex === index
+            ? null // the removed box was the selected one
+            : s.selectedRedactBoxIndex > index
+              ? s.selectedRedactBoxIndex - 1 // shift down to keep pointing at the same logical box
+              : s.selectedRedactBoxIndex,
+    })),
+  clearRedactBoxes: () => set({ redactBoxes: [], selectedRedactBoxIndex: null }),
+  setSelectedRedactBoxIndex: (selectedRedactBoxIndex) => set({ selectedRedactBoxIndex }),
 
   applyRedactions: async (renderedPages) => {
     const { document: doc, redactBoxes, applyPdfMutation: apply } = get();
@@ -565,7 +595,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       });
       const bytes = await client.redactPages(await doc.getRawBytes(), pages);
       await apply(bytes);
-      set({ redactBoxes: [], redactOpen: false });
+      set({ redactBoxes: [], redactOpen: false, selectedRedactBoxIndex: null });
     } finally {
       set({ isApplyingRedactions: false });
     }
