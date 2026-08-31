@@ -27,15 +27,22 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Default CNAME validation requires the DNS record to already resolve
+      # to this Static Web App *before* Azure will accept the registration
+      # — a chicken-and-egg problem for a first-time apex domain, and a
+      # bare CNAME at a zone apex isn't valid DNS anyway. dns-txt-token
+      # decouples "prove you own this domain" (a TXT record) from
+      # "point traffic here" (the CNAME/ALIAS you add afterward).
       - name: Register the hostname if it isn't already, then show its current status
         run: |
           HOSTNAME="${{ github.event.inputs.hostname }}"
           if ! az staticwebapp hostname show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --hostname "$HOSTNAME" --output none 2>/dev/null; then
-            echo "--- registering $HOSTNAME ---"
+            echo "--- registering $HOSTNAME (TXT validation) ---"
             az staticwebapp hostname set \
               --name "$AZURE_SWA_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --hostname "$HOSTNAME" \
+              --validation-method dns-txt-token \
               --output none || true
           fi
           echo "--- current status ---"
