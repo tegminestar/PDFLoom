@@ -1,0 +1,95 @@
+name: Build Desktop Installers and Publish a GitHub Release
+
+# Manual only, on purpose — same standing rule as deploy-api.yml and
+# deploy-web.yml: a release is an explicit, asked-for action, never an
+# automatic side effect of pushing to master. The version becomes the git
+# tag (v<version>) and the release title, so re-running for a new version
+# doesn't require a separate commit bumping tauri.conf.json first.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0 (becomes tag v0.1.0)"
+        required: true
+        default: "0.1.0"
+
+env:
+  # Same live backend the web deploy points at — the desktop build's
+  # account/billing UI needs this baked in at build time (Vite inlines
+  # import.meta.env.*), same reasoning as deploy-web.yml. Core PDF editing
+  # itself needs none of these.
+  VITE_API_URL: https://pdfloom-api-tegminestar.azurewebsites.net
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Universal binary covers both Apple Silicon and Intel Macs from
+          # one build, at the cost of compiling twice — worth it so there's
+          # a single download rather than asking users to know their chip.
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+          # 22.04, not "ubuntu-latest" — Tauri's own guidance: building
+          # against an older glibc keeps the resulting .deb/.AppImage
+          # compatible with more users' systems than the newest LTS would.
+          - platform: ubuntu-22.04
+            args: ""
+          - platform: windows-latest
+            args: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies (webkit2gtk etc.)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      # Runs `tauri build` (which itself shells out to tauri.conf.json's
+      # beforeBuildCommand to build apps/web first) and, since a
+      # GITHUB_TOKEN + tagName are given, creates/updates a single draft
+      # GitHub Release and uploads each platform's installers to it — left
+      # as a draft deliberately so the actual artifacts can be checked
+      # before anyone sees a public release.
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        with:
+          projectPath: apps/desktop
+          tagName: v${{ github.event.inputs.version }}
+          releaseName: "PDFLoom v${{ github.event.inputs.version }}"
+          releaseBody: |
+            First public desktop build of PDFLoom. Works fully offline once installed; AI features download their model on first use.
+
+            These installers are not code-signed (no paid certificate yet):
+            - **Windows**: SmartScreen will warn on first run — click "More info" → "Run anyway".
+            - **macOS**: Gatekeeper will block it — right-click the app → "Open" the first time, or allow it in System Settings → Privacy & Security.
+            - **Linux**: no equivalent warning.
+
+            No install needed at all? The same app runs at https://happy-smoke-002c10c1e.3.azurestaticapps.net
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
