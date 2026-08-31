@@ -242,11 +242,24 @@ export function SignaturePlaceOverlay({ doc, pageNumber, scale, rotation }: Sign
     const minW = MIN_WIDTH_PT * scale;
     const minH = MIN_HEIGHT_PT * scale;
 
+    // Clamp to the intersection of the page's own bounds and the
+    // currently-visible viewport, not just the page — a PDF page is
+    // routinely taller than the browser window at any real zoom level, and
+    // a draft (or its own resize handles) dragged below the visible fold
+    // becomes physically unreachable without scrolling first. EDGE_MARGIN
+    // keeps a handle's hit-circle (centered exactly on the draft's edge)
+    // off the viewport's boundary pixel, which is outside hit-testing range.
+    const EDGE_MARGIN = 10;
+    const visibleMinX = Math.max(0, -bounds.left) + EDGE_MARGIN;
+    const visibleMaxX = Math.min(bounds.width, window.innerWidth - bounds.left) - EDGE_MARGIN;
+    const visibleMinY = Math.max(0, -bounds.top) + EDGE_MARGIN;
+    const visibleMaxY = Math.min(bounds.height, window.innerHeight - bounds.top) - EDGE_MARGIN;
+
     if (dragMode.kind === "move") {
       let x = dragMode.startRect.x + dx;
       let y = dragMode.startRect.y + dy;
-      x = Math.min(Math.max(0, x), Math.max(0, bounds.width - dragMode.startRect.width));
-      y = Math.min(Math.max(0, y), Math.max(0, bounds.height - dragMode.startRect.height));
+      x = Math.min(Math.max(visibleMinX, x), Math.max(visibleMinX, visibleMaxX - dragMode.startRect.width));
+      y = Math.min(Math.max(visibleMinY, y), Math.max(visibleMinY, visibleMaxY - dragMode.startRect.height));
 
       const centerX = x + dragMode.startRect.width / 2;
       const centerY = y + dragMode.startRect.height / 2;
@@ -282,8 +295,8 @@ export function SignaturePlaceOverlay({ doc, pageNumber, scale, rotation }: Sign
       let y = dragMode.startRect.y;
       if (spec.left) x = dragMode.startRect.x + (dragMode.startRect.width - newWidth);
       if (spec.top) y = dragMode.startRect.y + (dragMode.startRect.height - newHeight);
-      x = Math.min(Math.max(0, x), Math.max(0, bounds.width - newWidth));
-      y = Math.min(Math.max(0, y), Math.max(0, bounds.height - newHeight));
+      x = Math.min(Math.max(visibleMinX, x), Math.max(visibleMinX, visibleMaxX - newWidth));
+      y = Math.min(Math.max(visibleMinY, y), Math.max(visibleMinY, visibleMaxY - newHeight));
       setScreenRect({ x, y, width: newWidth, height: newHeight });
       return;
     }
@@ -311,16 +324,16 @@ export function SignaturePlaceOverlay({ doc, pageNumber, scale, rotation }: Sign
       if (spec.top) y -= minH - height;
       height = minH;
     }
-    if (x < 0) {
-      width += x;
-      x = 0;
+    if (x < visibleMinX) {
+      width -= visibleMinX - x;
+      x = visibleMinX;
     }
-    if (y < 0) {
-      height += y;
-      y = 0;
+    if (y < visibleMinY) {
+      height -= visibleMinY - y;
+      y = visibleMinY;
     }
-    if (x + width > bounds.width) width = bounds.width - x;
-    if (y + height > bounds.height) height = bounds.height - y;
+    if (x + width > visibleMaxX) width = visibleMaxX - x;
+    if (y + height > visibleMaxY) height = visibleMaxY - y;
 
     setScreenRect({ x, y, width, height });
   };

@@ -70,3 +70,79 @@ test("annotate a page (highlight + shape), committed marks change the rendered p
   const canvasReopenedDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
   expect(canvasReopenedDataUrl).toBe(canvasAfterDataUrl);
 });
+
+test("comment (text) box: stays adjustable while editing, then move + resize + commit bakes it in at the adjusted spot", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await page.getByLabel("Add comment", { exact: true }).click();
+
+  const canvasBeforeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  const pageBox = await page.locator("[data-page-number='1']").boundingBox();
+  if (!pageBox) throw new Error("page not found");
+  // A PDF page at "fit width" is routinely taller than the actual browser
+  // viewport, so click/drag targets are chosen relative to the viewport
+  // (always on-screen), not as raw fractions of the page's own — possibly
+  // much larger — bounding box.
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error("viewport size unavailable");
+  const firstY = pageBox.y + Math.min(pageBox.height * 0.35, viewport.height * 0.3);
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, firstY);
+
+  const textarea = page.locator("textarea");
+  await expect(textarea).toBeVisible({ timeout: 3000 });
+  await textarea.fill("Please review this section before signing.");
+
+  // Nothing is baked in yet just from placing + typing.
+  const canvasWhileEditingDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasWhileEditingDataUrl).toBe(canvasBeforeDataUrl);
+
+  // Drag via the grip handle — the box must stay editable afterward (not
+  // accidentally blurred/committed by the drag gesture).
+  const grip = page.getByText("Comment", { exact: true });
+  const gripBox = await grip.boundingBox();
+  if (!gripBox) throw new Error("drag grip not found");
+  await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(gripBox.x + 60, gripBox.y + 100, { steps: 10 });
+  await page.mouse.up();
+  await expect(textarea).toHaveValue("Please review this section before signing.");
+
+  // Resize via the bottom-right handle — same "still editable after" check.
+  const seHandle = page.locator(".cursor-nwse-resize").last();
+  const seBox = await seHandle.boundingBox();
+  if (!seBox) throw new Error("resize handle not found");
+  await page.mouse.move(seBox.x + seBox.width / 2, seBox.y + seBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(seBox.x + 80, seBox.y + 40, { steps: 10 });
+  await page.mouse.up();
+  await expect(textarea).toHaveValue("Please review this section before signing.");
+
+  // Commit via the checkmark button.
+  await page.getByRole("button", { name: "Add comment" }).last().click();
+  await expect(page.locator("textarea")).toHaveCount(0);
+  await expect
+    .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
+    .not.toBe(canvasBeforeDataUrl);
+  const canvasAfterCommitDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  // A second box, discarded via the X button, must not touch the document.
+  const secondY = pageBox.y + Math.min(pageBox.height * 0.6, viewport.height * 0.55);
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, secondY);
+  const discardBtn = page.getByRole("button", { name: "Discard comment" });
+  await expect(discardBtn).toBeVisible({ timeout: 3000 });
+  await discardBtn.click();
+  await expect(page.locator("textarea")).toHaveCount(0);
+  const canvasAfterDiscardDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasAfterDiscardDataUrl).toBe(canvasAfterCommitDataUrl);
+
+  // A third box, finalized by clicking elsewhere on the page instead of the checkmark.
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, secondY);
+  await page.locator("textarea").fill("Click-away commit test");
+  await page.mouse.click(pageBox.x + pageBox.width * 0.2, firstY);
+  await expect
+    .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
+    .not.toBe(canvasAfterDiscardDataUrl);
+});
