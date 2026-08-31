@@ -151,3 +151,95 @@ export async function cropPages(source: Uint8Array, pageIndices: number[], box: 
   }
   return finish(doc);
 }
+
+export interface PageSize {
+  width: number;
+  height: number;
+}
+
+/** Named standard sizes for the resize-pages UI's preset picker, in PDF points. */
+export const STANDARD_PAGE_SIZES: Record<string, { label: string; size: PageSize }> = {
+  letter: { label: "US Letter (8.5 × 11 in)", size: { width: 612, height: 792 } },
+  legal: { label: "US Legal (8.5 × 14 in)", size: { width: 612, height: 1008 } },
+  tabloid: { label: "Tabloid (11 × 17 in)", size: { width: 792, height: 1224 } },
+  a4: { label: "A4 (210 × 297 mm)", size: { width: 595.28, height: 841.89 } },
+  a3: { label: "A3 (297 × 420 mm)", size: { width: 841.89, height: 1190.55 } },
+};
+
+/**
+ * Resizes specific pages (0-based indices) to a target size in PDF points —
+ * matches Acrobat's "Resize Pages": existing content is uniformly scaled to
+ * fit within the new size (never stretched/distorted) and centered, not
+ * reflowed. `page.scale()` moves size+content+annotations together, so the
+ * remaining `setSize`+`translateContent` pair only has to grow the box to
+ * the exact target and re-center the now-smaller-on-one-axis content in it.
+ */
+export async function resizePages(source: Uint8Array, pageIndices: number[], targetSize: PageSize): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const pageCount = doc.getPageCount();
+  for (const index of pageIndices) {
+    if (index < 0 || index >= pageCount) throw new Error(`Page index ${index} out of range`);
+    const page = doc.getPage(index);
+    const { width: srcWidth, height: srcHeight } = page.getSize();
+    const scale = Math.min(targetSize.width / srcWidth, targetSize.height / srcHeight);
+    page.scale(scale, scale);
+    const scaledWidth = srcWidth * scale;
+    const scaledHeight = srcHeight * scale;
+    page.setSize(targetSize.width, targetSize.height);
+    page.translateContent((targetSize.width - scaledWidth) / 2, (targetSize.height - scaledHeight) / 2);
+  }
+  return finish(doc);
+}
+
+export interface NUpOptions {
+  /** Grid layout — e.g. 2×1 for a classic side-by-side 2-up, 2×2 for 4-up. */
+  columns: number;
+  rows: number;
+  /** Output sheet size — defaults to Letter portrait; pass a landscape size (width > height) for side-by-side layouts. */
+  sheetSize?: PageSize;
+}
+
+/**
+ * Combines multiple source pages onto fewer, larger output sheets in a grid
+ * — matches Acrobat/most printers' "Multiple pages per sheet". Each source
+ * page is embedded once (`embedPdf`) then drawn into its grid cell, scaled
+ * to fit (preserving aspect ratio, centered, not stretched/rotated) rather
+ * than assuming a uniform source page size.
+ */
+export async function nUpPages(source: Uint8Array, pageIndices: number[] | undefined, options: NUpOptions): Promise<Uint8Array> {
+  const { columns, rows } = options;
+  if (columns < 1 || rows < 1) throw new Error("columns and rows must each be at least 1");
+  const src = await loadForMutation(source);
+  const indices = pageIndices ?? src.getPageIndices();
+  if (indices.length === 0) throw new Error("nUpPages requires at least one page index");
+  const sheetSize = options.sheetSize ?? { width: 612, height: 792 };
+  const pagesPerSheet = columns * rows;
+
+  const out = await PDFDocument.create();
+  const embedded = await out.embedPdf(src, indices);
+
+  const cellWidth = sheetSize.width / columns;
+  const cellHeight = sheetSize.height / rows;
+  const margin = Math.min(cellWidth, cellHeight) * 0.04;
+
+  for (let sheetStart = 0; sheetStart < embedded.length; sheetStart += pagesPerSheet) {
+    const sheetPage = out.addPage([sheetSize.width, sheetSize.height]);
+    const sheetPages = embedded.slice(sheetStart, sheetStart + pagesPerSheet);
+    sheetPages.forEach((embeddedPage, i) => {
+      const col = i % columns;
+      const row = Math.floor(i / columns);
+      const availWidth = cellWidth - margin * 2;
+      const availHeight = cellHeight - margin * 2;
+      const scale = Math.min(availWidth / embeddedPage.width, availHeight / embeddedPage.height);
+      const drawWidth = embeddedPage.width * scale;
+      const drawHeight = embeddedPage.height * scale;
+      const cellX = col * cellWidth;
+      const cellTopY = sheetSize.height - row * cellHeight;
+      const x = cellX + (cellWidth - drawWidth) / 2;
+      const y = cellTopY - cellHeight + (cellHeight - drawHeight) / 2;
+      sheetPage.drawPage(embeddedPage, { x, y, xScale: scale, yScale: scale });
+    });
+  }
+
+  return finish(out);
+}

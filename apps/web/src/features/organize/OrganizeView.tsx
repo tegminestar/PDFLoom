@@ -5,6 +5,8 @@ import {
   Crop,
   FilePlus2,
   FileUp,
+  Grid2x2,
+  Maximize2,
   RotateCcw,
   RotateCw,
   Scissors,
@@ -14,7 +16,10 @@ import {
 import { useCallback, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useLoomStore } from "../../app/store";
 import { CropDialog } from "./CropDialog";
-import { OrganizePageTile } from "./OrganizePageTile";
+import { NUpDialog } from "./NUpDialog";
+import { OrganizePageTile, type DropEdge } from "./OrganizePageTile";
+import { reorderByEdge } from "./reorder";
+import { ResizeDialog } from "./ResizeDialog";
 import { SplitDialog } from "./SplitDialog";
 
 export function OrganizeView() {
@@ -27,9 +32,11 @@ export function OrganizeView() {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragPage, setDragPage] = useState<number | null>(null);
-  const [dropTargetPage, setDropTargetPage] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ pageNumber: number; edge: DropEdge } | null>(null);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [resizeDialogOpen, setResizeDialogOpen] = useState(false);
+  const [nUpDialogOpen, setNUpDialogOpen] = useState(false);
   const lastClickedRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,6 +122,11 @@ export function OrganizeView() {
       await storage.saveAs(new Uint8Array(extracted), suggestedName);
       toast.success(`Extracted ${selected.size} page${selected.size === 1 ? "" : "s"}`);
     } catch (error) {
+      // Cancelling the native save dialog is a normal, expected action —
+      // not a failure worth an error toast (saveAs throws AbortError for
+      // it rather than resolving, specifically so this is distinguishable
+      // from every other kind of failure).
+      if (error instanceof DOMException && error.name === "AbortError") return;
       toast.error("Couldn't extract pages", error instanceof Error ? error.message : undefined);
     } finally {
       setIsProcessing(false);
@@ -134,19 +146,18 @@ export function OrganizeView() {
   };
 
   const handleDragStart = useCallback((pageNumber: number) => setDragPage(pageNumber), []);
-  const handleDragOverTile = useCallback((pageNumber: number) => setDropTargetPage(pageNumber), []);
+  const handleDragOverTile = useCallback(
+    (pageNumber: number, edge: DropEdge) => setDropTarget((prev) => (prev?.pageNumber === pageNumber && prev.edge === edge ? prev : { pageNumber, edge })),
+    [],
+  );
   const handleDrop = useCallback(
-    (targetPage: number) => {
+    (targetPage: number, edge: DropEdge) => {
       const source = dragPage;
       setDragPage(null);
-      setDropTargetPage(null);
+      setDropTarget(null);
       if (source === null || source === targetPage || !meta) return;
 
-      const order = pageNumbers.map((p) => p - 1); // 0-based
-      const fromIdx = order.indexOf(source - 1);
-      const toIdx = order.indexOf(targetPage - 1);
-      order.splice(fromIdx, 1);
-      order.splice(toIdx, 0, source - 1);
+      const order = reorderByEdge(pageNumbers, source, targetPage, edge);
 
       void runMutation("Reordered pages", async (bytes) => {
         const client = await getPdfWorkerClient();
@@ -219,6 +230,14 @@ export function OrganizeView() {
             <Scissors className="h-4 w-4" />
             Split…
           </Button>
+          <Button variant="secondary" size="sm" disabled={isProcessing} onClick={() => setResizeDialogOpen(true)}>
+            <Maximize2 className="h-4 w-4" />
+            Resize…
+          </Button>
+          <Button variant="secondary" size="sm" disabled={isProcessing} onClick={() => setNUpDialogOpen(true)}>
+            <Grid2x2 className="h-4 w-4" />
+            Multiple per sheet…
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -250,7 +269,7 @@ export function OrganizeView() {
               onDragStart={handleDragStart}
               onDragOverTile={handleDragOverTile}
               onDrop={handleDrop}
-              isDropTarget={dropTargetPage === pageNumber}
+              dropEdge={dropTarget?.pageNumber === pageNumber ? dropTarget.edge : null}
               isDragging={dragPage === pageNumber}
             />
           ))}
@@ -261,6 +280,8 @@ export function OrganizeView() {
       {selected.size === 1 && (
         <CropDialog open={cropDialogOpen} onOpenChange={setCropDialogOpen} pageNumber={[...selected][0]!} />
       )}
+      <ResizeDialog open={resizeDialogOpen} onOpenChange={setResizeDialogOpen} selectedPageNumbers={[...selected]} />
+      <NUpDialog open={nUpDialogOpen} onOpenChange={setNUpDialogOpen} selectedPageNumbers={[...selected]} />
     </div>
   );
 }

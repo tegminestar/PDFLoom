@@ -2,6 +2,9 @@ import type { PdfDocument } from "@pdfloom/core";
 import { cn } from "@pdfloom/ui";
 import { CheckCircle2 } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
+import type { DropEdge } from "./reorder";
+
+export type { DropEdge };
 
 const TILE_SCALE = 0.32;
 
@@ -11,9 +14,10 @@ export interface OrganizePageTileProps {
   selected: boolean;
   onToggleSelect: (pageNumber: number, event: MouseEvent) => void;
   onDragStart: (pageNumber: number) => void;
-  onDragOverTile: (pageNumber: number) => void;
-  onDrop: (pageNumber: number) => void;
-  isDropTarget: boolean;
+  onDragOverTile: (pageNumber: number, edge: DropEdge) => void;
+  onDrop: (pageNumber: number, edge: DropEdge) => void;
+  /** Which edge to show the insertion-line indicator on, or null if this tile isn't the current drop target. */
+  dropEdge: DropEdge | null;
   isDragging: boolean;
 }
 
@@ -25,7 +29,7 @@ export function OrganizePageTile({
   onDragStart,
   onDragOverTile,
   onDrop,
-  isDropTarget,
+  dropEdge,
   isDragging,
 }: OrganizePageTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,20 +82,37 @@ export function OrganizePageTile({
       }}
       onDragOver={(e) => {
         e.preventDefault();
-        onDragOverTile(pageNumber);
+        // Which half of this tile the cursor is over decides insert-before
+        // vs insert-after — a single "this tile is the target" highlight is
+        // ambiguous about which side the dragged page lands on (and, worse,
+        // made the actual drop position depend on drag direction). An
+        // explicit edge, shown as a line rather than a tile-wide highlight,
+        // removes both problems.
+        const rect = e.currentTarget.getBoundingClientRect();
+        const edge: DropEdge = e.clientX - rect.left < rect.width / 2 ? "before" : "after";
+        onDragOverTile(pageNumber, edge);
       }}
       onDrop={(e) => {
         e.preventDefault();
-        onDrop(pageNumber);
+        const rect = e.currentTarget.getBoundingClientRect();
+        const edge: DropEdge = e.clientX - rect.left < rect.width / 2 ? "before" : "after";
+        onDrop(pageNumber, edge);
       }}
       onClick={(e) => onToggleSelect(pageNumber, e)}
       className={cn(
         "group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-[--radius-md] border-2 p-3 transition-colors",
         selected ? "border-primary bg-primary-muted" : "border-transparent hover:bg-surface-hover",
-        isDropTarget && "border-ai",
         isDragging && "opacity-40",
       )}
     >
+      {dropEdge && (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-y-1 w-0.5 rounded-full bg-ai",
+            dropEdge === "before" ? "-left-0.5" : "-right-0.5",
+          )}
+        />
+      )}
       <div
         className="flex items-center justify-center bg-canvas shadow-[0_1px_4px_var(--loom-canvas-shadow)]"
         style={{ width: widthPt * TILE_SCALE, height: heightPt * TILE_SCALE }}

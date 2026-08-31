@@ -4,7 +4,8 @@ export type { TextLayer } from "pdfjs-dist";
 
 export { getPdfWorkerClient } from "./workers/pdf-worker-client";
 export type { PdfWorkerApi } from "./workers/pdf-worker-client";
-export type { PageRange, RotationDelta, CropBox } from "./pdf/organize";
+export type { PageRange, RotationDelta, CropBox, PageSize, NUpOptions } from "./pdf/organize";
+export { STANDARD_PAGE_SIZES } from "./pdf/organize";
 export type { Quad, Point, Rect, RgbColor, StampPreset } from "./pdf/annotations";
 export type {
   TextWatermarkOptions,

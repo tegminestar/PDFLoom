@@ -68,7 +68,15 @@ export function Toolbar() {
     // exports the exact bytes the document was opened from to a
     // user-chosen location: a real, complete "Save As" today.
     const bytes = await document_.getRawBytes();
-    await storage.saveAs(bytes, meta.name);
+    try {
+      await storage.saveAs(bytes, meta.name);
+    } catch (error) {
+      // Cancelling the native save dialog is a normal, expected user
+      // action (not a failure) — saveAs throws AbortError for it rather
+      // than resolving, so this stays silent the same way it always has.
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      throw error;
+    }
   };
 
   return (

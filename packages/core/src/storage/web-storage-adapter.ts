@@ -113,21 +113,25 @@ export class WebStorageAdapter implements StorageAdapter {
     triggerDownload(bytes, suggestedName);
   }
 
+  /**
+   * Note: a user cancelling the native save picker throws a DOMException
+   * named "AbortError" rather than resolving — this used to be swallowed
+   * into a `null` return, indistinguishable from the "no File System
+   * Access support, fell back to a real download" case (also `null`),
+   * which made every caller show a false "success" toast on cancel.
+   * Callers should catch AbortError specifically and treat it as neither
+   * success nor failure — see OrganizeView's handleExtract for the pattern.
+   */
   async saveAs(bytes: Uint8Array, suggestedName: string): Promise<FileSystemFileHandle | null> {
     if (this.capabilities.fileSystemAccess) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName,
-          types: [{ description: "PDF document", accept: { "application/pdf": [".pdf"] } }],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(bytes as BufferSource);
-        await writable.close();
-        return handle;
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return null;
-        throw error;
-      }
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types: [{ description: "PDF document", accept: { "application/pdf": [".pdf"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(bytes as BufferSource);
+      await writable.close();
+      return handle;
     }
     triggerDownload(bytes, suggestedName);
     return null;
