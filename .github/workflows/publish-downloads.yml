@@ -1,0 +1,120 @@
+name: Publish Desktop Downloads to Blob Storage
+
+# Deliberately separate from release-desktop.yml, not auto-chained after
+# it — building produces a draft GitHub release (private repo, nobody
+# outside collaborators can reach it) specifically so installers can be
+# tried before anyone else can download them. This is the explicit "yes,
+# make this version public" step, run only when asked.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: pdfloom-rg
+  AZURE_LOCATION: eastus
+  AZURE_STORAGE_ACCOUNT: pdfloomdownloads
+  AZURE_CONTAINER: downloads
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the release's installers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p ./release-assets
+          gh release download "${{ github.event.inputs.tag }}" --repo "${{ github.repository }}" --dir ./release-assets --clobber
+          ls -la ./release-assets
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure the storage account and public container exist
+        run: |
+          az group create --name "$AZURE_RESOURCE_GROUP" --location "$AZURE_LOCATION" --output none
+
+          if ! az storage account show --name "$AZURE_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP" --output none 2>/dev/null; then
+            az storage account create \
+              --name "$AZURE_STORAGE_ACCOUNT" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --location "$AZURE_LOCATION" \
+              --sku Standard_LRS \
+              --kind StorageV2 \
+              --allow-blob-public-access true \
+              --min-tls-version TLS1_2 \
+              --output none
+          fi
+
+          ACCOUNT_KEY=$(az storage account keys list --account-name "$AZURE_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP" --query "[0].value" -o tsv)
+          echo "::add-mask::$ACCOUNT_KEY"
+          echo "ACCOUNT_KEY=$ACCOUNT_KEY" >> "$GITHUB_ENV"
+
+          if ! az storage container show --name "$AZURE_CONTAINER" --account-name "$AZURE_STORAGE_ACCOUNT" --account-key "$ACCOUNT_KEY" --output none 2>/dev/null; then
+            az storage container create \
+              --name "$AZURE_CONTAINER" \
+              --account-name "$AZURE_STORAGE_ACCOUNT" \
+              --account-key "$ACCOUNT_KEY" \
+              --public-access blob \
+              --output none
+          fi
+
+      # Every asset is uploaded under its real, versioned filename (so old
+      # versions stay reachable) AND copied to a stable "PDFLoom-latest.*"
+      # name — the landing page links to the stable names so it never
+      # needs to change across future releases; only this workflow does,
+      # each time a new version is published.
+      - name: Upload installers, versioned and as stable "latest" names
+        run: |
+          declare -A LATEST_NAME=(
+            ["x64-setup.exe"]="PDFLoom-latest-setup.exe"
+            ["x64_en-US.msi"]="PDFLoom-latest.msi"
+            ["universal.dmg"]="PDFLoom-latest.dmg"
+            ["amd64.deb"]="PDFLoom-latest.deb"
+            ["amd64.AppImage"]="PDFLoom-latest.AppImage"
+            ["x86_64.rpm"]="PDFLoom-latest.rpm"
+          )
+          for file in ./release-assets/*; do
+            name=$(basename "$file")
+            case "$name" in
+              *.app.tar.gz) continue ;; # raw macOS app bundle, not a real installer
+            esac
+            az storage blob upload \
+              --account-name "$AZURE_STORAGE_ACCOUNT" --account-key "$ACCOUNT_KEY" \
+              --container-name "$AZURE_CONTAINER" --name "$name" --file "$file" \
+              --overwrite --output none
+            for suffix in "${!LATEST_NAME[@]}"; do
+              case "$name" in
+                *"$suffix")
+                  az storage blob upload \
+                    --account-name "$AZURE_STORAGE_ACCOUNT" --account-key "$ACCOUNT_KEY" \
+                    --container-name "$AZURE_CONTAINER" --name "${LATEST_NAME[$suffix]}" --file "$file" \
+                    --overwrite --output none
+                  ;;
+              esac
+            done
+          done
+          echo "--- uploaded blobs ---"
+          az storage blob list --account-name "$AZURE_STORAGE_ACCOUNT" --account-key "$ACCOUNT_KEY" --container-name "$AZURE_CONTAINER" --query "[].name" -o tsv
+
+      - name: Print public download URLs and verify they're actually reachable
+        run: |
+          BASE="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER"
+          echo "Windows (exe):     $BASE/PDFLoom-latest-setup.exe"
+          echo "Windows (msi):     $BASE/PDFLoom-latest.msi"
+          echo "macOS (dmg):       $BASE/PDFLoom-latest.dmg"
+          echo "Linux (deb):       $BASE/PDFLoom-latest.deb"
+          echo "Linux (AppImage):  $BASE/PDFLoom-latest.AppImage"
+          echo "Linux (rpm):       $BASE/PDFLoom-latest.rpm"
+          echo "--- anonymous HEAD check on each (no Azure auth — proves public access actually works) ---"
+          for path in PDFLoom-latest-setup.exe PDFLoom-latest.msi PDFLoom-latest.dmg PDFLoom-latest.deb PDFLoom-latest.AppImage PDFLoom-latest.rpm; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -I "$BASE/$path")
+            echo "$path -> HTTP $code"
+          done
