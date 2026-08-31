@@ -199,8 +199,10 @@ they're the actual, considered definition of what Pro is for.
 
 ### Current status
 
-Web app is live and verified end-to-end. Backend billing API is live.
-Desktop installers exist for v0.1.0 and are publicly downloadable. No
-custom domain yet (Azure-assigned hostnames only). No app-store
+Web app is live at its custom domain, **pdfloom.app** (Cloudflare DNS,
+Azure-managed free TLS certificate), verified end-to-end — the original
+Azure-assigned hostname also still resolves. Backend billing API is live,
+with CORS/Stripe redirect targets pointed at the custom domain. Desktop
+installers exist for v0.1.0 and are publicly downloadable. No app-store
 submission (Microsoft Store / Mac App Store) — GitHub Releases + Blob
 Storage is the only distribution channel today.

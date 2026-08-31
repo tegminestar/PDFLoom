@@ -8,7 +8,7 @@ no API key. See [PRD.md](PRD.md) for the full product requirements and the
 engineering standards this repo is held to.
 
 **Live**
-- Web app: https://happy-smoke-002c10c1e.3.azurestaticapps.net
+- Web app: https://pdfloom.app (custom domain via Cloudflare DNS; the Azure-assigned `https://happy-smoke-002c10c1e.3.azurestaticapps.net` also still works)
 - Desktop downloads (Windows/macOS/Linux): `https://pdfloomdownloads.blob.core.windows.net/downloads/PDFLoom-latest-*`
 - Billing API health check: https://pdfloom-api-tegminestar.azurewebsites.net/api/health
 
