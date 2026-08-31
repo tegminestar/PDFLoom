@@ -22,6 +22,12 @@ env:
 jobs:
   configure:
     runs-on: ubuntu-latest
+    # Real safety net: `az staticwebapp hostname set` with TXT validation
+    # turned out to block for 15+ minutes with no output at all (presumably
+    # polling for a TXT record that can't exist yet, since this call is
+    # what generates the token to put in it) — the `timeout` wrapper below
+    # is the primary fix, this is a hard backstop in case that's not enough.
+    timeout-minutes: 5
     steps:
       - uses: azure/login@v2
         with:
@@ -32,24 +38,33 @@ jobs:
       # — a chicken-and-egg problem for a first-time apex domain, and a
       # bare CNAME at a zone apex isn't valid DNS anyway. dns-txt-token
       # decouples "prove you own this domain" (a TXT record) from
-      # "point traffic here" (the CNAME/ALIAS you add afterward).
-      - name: Register the hostname if it isn't already, then show its current status
+      # "point traffic here" (the CNAME/ALIAS you add afterward). The
+      # `set` call itself blocks waiting on validation rather than
+      # returning the token immediately, so it's wrapped in `timeout` —
+      # the hostname resource + its token exist as soon as the API call
+      # lands regardless, so killing the CLI process after a short wait
+      # and reading it back via a separate `hostname show` is safe.
+      - name: Register the hostname if it isn't already
         run: |
           HOSTNAME="${{ github.event.inputs.hostname }}"
           if ! az staticwebapp hostname show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --hostname "$HOSTNAME" --output none 2>/dev/null; then
             echo "--- registering $HOSTNAME (TXT validation) ---"
-            az staticwebapp hostname set \
+            timeout 60 az staticwebapp hostname set \
               --name "$AZURE_SWA_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --hostname "$HOSTNAME" \
               --validation-method dns-txt-token \
-              --output none || true
+              --output none || echo "(set call didn't return within 60s — checking what was actually created below)"
+          else
+            echo "--- $HOSTNAME already registered ---"
           fi
-          echo "--- current status ---"
+
+      - name: Show its current status (the validation token, if pending)
+        run: |
           az staticwebapp hostname show \
             --name "$AZURE_SWA_NAME" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --hostname "$HOSTNAME" \
+            --hostname "${{ github.event.inputs.hostname }}" \
             -o json
 
       - name: Print the Static Web App's own default hostname (what the apex record should point at)
