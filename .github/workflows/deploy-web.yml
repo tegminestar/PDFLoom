@@ -1,0 +1,102 @@
+name: Deploy Web to Azure Static Web Apps
+
+# Manual only, on purpose — same standing rule as deploy-api.yml: deployment
+# is an explicit, asked-for action, never an automatic side effect of
+# pushing to master.
+on:
+  workflow_dispatch:
+
+env:
+  AZURE_RESOURCE_GROUP: pdfloom-rg
+  # The resource group already exists in eastus (from the API's earlier
+  # Functions attempt) and a group's location can't be changed after
+  # creation — but resources *inside* it can be in a different region.
+  # westus2 is one of Static Web Apps' Free-tier-supported regions and
+  # matches where the API's own App Service plan ended up for the same
+  # reason (eastus had 0 quota for the API's plan).
+  AZURE_LOCATION: eastus
+  AZURE_SWA_LOCATION: westus2
+  AZURE_SWA_NAME: pdfloom-web
+  # The already-live backend (apps/api) — the frontend's Pro/billing calls
+  # (checkout, billing portal, account status) need this baked in at build
+  # time since Vite inlines import.meta.env.* into the bundle. Core PDF
+  # editing itself never calls this — only the account/billing UI does.
+  VITE_API_URL: https://pdfloom-api-tegminestar.azurewebsites.net
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      # Root build script sequences core -> ui -> web (web's own `tsc -b`
+      # needs core/ui already built, not raw source) and gates on a real
+      # typecheck before anything gets deployed, matching deploy-api.yml.
+      - name: Typecheck and build apps/web (and its workspace deps)
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: pnpm run build
+
+      - name: Confirm the SPA fallback config made it into the build output
+        run: test -f apps/web/dist/staticwebapp.config.json
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Ensure resource group exists
+        run: |
+          az group create \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --location "$AZURE_LOCATION" \
+            --output none
+
+      - name: Ensure Static Web App exists (Free tier — $0/month)
+        run: |
+          if ! az staticwebapp show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --output none 2>/dev/null; then
+            az staticwebapp create \
+              --name "$AZURE_SWA_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --location "$AZURE_SWA_LOCATION" \
+              --sku Free \
+              --output none
+          fi
+
+      - name: Get deployment token
+        id: token
+        run: |
+          TOKEN=$(az staticwebapp secrets list --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --query "properties.apiKey" -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy the already-built app to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.token.outputs.token }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: apps/web/dist
+          output_location: ""
+          skip_app_build: true
+
+      - name: Print the deployed URL
+        id: url
+        run: |
+          HOSTNAME=$(az staticwebapp show --name "$AZURE_SWA_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --query "defaultHostname" -o tsv)
+          echo "Web URL: https://$HOSTNAME"
+          echo "web_url=https://$HOSTNAME" >> "$GITHUB_OUTPUT"
+
+      - name: Health check
+        run: |
+          sleep 20
+          curl -sL -w "\nSTATUS:%{http_code}\n" "${{ steps.url.outputs.web_url }}" --max-time 30 || true
