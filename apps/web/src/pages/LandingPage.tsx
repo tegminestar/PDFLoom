@@ -1,5 +1,6 @@
 import { Button, Mark, cn } from "@pdfloom/ui";
 import {
+  ChevronDown,
   Cpu,
   Edit3,
   EyeOff,
@@ -91,6 +92,44 @@ const AI_FEATURES: AiCard[] = [
   { icon: Mic, title: "Voice-to-fill", description: "Fill out form fields by speaking, using your browser's own speech API." },
 ];
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+const FAQS: FaqItem[] = [
+  {
+    question: "Will my PDFs be shared with anyone else, or end up somewhere on the internet?",
+    answer:
+      "No. PDFLoom does all of its editing and AI work locally in your browser — your file is never uploaded to a server, so it's never seen by us, stored anywhere, or mixed in with anyone else's documents. Everything happens on your own device.",
+  },
+  {
+    question: "Is PDFLoom really free?",
+    answer:
+      "Yes. There's no account, no subscription, and no API key to add — including for the AI features. The app and the AI models it uses both run for free in your browser.",
+  },
+  {
+    question: "Do I need an internet connection to use it?",
+    answer:
+      "Only to load the app the first time and to download the AI models once. After that, PDFLoom keeps working offline — there's no server round-trip for editing or for AI features like summarize, translate, or chat.",
+  },
+  {
+    question: "How accurate is the AI (summaries, redaction, chat)?",
+    answer:
+      "It's best-effort and grounded in your document's own text, but AI can still miss things or get details wrong — always review AI-suggested redactions and summaries before relying on them, especially for sensitive or legal documents.",
+  },
+  {
+    question: "What happens to my file when I close the tab?",
+    answer:
+      "Nothing persists anywhere outside your device. PDFLoom keeps no server-side copy or history — if you want to keep your work, save the file to your computer before closing.",
+  },
+  {
+    question: "Which browsers does PDFLoom support?",
+    answer:
+      "Any modern Chromium-based browser (Chrome, Edge, Brave) or Firefox. PDFLoom uses standard browser and WebAssembly features to do the editing and AI work on-device — no plugin or extension required.",
+  },
+];
+
 function SectionHeading({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
   return (
     <div className="flex max-w-2xl flex-col gap-3">
@@ -119,6 +158,9 @@ export function LandingPage() {
             </a>
             <a href="#privacy" className="hover:text-text">
               Privacy
+            </a>
+            <a href="#faq" className="hover:text-text">
+              FAQ
             </a>
           </nav>
           <Button asChild variant="primary" size="sm">
@@ -229,6 +271,26 @@ export function LandingPage() {
               value is ever uploaded to a server. There's no account to create and no data to hand over. Open a
               file, do the work, and close the tab.
             </p>
+          </div>
+        </section>
+
+        <section id="faq" className="border-t border-border px-6 py-20 sm:py-28">
+          <div className="mx-auto flex max-w-3xl flex-col gap-12">
+            <SectionHeading eyebrow="FAQ" title="Frequently asked questions" />
+            <div className="flex flex-col gap-3">
+              {FAQS.map(({ question, answer }) => (
+                <details
+                  key={question}
+                  className="group rounded-[--radius-lg] border border-border bg-bg-elevated px-5 py-4 open:pb-5"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-text marker:content-none">
+                    {question}
+                    <ChevronDown className="h-4 w-4 shrink-0 text-text-faint transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-3 text-sm leading-relaxed text-text-muted">{answer}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -348,9 +348,25 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
             onPointerMove={handleTextDragMove}
             onPointerUp={handleTextDragEnd}
             onPointerCancel={handleTextDragEnd}
-            className="absolute z-10 cursor-move border-2 border-dashed border-primary outline-none"
+            className="absolute z-10 cursor-move overflow-hidden border-2 border-dashed border-primary bg-white outline-none"
             style={{ left: textEdit.rect.x, top: textEdit.rect.y, width: textEdit.rect.width, height: textEdit.rect.height }}
           >
+            {/* Live preview of the replacement — mirrors addFreeTextInternal's
+                sizing (fontSize = 72% of box height, 4pt/[scale] padding) so
+                what's shown while dragging matches what gets baked in on commit. */}
+            <div
+              aria-hidden
+              className="pointer-events-none h-full w-full overflow-hidden whitespace-pre-wrap break-words text-[#0f0f14]"
+              style={{
+                padding: 4 * scale,
+                fontFamily: "Helvetica, Arial, sans-serif",
+                fontSize: Math.max(6, textEdit.rect.height * 0.72),
+                lineHeight: 1.25,
+              }}
+            >
+              {textValue}
+            </div>
+
             {RESIZE_HANDLES.map((h) => (
               <div
                 key={h}

@@ -8,12 +8,102 @@
       name="description"
       content="PDFLoom — a premium, AI-native PDF editor. Edit, organize, and sign PDFs entirely in your browser. Your files never leave your device."
     />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://pdfloom.app/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PDFLoom" />
+    <meta property="og:url" content="https://pdfloom.app/" />
+    <meta property="og:title" content="PDFLoom — Weave every page" />
+    <meta
+      property="og:description"
+      content="A premium PDF editor with real local AI built in — free, with no account and no API key. Everything runs in your browser, so your files never leave your device."
+    />
+    <meta property="og:image" content="https://pdfloom.app/icons/icon-512.png" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="PDFLoom — Weave every page" />
+    <meta
+      name="twitter:description"
+      content="A premium PDF editor with real local AI built in — free, with no account and no API key. Everything runs in your browser, so your files never leave your device."
+    />
+    <meta name="twitter:image" content="https://pdfloom.app/icons/icon-512.png" />
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <title>PDFLoom — Weave every page</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "PDFLoom",
+            "url": "https://pdfloom.app/",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Any (runs in-browser)",
+            "description": "A premium, AI-native PDF editor that runs entirely in your browser — organize, edit, convert, fill forms, sign, and protect PDFs with no account and no upload.",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Will my PDFs be shared with anyone else, or end up somewhere on the internet?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. PDFLoom does all of its editing and AI work locally in your browser — your file is never uploaded to a server, so it's never seen by us, stored anywhere, or mixed in with anyone else's documents. Everything happens on your own device."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is PDFLoom really free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. There's no account, no subscription, and no API key to add — including for the AI features. The app and the AI models it uses both run for free in your browser."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I need an internet connection to use it?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Only to load the app the first time and to download the AI models once. After that, PDFLoom keeps working offline — there's no server round-trip for editing or for AI features like summarize, translate, or chat."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How accurate is the AI (summaries, redaction, chat)?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "It's best-effort and grounded in your document's own text, but AI can still miss things or get details wrong — always review AI-suggested redactions and summaries before relying on them, especially for sensitive or legal documents."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What happens to my file when I close the tab?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nothing persists anywhere outside your device. PDFLoom keeps no server-side copy or history — if you want to keep your work, save the file to your computer before closing."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Which browsers does PDFLoom support?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Any modern Chromium-based browser (Chrome, Edge, Brave) or Firefox. PDFLoom uses standard browser and WebAssembly features to do the editing and AI work on-device — no plugin or extension required."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
