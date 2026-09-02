@@ -34,6 +34,15 @@ jobs:
       - name: Install workspace deps
         run: pnpm install --frozen-lockfile
 
+      - name: Security audit
+        # GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq: image-size DoS parsers,
+        # pulled in transitively via apps/web's pptxgenjs. No patched
+        # version exists upstream yet; not exploitable here since that path
+        # only ever feeds it PNGs this app renders itself (see the note by
+        # the pptxgenjs import in apps/web/src/features/quick-create/export.ts).
+        # Remove the --ignore flags once image-size ships a fix.
+        run: pnpm audit --audit-level high --ignore GHSA-w3rx-r6r6-pgpr --ignore GHSA-5p2g-fcmc-qvqq
+
       - name: Typecheck apps/api
         run: pnpm --filter @pdfloom/api run typecheck
 

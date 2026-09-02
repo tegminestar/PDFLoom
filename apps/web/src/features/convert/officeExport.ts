@@ -10,6 +10,11 @@ import PptxGenJS from "pptxgenjs";
  * space/tab-delimited row per line (XLSX), or one slide per page (PPTX) —
  * not a layout-preserving conversion. The UI must say so; see
  * ExportOfficeDialog's description copy.
+ *
+ * pptxgenjs pulls in image-size, which has open, currently unpatched DoS
+ * advisories in its ICNS/JXL/HEIF parsers (CVE-2025-71329/71330) — not
+ * reachable here, since buildPptx below is text-only and never calls
+ * addImage. Re-check this note if image slides are ever added.
  */
 
 export async function buildDocx(pages: string[], title?: string): Promise<Blob> {

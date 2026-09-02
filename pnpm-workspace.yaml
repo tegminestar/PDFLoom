@@ -1,6 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+overrides:
+  adm-zip: ">=0.6.0"
+  sharp: ">=0.35.0"
+  qs: ">=6.16.0"
+  uuid: ">=11.1.1"
 allowBuilds:
   # This app is 100% browser/WASM — these packages' native Node addons are
   # never used (@huggingface/transformers only needs its browser bundle
@@ -9,3 +14,7 @@ allowBuilds:
   protobufjs: false
   sharp: false
   tesseract.js: true
+auditConfig:
+  ignoreGhsas:
+    - GHSA-w3rx-r6r6-pgpr
+    - GHSA-5p2g-fcmc-qvqq
