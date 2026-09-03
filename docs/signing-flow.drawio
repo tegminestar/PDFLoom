@@ -1,0 +1,89 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram name="Multi-Party Signing Flow" id="pdfloom-signing-flow">
+    <mxGraphModel dx="1200" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Lane backgrounds -->
+        <mxCell id="lane-owner" value="Owner (signed in)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-system" value="apps/api + Supabase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="330" y="40" width="260" height="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-signer" value="Signer (no account)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="620" y="40" width="260" height="1100" as="geometry" />
+        </mxCell>
+
+        <!-- Owner lane steps -->
+        <mxCell id="s1" value="Has a document open" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="Click &quot;Request signatures&quot;, add signer email(s) + name(s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="Click &quot;Send for signature&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="270" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" value="Copies each signer's link, shares it themselves (email/chat) — no auto-email sent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s10" value="Checks status, sees &quot;completed&quot; + download link" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="990" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="s11" value="Downloads the fully-signed PDF" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1080" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- System lane steps -->
+        <mxCell id="s4" value="POST /signature-requests&#10;Upload doc to private Storage; create DB rows; generate one unguessable token per signer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="270" width="260" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="GET /sign/:token&#10;Fetch signer info + a time-limited signed URL for the document" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="580" width="260" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" value="POST /sign/:token&#10;Record signature + IP + timestamp" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="760" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" value="All signers&#10;signed?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="365" y="850" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="s9pending" value="Request stays &quot;pending&quot; — waits for the remaining signers" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="620" y="855" width="200" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s9" value="Composite every signature onto the original PDF (pdf-lib, server-side)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="960" width="260" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s9b" value="Store final signed PDF; mark request &quot;completed&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1050" width="260" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Signer lane steps -->
+        <mxCell id="s5b" value="Opens their link — no account needed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="620" y="580" width="260" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="Reviews the document, draws/types their signature, clicks &quot;Sign document&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="620" y="680" width="260" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s1" target="s2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s2" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s3" target="s4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="signUrl per signer" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="s4" target="s5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s5" target="s5b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s5b" target="s6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" value="renders doc + signer info" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="s6" target="s7"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s7" target="s8"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s8" target="d1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" value="No" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="d1" target="s9pending"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" value="Yes" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;" edge="1" parent="1" source="d1" target="s9"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s9" target="s9b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s9b" target="s10"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="s10" target="s11"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
