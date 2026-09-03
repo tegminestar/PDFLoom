@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
+import { Link } from "react-router-dom";
 import { useLoomStore } from "../app/store";
 import { CreateFromTextDialog } from "../features/convert/CreateFromTextDialog";
 import { useImageFilePicker } from "../features/convert/useImageFilePicker";
@@ -188,13 +189,13 @@ export function WelcomeScreen() {
 
       <div className="relative grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex w-fit items-center gap-3" aria-label="PDFLoom home">
             <Mark size={40} className="rounded-[--radius-md] shadow-[--shadow-panel]" />
             <div>
               <div className="font-serif text-2xl font-medium leading-none tracking-tight text-text">PDFLoom</div>
               <div className="mt-1 text-xs text-text-faint">Weave every page</div>
             </div>
-          </div>
+          </Link>
 
           <div
             onDragOver={(e) => {

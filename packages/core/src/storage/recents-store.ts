@@ -34,13 +34,42 @@ export const recentsStore = {
   async list(): Promise<RecentFileEntry[]> {
     const db = await getDb();
     const all = await db.getAllFromIndex("recents", "by-lastOpenedAt");
-    return all
+
+    // Self-heals rows left over from before record() deduped by name+size
+    // (every reopen of the same file used to add a new row instead of
+    // updating one) — keep only the most-recently-opened row per file.
+    const seen = new Map<string, RecentRecord>();
+    const stale: string[] = [];
+    for (const record of [...all].sort((a, b) => b.lastOpenedAt - a.lastOpenedAt)) {
+      const key = `${record.name}::${record.sizeBytes}`;
+      if (seen.has(key)) stale.push(record.id);
+      else seen.set(key, record);
+    }
+    if (stale.length > 0) {
+      const tx = db.transaction("recents", "readwrite");
+      await Promise.all(stale.map((id) => tx.store.delete(id)));
+      await tx.done;
+    }
+
+    return [...seen.values()]
       .map(({ handle: _handle, ...entry }) => entry)
       .sort((a, b) => b.lastOpenedAt - a.lastOpenedAt);
   },
 
   async record(entry: RecentFileEntry, handle: FileSystemFileHandle | null): Promise<void> {
     const db = await getDb();
+
+    // `entry.id` is a fresh id per file-*open* (deliberately — see
+    // ensureDocumentText.ts, which relies on it changing to detect a
+    // document switch mid-operation), not a stable file identity. Without
+    // this, reopening the same file repeatedly added a new row every time
+    // instead of updating the one already there — name+size is an
+    // imperfect but practical stand-in for "the same file" in a sandboxed
+    // browser with no persistent file paths to key off of.
+    const existingForSameFile = await db.getAllFromIndex("recents", "by-lastOpenedAt");
+    const duplicate = existingForSameFile.find((r) => r.name === entry.name && r.sizeBytes === entry.sizeBytes && r.id !== entry.id);
+    if (duplicate) await db.delete("recents", duplicate.id);
+
     await db.put("recents", { ...entry, handle });
 
     const all = await db.getAllFromIndex("recents", "by-lastOpenedAt");

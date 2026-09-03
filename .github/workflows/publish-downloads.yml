@@ -62,6 +62,18 @@ jobs:
               --output none
           fi
 
+          # Unconditional, not just on first creation: an account created
+          # before this flag existed (or toggled off later by an Azure
+          # security policy/portal action) silently fails every public
+          # download forever otherwise, with no error anywhere in this
+          # workflow's own history to catch it — confirmed happening in
+          # practice, not theoretical.
+          az storage account update \
+            --name "$AZURE_STORAGE_ACCOUNT" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --allow-blob-public-access true \
+            --output none
+
           ACCOUNT_KEY=$(az storage account keys list --account-name "$AZURE_STORAGE_ACCOUNT" --resource-group "$AZURE_RESOURCE_GROUP" --query "[0].value" -o tsv)
           echo "::add-mask::$ACCOUNT_KEY"
           echo "ACCOUNT_KEY=$ACCOUNT_KEY" >> "$GITHUB_ENV"

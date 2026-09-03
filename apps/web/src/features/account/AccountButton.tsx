@@ -1,5 +1,5 @@
 import { IconButton } from "@pdfloom/ui";
-import { Sparkles, User } from "lucide-react";
+import { LogIn, Sparkles, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { isAuthConfigured } from "../../app/supabase";
 import { useAuthStore } from "../../app/auth";
@@ -34,12 +34,27 @@ export function AccountButton() {
           toolbar row instead avoids the collision in every mode, not just
           the welcome screen where the conflict wasn't obvious. */}
       <div className="fixed right-3 top-16 z-[150]">
-        <IconButton
-          icon={isPro ? <Sparkles /> : <User />}
-          label={user ? (isPro ? "Account (Pro)" : "Account") : "Sign in"}
-          variant={isPro ? "ai" : "default"}
-          onClick={() => setOpen(true)}
-        />
+        {user ? (
+          <IconButton
+            icon={isPro ? <Sparkles /> : <User />}
+            label={isPro ? "Account (Pro)" : "Account"}
+            variant={isPro ? "ai" : "default"}
+            onClick={() => setOpen(true)}
+          />
+        ) : (
+          // Signed out is exactly when this needs to be found, not just
+          // recognized once you already know it's there — an icon-only
+          // button with no resting background (IconButton's "default"
+          // variant) blended into the page and was easy to miss entirely.
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-1.5 rounded-[--radius-md] border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-text shadow-[--shadow-floating] transition-colors hover:bg-surface-hover"
+          >
+            <LogIn className="h-4 w-4" />
+            Sign in
+          </button>
+        )}
       </div>
       <AccountDialog open={open} onOpenChange={setOpen} />
     </>

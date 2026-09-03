@@ -63,7 +63,15 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
       {fieldsOnPage.map((field, i) => {
         const rect = screenRects.get(i);
         if (!rect) return null;
-        const style = { left: rect.x, top: rect.y, width: rect.width, height: rect.height, fontSize: Math.max(10, rect.height * 0.6) };
+        // A taller box means room for more wrapped lines, not one giant
+        // line — sizing off the full box height (fine for single-line
+        // fields, where height directly implies the intended text size)
+        // blew up multiline fields to an enormous font, since those boxes
+        // are made tall on purpose to hold several normal-sized lines.
+        // Acrobat's own auto-size for multiline fields does the same:
+        // picks a size meant to fit wrapped lines, not the whole box in one.
+        const fontSize = field.multiline ? Math.max(10, Math.min(16, rect.width * 0.028)) : Math.max(10, rect.height * 0.6);
+        const style = { left: rect.x, top: rect.y, width: rect.width, height: rect.height, fontSize };
         const value = formFieldValues[field.name];
 
         if (field.type === "text") {
