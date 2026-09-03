@@ -67,12 +67,23 @@ export default defineConfig({
   // verified by actually running the app under it, not by inspection, so
   // local dev needs to match production exactly.
   server: {
+    // Explicit IPv4 loopback, not the bare default ("localhost") — that
+    // resolves to whatever this machine's Node/OS happens to prefer at
+    // that moment, which was observed to vary run-to-run between IPv4
+    // (127.0.0.1) and IPv6-only (::1). Playwright's own baseURL
+    // (playwright.config.ts) is "http://localhost:5173", so any time the
+    // two disagreed on which stack "localhost" meant, page.goto hung until
+    // its own timeout — this is the likely real cause behind at least some
+    // of the "cold start" e2e flakiness chased down elsewhere this session,
+    // not a property of Vite startup cost itself.
+    host: "127.0.0.1",
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
   preview: {
+    host: "127.0.0.1",
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",

@@ -16,7 +16,11 @@ export default defineConfig({
   reporter: [["list"]],
   timeout: 60_000,
   use: {
-    baseURL: "http://localhost:5173",
+    // Explicit IPv4 loopback, matching vite.config.ts's server.host — see
+    // the comment there for why "localhost" on its own isn't safe to rely
+    // on (it resolves to whatever the OS/Node prefers at that moment,
+    // observed to vary between IPv4 and IPv6-only run to run).
+    baseURL: "http://127.0.0.1:5173",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -28,7 +32,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "pnpm dev",
-    url: "http://localhost:5173",
+    url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
     timeout: 30_000,
   },

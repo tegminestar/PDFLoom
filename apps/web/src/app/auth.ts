@@ -73,12 +73,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   signInWithEmail: async (email) => {
     if (!supabase) return { error: "Auth isn't configured" };
     set({ actionPending: true });
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + "/app" },
-    });
-    set({ actionPending: false });
-    return { error: error?.message ?? null };
+    // A thrown network error (not just a returned {error}) used to leave
+    // actionPending stuck at true forever — the button stayed on "Sending…",
+    // disabled, with no way out short of reloading. Every other network
+    // call in this file already guards against exactly this; this one
+    // didn't.
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + "/app" },
+      });
+      return { error: error?.message ?? null };
+    } catch {
+      return { error: "Couldn't reach the sign-in service — check your connection and try again." };
+    } finally {
+      set({ actionPending: false });
+    }
   },
 
   signOut: async () => {

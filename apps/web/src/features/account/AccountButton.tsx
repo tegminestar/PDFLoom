@@ -43,13 +43,18 @@ export function AccountButton() {
           />
         ) : (
           // Signed out is exactly when this needs to be found, not just
-          // recognized once you already know it's there — an icon-only
-          // button with no resting background (IconButton's "default"
-          // variant) blended into the page and was easy to miss entirely.
+          // recognized once you already know it's there. A neutral
+          // bordered/bg-surface button (the first fix for this) was still
+          // reported as "super small, easy to miss" — it read as more
+          // chrome, not a thing to click, against a UI that's mostly dark
+          // neutral surfaces already. The solid primary-accent treatment
+          // used for actual calls to action elsewhere (Upgrade to Pro,
+          // dialog confirm buttons) is the one color in this palette that
+          // reads as "click me" rather than "layout element."
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex items-center gap-1.5 rounded-[--radius-md] border border-border-strong bg-surface px-3 py-1.5 text-sm font-medium text-text shadow-[--shadow-floating] transition-colors hover:bg-surface-hover"
+            className="flex items-center gap-2 rounded-[--radius-md] bg-primary px-3.5 py-2 text-sm font-semibold text-primary-text shadow-[--shadow-floating] transition-colors hover:bg-primary-hover active:bg-primary-active"
           >
             <LogIn className="h-4 w-4" />
             Sign in
