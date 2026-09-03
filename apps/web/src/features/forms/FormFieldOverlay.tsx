@@ -2,6 +2,7 @@ import type { PdfDocument } from "@pdfloom/core";
 import { cn } from "@pdfloom/ui";
 import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { isFieldValueMissing } from "./validation";
 
 export interface FormFieldOverlayProps {
   doc: PdfDocument;
@@ -73,6 +74,12 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
         const fontSize = field.multiline ? Math.max(10, Math.min(16, rect.width * 0.028)) : Math.max(10, rect.height * 0.6);
         const style = { left: rect.x, top: rect.y, width: rect.width, height: rect.height, fontSize };
         const value = formFieldValues[field.name];
+        // Only "required and still empty" gets flagged — a required field
+        // the user has already filled in shouldn't stay marked as an error
+        // just because it's required, and a non-required field is never
+        // flagged regardless of its value.
+        const missing = field.required && isFieldValueMissing(field.type, value);
+        const missingRingClass = missing ? "outline outline-2 outline-offset-1 outline-red-500" : "";
 
         if (field.type === "text") {
           return field.multiline ? (
@@ -82,7 +89,8 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
               disabled={field.readOnly}
-              className={cn(inputClass, "resize-none")}
+              title={missing ? "Required" : undefined}
+              className={cn(inputClass, "resize-none", missing && "border-red-500")}
               style={style}
             />
           ) : (
@@ -93,7 +101,8 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
               disabled={field.readOnly}
-              className={inputClass}
+              title={missing ? "Required" : undefined}
+              className={cn(inputClass, missing && "border-red-500")}
               style={style}
             />
           );
@@ -107,7 +116,8 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               checked={typeof value === "boolean" ? value : false}
               onChange={(e) => setFormFieldValue(field.name, e.target.checked)}
               disabled={field.readOnly}
-              className="absolute accent-[var(--loom-primary)]"
+              title={missing ? "Required" : undefined}
+              className={cn("absolute accent-[var(--loom-primary)]", missingRingClass)}
               style={style}
             />
           );
@@ -126,7 +136,8 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               checked={value === field.widgetOnValue}
               onChange={() => setFormFieldValue(field.name, field.widgetOnValue!)}
               disabled={field.readOnly}
-              className="absolute accent-[var(--loom-primary)]"
+              title={missing ? "Required" : undefined}
+              className={cn("absolute accent-[var(--loom-primary)]", missingRingClass)}
               style={style}
             />
           );
@@ -140,7 +151,8 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               value={selected}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
               disabled={field.readOnly}
-              className={inputClass}
+              title={missing ? "Required" : undefined}
+              className={cn(inputClass, missing && "border-red-500")}
               style={style}
             >
               <option value="" disabled>

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useLoomStore, type FieldDesignTool } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
+import { getMissingRequiredFields } from "./validation";
 
 const DESIGN_TOOLS: { id: FieldDesignTool; label: string; icon: ReactNode }[] = [
   { id: "text", label: "Text field", icon: <Type /> },
@@ -17,13 +18,34 @@ export function FormsToolbar() {
   const saveFormValues = useLoomStore((s) => s.saveFormValues);
   const isSavingForm = useLoomStore((s) => s.isSavingForm);
   const formFields = useLoomStore((s) => s.formFields);
+  const formFieldValues = useLoomStore((s) => s.formFieldValues);
   const formMode = useLoomStore((s) => s.formMode);
   const setFormMode = useLoomStore((s) => s.setFormMode);
   const designTool = useLoomStore((s) => s.formDesignTool);
   const setFormDesignTool = useLoomStore((s) => s.setFormDesignTool);
   const fieldCount = new Set(formFields.map((f) => f.name)).size;
 
+  const describeMissing = (missing: ReturnType<typeof getMissingRequiredFields>) => {
+    const names = missing.slice(0, 5).map((f) => f.name);
+    const suffix = missing.length > 5 ? `, and ${missing.length - 5} more` : "";
+    return `${names.join(", ")}${suffix}`;
+  };
+
   const handleSave = async (flatten: boolean) => {
+    const missing = getMissingRequiredFields(formFields, formFieldValues);
+    if (missing.length > 0) {
+      if (flatten) {
+        // Flattening bakes values in and removes the fields — blocked
+        // outright, since there'd be no way to go back and fill a required
+        // field in afterward. A plain (non-flattened) save is left as a
+        // draft-in-progress use case instead — warned, not blocked, since
+        // someone filling this out over multiple sessions still needs to
+        // be able to save partial progress.
+        toast.error(`${missing.length} required field${missing.length === 1 ? "" : "s"} still empty`, `${describeMissing(missing)} — fill these in before saving & flattening, or use plain Save to keep working on it later.`);
+        return;
+      }
+      toast.warning(`${missing.length} required field${missing.length === 1 ? "" : "s"} still empty`, describeMissing(missing));
+    }
     try {
       await saveFormValues(flatten);
       toast.success(flatten ? "Form saved and flattened" : "Form saved");
