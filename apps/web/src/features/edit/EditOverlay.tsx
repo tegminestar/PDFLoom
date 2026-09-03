@@ -168,6 +168,15 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
   const [textEdit, setTextEdit] = useState<PendingTextEdit | null>(null);
   const [textValue, setTextValue] = useState("");
   const [isSavingText, setIsSavingText] = useState(false);
+  // "Replace" covers-and-redraws via pdf-lib (load the whole PDF, draw the
+  // new text, re-save the whole PDF) — pdf-lib's load/save is well known to
+  // take a while on a large, image-heavy document (a multi-MB flyer with
+  // photos/graphics, not this app's small text-only test fixtures), and
+  // there was previously no feedback at all beyond a static "Replacing…"
+  // for however long that took — indistinguishable from a hang. This
+  // message escalates so a genuinely slow-but-working case reads as busy,
+  // not broken.
+  const [savingStatusMessage, setSavingStatusMessage] = useState<string | null>(null);
   const [textDragMode, setTextDragMode] = useState<DragMode | null>(null);
 
   const measureRef = useRef<HTMLDivElement>(null);
@@ -229,6 +238,15 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
     setTextEdit(null);
     if (!newText || newText === textEdit.originalText) return;
     setIsSavingText(true);
+    setSavingStatusMessage(null);
+    // Escalating messages, not a fixed one — a large/image-heavy page's
+    // pdf-lib load+redraw+save cycle can genuinely take a while, and a
+    // static "Replacing…" with no update looked identical to a hang (the
+    // actual bug report this addressed). Cleared in `finally` either way.
+    const escalateTimers = [
+      setTimeout(() => setSavingStatusMessage("Still working — larger or image-heavy pages take longer…"), 6000),
+      setTimeout(() => setSavingStatusMessage("Still going. Complex pages can take a minute or more."), 20000),
+    ];
     try {
       const r = textEdit.rect;
       const p1 = await doc.screenPointToPdfPoint(pageNumber, scale, rotation, r.x, r.y);
@@ -245,17 +263,38 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
       // PDF-point space without needing a second screenPointToPdfPoint call.
       const fontSize = Math.max(6, textEdit.fontSizePx / scale);
       const client = await getPdfWorkerClient();
-      const bytes = await client.addFreeText(await doc.getRawBytes(), pageNumber - 1, rect, newText, {
-        fontSize,
-        color: textEdit.color,
-        box: { fill: { r: 1, g: 1, b: 1 } },
+      const rawBytes = await doc.getRawBytes();
+      // A hard ceiling so a genuinely pathological document (or a crashed/
+      // unresponsive worker) surfaces an actionable error instead of
+      // leaving the dialog stuck on "Replacing…" forever with no recourse
+      // but reloading the tab. This can't cancel the worker's own
+      // in-flight computation (Comlink has no abort signal here), only
+      // stop the UI from waiting on it — acceptable, since the worker call
+      // either finishes harmlessly in the background or the tab is closed.
+      const timeoutMs = 90_000;
+      let timeoutHandle: ReturnType<typeof setTimeout>;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(
+          () => reject(new Error("This is taking far longer than expected — try again, or try a smaller selection if it keeps happening.")),
+          timeoutMs,
+        );
       });
+      const bytes = await Promise.race([
+        client.addFreeText(rawBytes, pageNumber - 1, rect, newText, {
+          fontSize,
+          color: textEdit.color,
+          box: { fill: { r: 1, g: 1, b: 1 } },
+        }),
+        timeout,
+      ]).finally(() => clearTimeout(timeoutHandle));
       await applyPdfMutation(bytes);
       toast.success("Text replaced", "Covered the original with a new text box at the same spot.");
     } catch (error) {
       toast.error("Couldn't replace text", error instanceof Error ? error.message : undefined);
     } finally {
+      escalateTimers.forEach(clearTimeout);
       setIsSavingText(false);
+      setSavingStatusMessage(null);
     }
   }, [applyPdfMutation, doc, pageNumber, rotation, scale, textEdit, textValue]);
 
@@ -528,6 +567,7 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
               Covers the original text with a new text box — drag the dashed box's edges to resize it if the
               replacement is a different length, or its middle to move it.
             </p>
+            {savingStatusMessage && <p className="text-[11px] leading-snug text-primary">{savingStatusMessage}</p>}
             <div className="mt-1 flex justify-end gap-2">
               <Button variant="secondary" size="sm" onClick={() => setTextEdit(null)} disabled={isSavingText}>
                 Cancel
