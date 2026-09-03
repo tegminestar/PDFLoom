@@ -211,6 +211,13 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
     const handler = (e: MouseEvent) => {
       const span = (e.target as HTMLElement).closest<HTMLElement>(".loom-text-layer span");
       if (!span || !span.textContent?.trim()) return;
+      // Without this, clicking another span while a commit is still in
+      // flight opened a brand-new popup that inherited the still-true
+      // isSavingText from the FIRST, unrelated commit — it rendered
+      // already showing "Replacing…", disabled, before the user had done
+      // anything with it. Reported live: "click again to make further
+      // edits, then you see the last change is still showing replacing."
+      if (isSavingText || textEdit) return;
       e.preventDefault();
       e.stopPropagation();
       const containerRect = container.getBoundingClientRect();
@@ -230,13 +237,23 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
 
     container.addEventListener("click", handler, true);
     return () => container.removeEventListener("click", handler, true);
-  }, [editOpen, tool, pageContainerRef]);
+  }, [editOpen, tool, pageContainerRef, isSavingText, textEdit]);
 
   const commitTextEdit = useCallback(async () => {
     if (!textEdit) return;
     const newText = textValue.trim();
-    setTextEdit(null);
-    if (!newText || newText === textEdit.originalText) return;
+    if (!newText || newText === textEdit.originalText) {
+      setTextEdit(null);
+      return;
+    }
+    // The popup used to close here, immediately on click, before any of the
+    // actual work below even started — meaning the moment "Replace" was
+    // pressed, the popup (and its only "Replacing…" indicator) vanished
+    // with the page not yet visually changed, reading as "nothing
+    // happened". It now stays open and visibly busy for the full commit,
+    // closing only once applyPdfMutation below actually succeeds — and the
+    // click handler above now also refuses to open a second edit while
+    // this one is still in flight, so the two bugs can't compound.
     setIsSavingText(true);
     setSavingStatusMessage(null);
     // Escalating messages, not a fixed one — a large/image-heavy page's
@@ -288,8 +305,13 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
         timeout,
       ]).finally(() => clearTimeout(timeoutHandle));
       await applyPdfMutation(bytes);
+      setTextEdit(null);
       toast.success("Text replaced", "Covered the original with a new text box at the same spot.");
     } catch (error) {
+      // Left open on failure (rather than closed like the success path) —
+      // the user's typed replacement stays visible so they can retry or
+      // cancel deliberately instead of losing it to a silently-dismissed
+      // popup.
       toast.error("Couldn't replace text", error instanceof Error ? error.message : undefined);
     } finally {
       escalateTimers.forEach(clearTimeout);
