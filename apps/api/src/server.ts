@@ -1,5 +1,5 @@
 import express from "express";
-import { getAnalyticsSummary, trackAnalyticsEvent } from "./routes/analytics";
+import { checkAnalyticsAccess, getAnalyticsSummary, trackAnalyticsEvent } from "./routes/analytics";
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
 import { submitFeedback } from "./routes/feedback";
@@ -74,6 +74,13 @@ app.get("/api/analytics/summary", (req, res) => {
   getAnalyticsSummary(req, res).catch((error: unknown) => {
     console.error("Unhandled error in getAnalyticsSummary", error);
     res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.get("/api/analytics/is-owner", (req, res) => {
+  checkAnalyticsAccess(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in checkAnalyticsAccess", error);
+    res.status(200).json({ isOwner: false });
   });
 });
 

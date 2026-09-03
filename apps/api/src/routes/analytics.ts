@@ -114,6 +114,78 @@ function topCounts(rows: AnalyticsEventRow[], key: keyof AnalyticsEventRow, limi
     .map(([name, count]) => ({ name, count }));
 }
 
+const FEATURE_OPENED_PREFIX = "feature_opened_";
+const FEATURE_LABELS: Record<string, string> = {
+  annotate: "Annotate",
+  fill_form: "Fill form",
+  edit: "Edit",
+  redact: "Redact",
+  sign: "Sign",
+};
+
+function titleCase(key: string): string {
+  return key
+    .split("_")
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(" ");
+}
+
+/** "Popular QR types"'s PDFLoom equivalent — which tool panels people actually open, decoded from trackEvent's composite "feature_opened_<feature>" event names into labels a non-engineer can read. */
+function popularFeatures(rows: AnalyticsEventRow[], limit: number): { name: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.event_name.startsWith(FEATURE_OPENED_PREFIX)) continue;
+    const key = row.event_name.slice(FEATURE_OPENED_PREFIX.length);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([key, count]) => ({ name: FEATURE_LABELS[key] ?? titleCase(key), count }));
+}
+
+interface OwnerCheck {
+  ok: boolean;
+  status: number;
+  error?: string;
+}
+
+async function checkOwnerAuth(req: Request, supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>): Promise<OwnerCheck> {
+  const authHeader = req.headers.authorization ?? "";
+  const accessToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!accessToken) return { ok: false, status: 401, error: "Missing Authorization header" };
+
+  const ownerEmail = process.env.ANALYTICS_OWNER_EMAIL;
+  if (!ownerEmail) return { ok: false, status: 500, error: "Analytics dashboard is not configured yet" };
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+  if (userError || !userData.user) return { ok: false, status: 401, error: "Invalid or expired session" };
+
+  if (userData.user.email?.toLowerCase() !== ownerEmail.toLowerCase()) {
+    return { ok: false, status: 403, error: "Not authorized" };
+  }
+  return { ok: true, status: 200 };
+}
+
+/**
+ * Cheap yes/no check the signed-in-only "Analytics" menu item uses to
+ * decide whether to show itself — deliberately separate from
+ * getAnalyticsSummary so checking "am I the owner" never requires shipping
+ * ANALYTICS_OWNER_EMAIL to the browser bundle (same reasoning as
+ * feedback.ts keeping its recipient address server-side only) or running
+ * the full analytics query just to render a menu item. Always 200 — "no"
+ * is a normal answer here, not an error.
+ */
+export async function checkAnalyticsAccess(req: Request, res: Response): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    res.status(200).json({ isOwner: false });
+    return;
+  }
+  const result = await checkOwnerAuth(req, supabase);
+  res.status(200).json({ isOwner: result.ok });
+}
+
 /**
  * Owner-only dashboard data. Gated the same way createCheckoutSession is —
  * a verified Supabase session — plus one extra check: the session's email
@@ -122,27 +194,15 @@ function topCounts(rows: AnalyticsEventRow[], key: keyof AnalyticsEventRow, limi
  * rather than open.
  */
 export async function getAnalyticsSummary(req: Request, res: Response): Promise<void> {
-  const authHeader = req.headers.authorization ?? "";
-  const accessToken = authHeader.replace(/^Bearer\s+/i, "");
-  if (!accessToken) {
-    res.status(401).json({ error: "Missing Authorization header" });
-    return;
-  }
-
-  const ownerEmail = process.env.ANALYTICS_OWNER_EMAIL;
   const supabase = getSupabaseAdmin();
-  if (!supabase || !ownerEmail) {
+  if (!supabase) {
     res.status(500).json({ error: "Analytics dashboard is not configured yet" });
     return;
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
-  if (userError || !userData.user) {
-    res.status(401).json({ error: "Invalid or expired session" });
-    return;
-  }
-  if (userData.user.email?.toLowerCase() !== ownerEmail.toLowerCase()) {
-    res.status(403).json({ error: "Not authorized" });
+  const auth = await checkOwnerAuth(req, supabase);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
     return;
   }
 
@@ -169,26 +229,21 @@ export async function getAnalyticsSummary(req: Request, res: Response): Promise<
   const last7Days = rows.filter((r) => now - new Date(r.created_at).getTime() <= 7 * DAY_MS).length;
   const last30Days = rows.filter((r) => now - new Date(r.created_at).getTime() <= 30 * DAY_MS).length;
 
-  const dailyBuckets = new Map<string, number>();
-  for (let i = 29; i >= 0; i--) {
-    const day = new Date(now - i * DAY_MS).toISOString().slice(0, 10);
-    dailyBuckets.set(day, 0);
-  }
-  for (const row of rows) {
-    const day = row.created_at.slice(0, 10);
-    if (dailyBuckets.has(day)) dailyBuckets.set(day, (dailyBuckets.get(day) ?? 0) + 1);
-  }
+  const [usersResult, feedbackResult] = await Promise.all([
+    fetchUserSummary(supabase, now),
+    fetchFeedbackSummary(supabase),
+  ]);
 
   res.status(200).json({
     totalEvents: rows.length,
     last7Days,
     last30Days,
-    dailyEvents: [...dailyBuckets.entries()].map(([date, count]) => ({ date, count })),
+    dailyEvents: dailyBuckets(rows.map((r) => r.created_at), 30, now),
     deviceBreakdown: topCounts(rows, "device", 8),
     browserBreakdown: topCounts(rows, "browser", 8),
     osBreakdown: topCounts(rows, "os", 8),
     countryBreakdown: topCounts(rows, "country", 8),
-    topEvents: topCounts(rows, "event_name", 10),
+    popularFeatures: popularFeatures(rows, 8),
     topPaths: topCounts(rows, "path", 10),
     recent: rows.slice(0, 20).map((r) => ({
       eventName: r.event_name,
@@ -200,5 +255,88 @@ export async function getAnalyticsSummary(req: Request, res: Response): Promise<
       city: r.city,
       createdAt: r.created_at,
     })),
+    users: usersResult,
+    feedback: feedbackResult,
   });
+}
+
+function dailyBuckets(isoDates: string[], days: number, now: number): { date: string; count: number }[] {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const buckets = new Map<string, number>();
+  for (let i = days - 1; i >= 0; i--) {
+    buckets.set(new Date(now - i * DAY_MS).toISOString().slice(0, 10), 0);
+  }
+  for (const iso of isoDates) {
+    const day = iso.slice(0, 10);
+    if (buckets.has(day)) buckets.set(day, (buckets.get(day) ?? 0) + 1);
+  }
+  return [...buckets.entries()].map(([date, count]) => ({ date, count }));
+}
+
+/**
+ * "Total users" / "Paying" / signups-over-time — PDFLoom's equivalent of
+ * MyQRCreate's user-admin panel, read-only for now (no role concept exists
+ * here to gate mutations on, and account deletion/role changes are a
+ * separate, deliberately-deferred decision). auth.users has emails and
+ * signup dates; profiles has is_pro — joined here since neither table
+ * alone has both.
+ */
+async function fetchUserSummary(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>, now: number) {
+  const [{ data: userPage, error: userError }, { data: profileRows, error: profileError }] = await Promise.all([
+    supabase.auth.admin.listUsers({ perPage: 1000 }),
+    supabase.from("profiles").select("id, is_pro"),
+  ]);
+
+  if (userError || profileError) {
+    console.error("Error loading user summary", userError ?? profileError);
+    return null;
+  }
+
+  const proById = new Map((profileRows ?? []).map((p: { id: string; is_pro: boolean }) => [p.id, p.is_pro]));
+  const users = (userPage?.users ?? []).map((u) => ({
+    email: u.email ?? "(no email)",
+    isPro: proById.get(u.id) ?? false,
+    joinedAt: u.created_at,
+  }));
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const total = users.length;
+  const pro = users.filter((u) => u.isPro).length;
+  const last7Days = users.filter((u) => now - new Date(u.joinedAt).getTime() <= 7 * DAY_MS).length;
+
+  return {
+    total,
+    pro,
+    free: total - pro,
+    last7Days,
+    dailySignups: dailyBuckets(users.map((u) => u.joinedAt), 30, now),
+    recent: [...users]
+      .sort((a, b) => new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime())
+      .slice(0, 50),
+  };
+}
+
+/** "Product feedback" panel — the feedback form's own copy, kept purely for the dashboard (see feedback.ts, which still delivers the real one by email). */
+async function fetchFeedbackSummary(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>) {
+  const { data, error, count } = await supabase
+    .from("feedback_submissions")
+    .select("category, message, reply_to, page, created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    console.error("Error loading feedback summary", error);
+    return null;
+  }
+
+  return {
+    total: count ?? data?.length ?? 0,
+    recent: (data ?? []).map((f) => ({
+      category: f.category as string | null,
+      message: f.message as string,
+      replyTo: f.reply_to as string | null,
+      page: f.page as string | null,
+      createdAt: f.created_at as string,
+    })),
+  };
 }

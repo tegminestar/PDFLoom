@@ -1,8 +1,16 @@
 import type { Request, Response } from "express";
+import { createClient } from "@supabase/supabase-js";
 
 // Kept server-side deliberately — the frontend never sees this address (not
 // in the bundle, not in any network request it makes), only our own /api/feedback.
 const FEEDBACK_RECIPIENT = "sales@tegminestar.com";
+
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 /**
  * Proxies a feedback submission to FormSubmit.co server-side. No email-
@@ -33,5 +41,22 @@ export async function submitFeedback(req: Request, res: Response): Promise<void>
     res.status(502).json({ error: "Couldn't deliver feedback right now" });
     return;
   }
+
+  // Best-effort second copy for the owner dashboard — the email above is
+  // the real delivery and must succeed/fail independently of this.
+  try {
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      await supabase.from("feedback_submissions").insert({
+        category: category ?? null,
+        message: message.trim(),
+        reply_to: replyTo?.trim() || null,
+        page: page ?? null,
+      });
+    }
+  } catch (error) {
+    console.error("Couldn't save feedback copy to Supabase", error);
+  }
+
   res.status(200).json({ ok: true });
 }

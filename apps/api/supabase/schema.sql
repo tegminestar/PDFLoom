@@ -117,3 +117,21 @@ create index if not exists analytics_events_created_at_idx
   on public.analytics_events (created_at);
 create index if not exists analytics_events_event_name_idx
   on public.analytics_events (event_name);
+
+-- Mirrors what submitFeedback (apps/api/src/routes/feedback.ts) already
+-- emails via FormSubmit — this is purely an additional copy so the owner
+-- dashboard has something to show, not a replacement for the email, which
+-- keeps working exactly as before. Same no-RLS-policy shape as the tables
+-- above: only apps/api's service-role key ever touches it.
+create table if not exists public.feedback_submissions (
+  id uuid primary key default gen_random_uuid(),
+  category text,
+  message text not null,
+  reply_to text,
+  page text,
+  created_at timestamptz not null default now()
+);
+alter table public.feedback_submissions enable row level security;
+
+create index if not exists feedback_submissions_created_at_idx
+  on public.feedback_submissions (created_at);

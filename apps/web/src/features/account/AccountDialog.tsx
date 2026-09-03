@@ -1,6 +1,8 @@
 import { Button, Dialog, toast } from "@pdfloom/ui";
-import { Sparkles } from "lucide-react";
-import { useState } from "react";
+import { BarChart3, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { apiUrl, supabase } from "../../app/supabase";
 import { useAuthStore } from "../../app/auth";
 
 export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -14,6 +16,32 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+
+  // Never checks the signed-in email against anything client-side — the
+  // owner's address (ANALYTICS_OWNER_EMAIL) stays server-only, same as
+  // feedback.ts's recipient address, so it never appears in the bundle.
+  useEffect(() => {
+    if (!user || !supabase) {
+      setIsOwner(false);
+      return;
+    }
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data }) => {
+      const accessToken = data.session?.access_token;
+      if (!accessToken) return;
+      try {
+        const res = await fetch(`${apiUrl}/api/analytics/is-owner`, { headers: { Authorization: `Bearer ${accessToken}` } });
+        const body = (await res.json()) as { isOwner?: boolean };
+        if (!cancelled) setIsOwner(body.isOwner === true);
+      } catch {
+        // Leave isOwner false — the menu item just doesn't show.
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const handleSignIn = async () => {
     if (!email.trim()) return;
@@ -78,6 +106,15 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               {isPro ? "Pro" : "Free"}
             </span>
           </div>
+
+          {isOwner && (
+            <Button asChild variant="secondary" size="sm" onClick={() => onOpenChange(false)}>
+              <Link to="/analytics">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </Link>
+            </Button>
+          )}
 
           {isPro ? (
             <Button variant="secondary" size="sm" disabled={actionPending} onClick={() => void handleManageBilling()}>

@@ -16,7 +16,7 @@ interface AnalyticsSummary {
   browserBreakdown: { name: string; count: number }[];
   osBreakdown: { name: string; count: number }[];
   countryBreakdown: { name: string; count: number }[];
-  topEvents: { name: string; count: number }[];
+  popularFeatures: { name: string; count: number }[];
   topPaths: { name: string; count: number }[];
   recent: {
     eventName: string;
@@ -28,6 +28,18 @@ interface AnalyticsSummary {
     city: string | null;
     createdAt: string;
   }[];
+  users: {
+    total: number;
+    pro: number;
+    free: number;
+    last7Days: number;
+    dailySignups: { date: string; count: number }[];
+    recent: { email: string; isPro: boolean; joinedAt: string }[];
+  } | null;
+  feedback: {
+    total: number;
+    recent: { category: string | null; message: string; replyTo: string | null; page: string | null; createdAt: string }[];
+  } | null;
 }
 
 function formatRelativeTime(iso: string): string {
@@ -155,16 +167,35 @@ export function AnalyticsDashboardPage() {
 
         {!error && summary && (
           <>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <StatTile label="Events, last 7 days" value={summary.last7Days} />
-              <StatTile label="Events, last 30 days" value={summary.last30Days} />
-              <StatTile label="Events, last 90 days" value={summary.totalEvents} />
-            </div>
+            {summary.users && (
+              <section className="flex flex-col gap-3">
+                <h2 className="text-sm font-semibold text-text">Users</h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <StatTile label="Total users" value={summary.users.total} />
+                  <StatTile label="Pro" value={summary.users.pro} />
+                  <StatTile label="Free" value={summary.users.free} />
+                  <StatTile label="New users, 7 days" value={summary.users.last7Days} />
+                </div>
+                <div className="rounded-[--radius-md] border border-border bg-surface p-4">
+                  <span className="text-sm text-text-muted">New signups per day, last 30 days</span>
+                  <EventsOverTimeChart data={summary.users.dailySignups} />
+                </div>
+              </section>
+            )}
 
-            <div className="rounded-[--radius-md] border border-border bg-surface p-4">
-              <span className="text-sm text-text-muted">Events per day, last 30 days</span>
-              <EventsOverTimeChart data={summary.dailyEvents} />
-            </div>
+            <section className="flex flex-col gap-3">
+              <h2 className="text-sm font-semibold text-text">Activity</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatTile label="Events, last 7 days" value={summary.last7Days} />
+                <StatTile label="Events, last 30 days" value={summary.last30Days} />
+                <StatTile label="Events, last 90 days" value={summary.totalEvents} />
+              </div>
+
+              <div className="rounded-[--radius-md] border border-border bg-surface p-4">
+                <span className="text-sm text-text-muted">Events per day, last 30 days</span>
+                <EventsOverTimeChart data={summary.dailyEvents} />
+              </div>
+            </section>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <BreakdownBars title="Device" rows={summary.deviceBreakdown} accent="var(--color-primary)" />
@@ -174,9 +205,70 @@ export function AnalyticsDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <BreakdownBars title="Top events" rows={summary.topEvents} accent="var(--color-primary)" />
+              <BreakdownBars title="Popular features" rows={summary.popularFeatures} accent="var(--color-primary)" />
               <BreakdownBars title="Top pages" rows={summary.topPaths} accent="var(--color-ai)" />
             </div>
+
+            {summary.feedback && (
+              <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+                <span className="text-sm text-text-muted">
+                  Product feedback{summary.feedback.total > 0 ? ` (${summary.feedback.total})` : ""}
+                </span>
+                {summary.feedback.recent.length === 0 ? (
+                  <p className="text-sm text-text-faint">No feedback submitted yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {summary.feedback.recent.map((f, i) => (
+                      <div key={`${f.createdAt}-${i}`} className="flex flex-col gap-1 rounded-[--radius-sm] border border-border-strong bg-bg p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">{f.category ?? "General feedback"}</span>
+                          <span className="text-xs text-text-faint">{formatRelativeTime(f.createdAt)}</span>
+                        </div>
+                        <p className="text-sm leading-relaxed text-text">{f.message}</p>
+                        {f.replyTo && <span className="text-xs text-text-faint">Reply to: {f.replyTo}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {summary.users && (
+              <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+                <span className="text-sm text-text-muted">Users</span>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] text-left text-sm">
+                    <thead>
+                      <tr className="text-xs text-text-faint">
+                        <th className="pb-2 font-medium">Email</th>
+                        <th className="pb-2 font-medium">Plan</th>
+                        <th className="pb-2 text-right font-medium">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.users.recent.map((u) => (
+                        <tr key={u.email} className="border-t border-border">
+                          <td className="max-w-56 truncate py-1.5 pr-2 text-text">{u.email}</td>
+                          <td className="py-1.5 pr-2">
+                            <span
+                              className={
+                                u.isPro
+                                  ? "rounded-full bg-ai-muted px-2 py-0.5 text-xs font-semibold text-ai"
+                                  : "rounded-full bg-surface-hover px-2 py-0.5 text-xs font-medium text-text-faint"
+                              }
+                            >
+                              {u.isPro ? "Pro" : "Free"}
+                            </span>
+                          </td>
+                          <td className="py-1.5 text-right tabular-nums text-text-faint">{new Date(u.joinedAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {summary.users.recent.length === 0 && <p className="py-3 text-sm text-text-faint">No users yet</p>}
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
               <span className="text-sm text-text-muted">Recent activity</span>
