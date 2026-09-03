@@ -415,12 +415,49 @@ export interface FreeTextOptions {
   /** When set, draws a filled/stroked box behind the text (used for stamps). */
   box?: { fill?: RgbColor; stroke?: RgbColor; lineWidth?: number };
   bold?: boolean;
+  italic?: boolean;
+  /**
+   * Which of the 14 standard PDF fonts' families to draw in — defaults to
+   * sans-serif (Helvetica) when omitted, e.g. for stamps, which are a
+   * deliberately distinct visual element rather than something meant to
+   * blend into the surrounding text. The "Replace text" edit tool passes
+   * the family/weight/style pdf.js's own text layer already reports for
+   * the span being replaced (see EditOverlay.tsx), so a serif document's
+   * replacement text lands in a serif standard font instead of always
+   * Helvetica — not a byte-for-byte match of the original embedded font
+   * (pdf-lib has no API to lift a font straight out of an existing PDF's
+   * resources), but a real, visible improvement over one fixed font
+   * regardless of context.
+   */
+  fontFamily?: "serif" | "sans-serif" | "monospace";
   align?: "left" | "center";
 }
 
-async function embedFonts(doc: PDFDocument): Promise<{ regular: PDFFont; bold: PDFFont }> {
-  const regular = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+const STANDARD_FONT_FAMILIES: Record<"serif" | "sans-serif" | "monospace", { regular: StandardFonts; bold: StandardFonts; italic: StandardFonts; boldItalic: StandardFonts }> = {
+  "sans-serif": {
+    regular: StandardFonts.Helvetica,
+    bold: StandardFonts.HelveticaBold,
+    italic: StandardFonts.HelveticaOblique,
+    boldItalic: StandardFonts.HelveticaBoldOblique,
+  },
+  serif: {
+    regular: StandardFonts.TimesRoman,
+    bold: StandardFonts.TimesRomanBold,
+    italic: StandardFonts.TimesRomanItalic,
+    boldItalic: StandardFonts.TimesRomanBoldItalic,
+  },
+  monospace: {
+    regular: StandardFonts.Courier,
+    bold: StandardFonts.CourierBold,
+    italic: StandardFonts.CourierOblique,
+    boldItalic: StandardFonts.CourierBoldOblique,
+  },
+};
+
+async function embedFonts(doc: PDFDocument, family: "serif" | "sans-serif" | "monospace" = "sans-serif", italic = false): Promise<{ regular: PDFFont; bold: PDFFont }> {
+  const variants = STANDARD_FONT_FAMILIES[family];
+  const regular = await doc.embedFont(italic ? variants.italic : variants.regular);
+  const bold = await doc.embedFont(italic ? variants.boldItalic : variants.bold);
   return { regular, bold };
 }
 
@@ -448,7 +485,7 @@ async function addFreeTextInternal(doc: PDFDocument, pageIndex: number, rect: Re
   const fontSize = options.fontSize ?? 14;
   const color = options.color ?? { r: 0, g: 0, b: 0 };
   const opacity = options.opacity ?? DEFAULT_OPACITY;
-  const { regular, bold } = await embedFonts(doc);
+  const { regular, bold } = await embedFonts(doc, options.fontFamily, options.italic);
   const font = options.bold ? bold : regular;
   const fontKey = options.bold ? "FB" : "FR";
 

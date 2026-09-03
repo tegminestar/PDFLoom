@@ -50,6 +50,19 @@ interface PendingTextEdit {
    * replacement that needed to wrap to more lines than that).
    */
   fontSizePx: number;
+  /**
+   * Read from the original span's own computed style at click time — pdf.js
+   * sets a real font-family/weight/style on every text-layer span so its
+   * (invisible) selectable text lines up with the canvas glyphs underneath,
+   * which doubles as a free, already-computed signal for what the actual
+   * PDF content is set in. Not the exact original font (pdf-lib can't lift
+   * a font straight out of an existing PDF's resources), but enough to
+   * pick the right one of the 14 standard PDF fonts instead of always
+   * Helvetica regardless of context — see annotations.ts's FreeTextOptions.
+   */
+  fontFamily: "serif" | "sans-serif" | "monospace";
+  bold: boolean;
+  italic: boolean;
 }
 
 interface PendingImageEdit {
@@ -93,6 +106,22 @@ const HANDLE_CURSOR: Record<HandleId, string> = {
 };
 const MIN_BOX_PX = 16;
 const EDGE_MARGIN = 10;
+
+/**
+ * pdf.js sets a real CSS font-family on every text-layer span (so its
+ * invisible, selectable text lines up with the canvas glyphs underneath) —
+ * usually a specific name it recognized plus one of these three generic
+ * keywords as the final fallback. Checking for "sans-serif" before "serif"
+ * matters: the substring "serif" alone would otherwise misclassify every
+ * sans-serif font as serif.
+ */
+function classifyFontFamily(fontFamily: string): "serif" | "sans-serif" | "monospace" {
+  const lower = fontFamily.toLowerCase();
+  if (lower.includes("monospace")) return "monospace";
+  if (lower.includes("sans-serif")) return "sans-serif";
+  if (lower.includes("serif")) return "serif";
+  return "sans-serif";
+}
 
 type DragMode =
   | { kind: "move"; startPointer: ScreenPoint; startRect: ScreenRect }
@@ -231,8 +260,17 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
       };
       const canvas = container.querySelector("canvas");
       const color = canvas ? sampleTextColor(canvas, canvas.getBoundingClientRect(), spanRect) : FALLBACK_TEXT_COLOR;
+      const computed = getComputedStyle(span);
       setTextValue(span.textContent);
-      setTextEdit({ rect, originalText: span.textContent, color, fontSizePx: Math.max(6, rect.height * 0.72) });
+      setTextEdit({
+        rect,
+        originalText: span.textContent,
+        color,
+        fontSizePx: Math.max(6, rect.height * 0.72),
+        fontFamily: classifyFontFamily(computed.fontFamily),
+        bold: Number.parseInt(computed.fontWeight, 10) >= 600,
+        italic: computed.fontStyle.includes("italic") || computed.fontStyle.includes("oblique"),
+      });
     };
 
     container.addEventListener("click", handler, true);
@@ -300,6 +338,9 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
         client.addFreeText(rawBytes, pageNumber - 1, rect, newText, {
           fontSize,
           color: textEdit.color,
+          fontFamily: textEdit.fontFamily,
+          bold: textEdit.bold,
+          italic: textEdit.italic,
           box: { fill: { r: 1, g: 1, b: 1 } },
         }),
         timeout,
