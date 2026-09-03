@@ -6,6 +6,12 @@ overrides:
   sharp: ">=0.35.0"
   qs: ">=6.16.0"
   uuid: ">=11.1.1"
+  # GHSA-mwp4-54f8-5fhr (high): geoip-lite pins an old ip-address@5.x with
+  # an octal/decimal octet-parsing mismatch. geoip-lite only ever feeds it
+  # an already-received request IP for an offline geo lookup — never an
+  # address that gates a network request or an allow/blocklist decision —
+  # so it's not exploitable here either way, but a real fix exists, so use it.
+  ip-address: ">=10.3.1"
 allowBuilds:
   # This app is 100% browser/WASM — these packages' native Node addons are
   # never used (@huggingface/transformers only needs its browser bundle
