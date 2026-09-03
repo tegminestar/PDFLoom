@@ -5,6 +5,8 @@ import {
   embedQuery,
   findRelevantChunks,
   isChatAvailable,
+  preloadChatModel,
+  preloadEmbeddingModel,
   sendChatMessage,
   type ChatMessage,
   type EmbeddedChunk,
@@ -49,7 +51,10 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const indexRef = useRef<EmbeddedChunk[] | null>(null);
+  // Caches the in-flight (not just the resolved) index promise, so a
+  // prefetch kicked off on open and a user hitting Send before it finishes
+  // await the same download/index work instead of racing two of it.
+  const indexRef = useRef<Promise<EmbeddedChunk[]> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,6 +69,19 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     };
   }, [open]);
 
+  // Both models (~360MB chat engine, small embedding model) are big enough
+  // that waiting for the user's first question to start the download makes
+  // "chat with your PDF" feel slow to open. Kick both off in parallel the
+  // moment the dialog confirms chat is actually usable on this device —
+  // loadPipeline/loadEngine's own module-level caches make this safe to
+  // call again later (handleSend's ensureIndex / sendChatMessage reuse
+  // the same in-flight or already-resolved promise, never a second copy).
+  useEffect(() => {
+    if (availability !== "available") return;
+    void preloadChatModel();
+    void preloadEmbeddingModel();
+  }, [availability]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
@@ -75,40 +93,62 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     setMessages([]);
   }, [meta?.id]);
 
-  const ensureIndex = async (): Promise<EmbeddedChunk[]> => {
+  const ensureIndex = (): Promise<EmbeddedChunk[]> => {
     if (indexRef.current) return indexRef.current;
-    if (!doc || !meta) throw new Error("No document is open.");
+    if (!doc || !meta) return Promise.reject(new Error("No document is open."));
 
-    const allPageNumbers = Array.from({ length: meta.pageCount }, (_, i) => i + 1);
-    const { ranOcr } = await ensureDocumentText(allPageNumbers, setStatus);
-    if (ranOcr) toast.success("Ran OCR automatically", "This document had no selectable text, so it was recognized (English) before indexing.");
+    const promise = (async () => {
+      const allPageNumbers = Array.from({ length: meta.pageCount }, (_, i) => i + 1);
+      // pages comes straight from ensureDocumentText's own already-guarded
+      // read (see its docstring) rather than a second, separate read pass
+      // here — this file used to re-read page-by-page itself after calling
+      // it, using the *stale* meta.pageCount captured above and a doc
+      // reference with no guard against the document having changed again
+      // in the meantime. Reusing its result closes that gap entirely
+      // instead of narrowing it.
+      const { pages, ranOcr } = await ensureDocumentText(allPageNumbers, setStatus);
+      if (ranOcr) toast.success("Ran OCR automatically", "This document had no selectable text, so it was recognized (English) before indexing.");
 
-    // Re-read from the store, not the `doc` closure — applyPdfMutation
-    // (invoked inside ensureDocumentText when OCR actually ran) destroys
-    // the old PdfDocument instance and swaps in a new one.
-    const freshDoc = useLoomStore.getState().document;
-    if (!freshDoc) throw new Error("No document is open.");
-    const pageTexts: { pageNumber: number; text: string }[] = [];
-    for (const pageNumber of allPageNumbers) {
-      setStatus(`Reading page ${pageNumber} of ${meta.pageCount}…`);
-      pageTexts.push({ pageNumber, text: await freshDoc.getFullPageText(pageNumber) });
-    }
-    const chunks = chunkPagesForRag(pageTexts);
-    if (chunks.length === 0) throw new Error("OCR ran automatically but didn't recognize any text in this document — it may be blank or too low-quality to read.");
+      const chunks = chunkPagesForRag(pages);
+      if (chunks.length === 0) throw new Error("OCR ran automatically but didn't recognize any text in this document — it may be blank or too low-quality to read.");
 
-    const embedded = await embedChunks(chunks, {
-      onProgress: (info) => {
-        if (info.stage === "loading-model") {
-          const d = info.detail;
-          setStatus(d.stage === "downloading" ? `Downloading indexing model… ${Math.round(d.progressPct)}%` : "Preparing the indexing model…");
-        } else {
-          setStatus(`Indexing document… (${info.index}/${info.total})`);
-        }
-      },
+      return embedChunks(chunks, {
+        onProgress: (info) => {
+          if (info.stage === "loading-model") {
+            const d = info.detail;
+            setStatus(d.stage === "downloading" ? `Downloading indexing model… ${Math.round(d.progressPct)}%` : "Preparing the indexing model…");
+          } else {
+            setStatus(`Indexing document… (${info.index}/${info.total})`);
+          }
+        },
+      });
+    })();
+
+    indexRef.current = promise;
+    // A failed index (bad OCR, doc closed mid-run) shouldn't be cached
+    // forever — clear it so the next Send (or the next eager-prefetch
+    // effect run) gets a fresh attempt instead of the same rejection.
+    promise.catch(() => {
+      if (indexRef.current === promise) indexRef.current = null;
     });
-    indexRef.current = embedded;
-    return embedded;
+    return promise;
   };
+
+  // Indexing (OCR fallback + embedding every page) is the other big chunk
+  // of "chat with PDF feels slow" — it used to only start once the user
+  // typed a question and hit Send. Start it the moment the dialog is open
+  // on an available, chat-capable document so it's typically already done
+  // (or well underway) by the time they finish typing; handleSend's
+  // ensureIndex() call below awaits this exact same cached promise instead
+  // of duplicating the work.
+  useEffect(() => {
+    if (!open || availability !== "available" || !doc || !meta) return;
+    ensureIndex().catch(() => {
+      // Swallow here — handleSend surfaces the same failure to the user
+      // via its own toast when they actually try to send a message.
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, availability, meta?.id]);
 
   const handleSend = async () => {
     const question = input.trim();

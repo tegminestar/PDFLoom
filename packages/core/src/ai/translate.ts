@@ -86,3 +86,17 @@ export async function translateText(text: string, language: TranslationLanguage,
   onProgress?.({ stage: "done" });
   return { translatedText: translatedChunks.join(" "), chunkCount: chunks.length };
 }
+
+/**
+ * Starts downloading one target language's model before the user clicks
+ * Translate — call with whichever language is currently selected in the
+ * dropdown (the default on dialog-open, then again on every change) so the
+ * download overlaps with them reading/deciding. Deliberately NOT one call
+ * per language in TRANSLATION_LANGUAGES — that would download all 7
+ * models (tens to hundreds of MB each) regardless of which one gets used.
+ * Options must match translateText's own loadPipeline call exactly, or
+ * this warms a different cache entry.
+ */
+export function preloadTranslateModel(language: TranslationLanguage): Promise<unknown> {
+  return loadPipeline("translation", language.modelId, { dtype: "q8", sessionOptions: { graphOptimizationLevel: "disabled" } });
+}

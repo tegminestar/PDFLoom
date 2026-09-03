@@ -56,3 +56,8 @@ export async function explainClause(text: string, options?: ExplainClauseOptions
   }
   return (first as { generated_text: string }).generated_text.trim();
 }
+
+/** Starts downloading the explain-clause model before any text is selected — call the moment that UI opens. Options must match explainClause's own loadPipeline call exactly, or this warms a different cache entry. */
+export function preloadExplainClauseModel(): Promise<unknown> {
+  return loadPipeline("text2text-generation", MODEL_ID, { dtype: "q8", sessionOptions: { graphOptimizationLevel: "disabled" } });
+}

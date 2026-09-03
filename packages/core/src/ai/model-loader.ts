@@ -63,7 +63,19 @@ export interface LoadPipelineOptions {
   sessionOptions?: InferenceSession.SessionOptions;
 }
 
-const pipelineCache = new Map<string, Promise<unknown>>();
+interface PipelineCacheEntry {
+  promise: Promise<unknown>;
+  /**
+   * Every caller currently interested in this model's download progress —
+   * not just whichever call happened to create this cache entry. A later
+   * call (e.g. the user actually clicking "Summarize" after an eager
+   * background preload already started the same download on dialog-open)
+   * joins an in-flight promise and must still see progress, not silence.
+   */
+  progressListeners: Set<ModelLoadProgressCallback>;
+}
+
+const pipelineCache = new Map<string, PipelineCacheEntry>();
 
 /**
  * `navigator.gpu` being present only means the WebGPU *API* exists, not
@@ -90,10 +102,20 @@ export async function loadPipeline<T extends PipelineType>(task: T, model: strin
   const dtype = options?.dtype;
   const sessionOptions = options?.sessionOptions;
   const cacheKey = `${task}::${model}::${dtype ?? "auto"}::${JSON.stringify(sessionOptions ?? {})}`;
-  const cached = pipelineCache.get(cacheKey);
-  if (cached) return cached as Promise<AllTasks[T]>;
-
   const onProgress = options?.onProgress;
+
+  const existing = pipelineCache.get(cacheKey);
+  if (existing) {
+    // Join the in-flight (or already-resolved) load. Registering here —
+    // even after the download actually started — is what lets a caller
+    // that arrives later than whoever created this entry still receive
+    // progress, instead of only the first caller ever seeing it.
+    if (onProgress) existing.progressListeners.add(onProgress);
+    return existing.promise as Promise<AllTasks[T]>;
+  }
+
+  const progressListeners = new Set<ModelLoadProgressCallback>();
+  if (onProgress) progressListeners.add(onProgress);
 
   const promise = (async () => {
     // detectAiCapabilities() is a fast synchronous heuristic (API presence
@@ -103,7 +125,11 @@ export async function loadPipeline<T extends PipelineType>(task: T, model: strin
     const preferredDevice = capabilities.webgpu && (await isWebgpuAdapterAvailable()) ? "webgpu" : "wasm";
 
     const { pipeline } = await loadTransformers();
-    const progressOptions = onProgress ? { progress_callback: (info: ProgressInfo) => normalizeProgress(info, onProgress) } : {};
+    // Always wired up (even when progressListeners starts empty, e.g. a
+    // preload call with no onProgress) — fans out to whichever listeners
+    // are registered *at event time*, so one added moments after this
+    // pipeline() call kicks off still gets every subsequent event.
+    const progressOptions = { progress_callback: (info: ProgressInfo) => progressListeners.forEach((listener) => normalizeProgress(info, listener)) };
     const dtypeOptions = dtype ? { dtype } : {};
     const sessionOptionsOptions = sessionOptions ? { session_options: sessionOptions } : {};
     try {
@@ -120,7 +146,7 @@ export async function loadPipeline<T extends PipelineType>(task: T, model: strin
     }
   })();
 
-  pipelineCache.set(cacheKey, promise);
+  pipelineCache.set(cacheKey, { promise, progressListeners });
   // Don't cache a failed load — the next call should get a fresh retry, not a permanently-rejected promise.
   promise.catch(() => pipelineCache.delete(cacheKey));
   return promise as Promise<AllTasks[T]>;

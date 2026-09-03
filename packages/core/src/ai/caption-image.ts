@@ -32,3 +32,8 @@ export async function captionImage(image: Blob | HTMLCanvasElement | string, opt
   }
   return (first as { generated_text: string }).generated_text.trim();
 }
+
+/** Starts downloading the captioning model before any image is actually captioned — call the moment the alt-text UI opens. Options must match captionImage's own loadPipeline call exactly, or this warms a different cache entry. */
+export function preloadCaptionModel(): Promise<unknown> {
+  return loadPipeline("image-to-text", MODEL_ID, { dtype: "q8", sessionOptions: { graphOptimizationLevel: "disabled" } });
+}

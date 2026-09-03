@@ -1,4 +1,4 @@
-import { captionImage, getPdfWorkerClient, type PageImageInfo } from "@pdfloom/core";
+import { captionImage, getPdfWorkerClient, preloadCaptionModel, type PageImageInfo } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useEffect, useRef, useState } from "react";
 import { useLoomStore } from "../../app/store";
@@ -46,6 +46,14 @@ export function AccessibilityDialog({ open, onOpenChange }: { open: boolean; onO
       thumbnailUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
+
+  // The captioning model is only needed once an actual undescribed image
+  // turns up mid-scan, but starting its download immediately on open — in
+  // parallel with the page-image scan itself — means it's often ready
+  // before the first image that needs it.
+  useEffect(() => {
+    if (open) void preloadCaptionModel();
+  }, [open]);
 
   const handleScan = async () => {
     if (!doc || !meta) return;

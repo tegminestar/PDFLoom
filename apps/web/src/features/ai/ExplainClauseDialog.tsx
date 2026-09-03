@@ -1,4 +1,4 @@
-import { explainClause } from "@pdfloom/core";
+import { explainClause, preloadExplainClauseModel } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useEffect, useState } from "react";
 
@@ -13,6 +13,15 @@ export function ExplainClauseDialog({ open, onOpenChange, clauseText }: { open: 
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+
+  // This dialog auto-runs the instant it opens (see below), so there's no
+  // real gap between "opened" and "started explaining" to preload into —
+  // it's kept anyway as a harmless no-op against loadPipeline's own cache,
+  // for consistency with every other AI dialog and in case that auto-run
+  // timing ever changes.
+  useEffect(() => {
+    if (open) void preloadExplainClauseModel();
+  }, [open]);
 
   // Auto-run once per newly-opened selection — the text is already chosen
   // by the time this dialog opens, so there's no separate "configure, then

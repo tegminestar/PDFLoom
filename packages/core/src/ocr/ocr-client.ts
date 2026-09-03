@@ -22,6 +22,26 @@ let workerLang: OcrLanguage | null = null;
 let currentProgressCallback: ((p: OcrProgress) => void) | null = null;
 
 /**
+ * Serializes every call below that touches the module-level worker/
+ * currentProgressCallback singleton. Without this, two calls overlapping
+ * in different languages (e.g. a user's own manual "Make searchable"
+ * run in French, plus some other feature's own recognizeImage call
+ * defaulting to English) race: getWorker() terminates whichever worker
+ * is cached for the "losing" language out from under a call that's still
+ * awaiting .recognize() on it, and the two calls' progress callbacks
+ * clobber each other. Queuing makes calls run one at a time instead.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  const result = queue.then(task, task);
+  queue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
+/**
  * Lazily creates (or re-langs) a single shared Tesseract.js worker. The
  * worker downloads its language's traineddata from Tesseract's own CDN on
  * first use per language and caches it (Cache API), same "free, no API key,
@@ -47,32 +67,36 @@ async function getWorker(lang: OcrLanguage): Promise<Worker> {
  * run in a Worker — has no access to) and for converting bboxes into PDF
  * point space using the same DPI it rasterized at.
  */
-export async function recognizeImage(image: Blob, lang: OcrLanguage, onProgress?: (p: OcrProgress) => void): Promise<OcrWord[]> {
-  const w = await getWorker(lang);
-  currentProgressCallback = onProgress ?? null;
-  try {
-    const { data } = await w.recognize(image, {}, { blocks: true });
-    const words: OcrWord[] = [];
-    for (const block of data.blocks ?? []) {
-      for (const paragraph of block.paragraphs) {
-        for (const line of paragraph.lines) {
-          for (const word of line.words) {
-            if (word.text.trim().length === 0) continue;
-            words.push({ text: word.text, bbox: word.bbox, confidence: word.confidence });
+export function recognizeImage(image: Blob, lang: OcrLanguage, onProgress?: (p: OcrProgress) => void): Promise<OcrWord[]> {
+  return enqueue(async () => {
+    const w = await getWorker(lang);
+    currentProgressCallback = onProgress ?? null;
+    try {
+      const { data } = await w.recognize(image, {}, { blocks: true });
+      const words: OcrWord[] = [];
+      for (const block of data.blocks ?? []) {
+        for (const paragraph of block.paragraphs) {
+          for (const line of paragraph.lines) {
+            for (const word of line.words) {
+              if (word.text.trim().length === 0) continue;
+              words.push({ text: word.text, bbox: word.bbox, confidence: word.confidence });
+            }
           }
         }
       }
+      return words;
+    } finally {
+      currentProgressCallback = null;
     }
-    return words;
-  } finally {
-    currentProgressCallback = null;
-  }
+  });
 }
 
-export async function terminateOcrWorker(): Promise<void> {
-  if (worker) {
-    await worker.terminate();
-    worker = null;
-    workerLang = null;
-  }
+export function terminateOcrWorker(): Promise<void> {
+  return enqueue(async () => {
+    if (worker) {
+      await worker.terminate();
+      worker = null;
+      workerLang = null;
+    }
+  });
 }

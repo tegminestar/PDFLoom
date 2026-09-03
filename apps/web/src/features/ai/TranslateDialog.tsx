@@ -1,7 +1,7 @@
-import { TRANSLATION_LANGUAGES, translateText, type TranslateResult, type TranslationLanguage } from "@pdfloom/core";
+import { TRANSLATION_LANGUAGES, preloadTranslateModel, translateText, type TranslateResult, type TranslationLanguage } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { ensureDocumentText } from "./ensureDocumentText";
 
@@ -24,6 +24,14 @@ export function TranslateDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const [status, setStatus] = useState<string | null>(null);
   const [result, setResult] = useState<TranslateResult | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Warm whichever language is currently selected as soon as the dialog is
+  // open, and again every time the user changes the dropdown — each
+  // target language is its own model, so this only ever downloads the one
+  // they're actually about to use, not all seven.
+  useEffect(() => {
+    if (open) void preloadTranslateModel(language);
+  }, [open, language]);
 
   const handleRun = async () => {
     if (!doc || !meta) return;

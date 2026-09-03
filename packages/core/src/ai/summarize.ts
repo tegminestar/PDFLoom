@@ -99,3 +99,8 @@ export async function summarizeText(text: string, options?: SummarizeOptions): P
   options?.onProgress?.({ stage: "done" });
   return { summary: finalSummary, wasChunked: true, chunkCount: chunks.length };
 }
+
+/** Starts downloading the summarization model before any text is summarized — call the moment the summarize UI opens. Options must match summarizeText's own loadPipeline call exactly, or this warms a different cache entry. */
+export function preloadSummarizeModel(): Promise<unknown> {
+  return loadPipeline("summarization", MODEL_ID, { dtype: "q8", sessionOptions: { graphOptimizationLevel: "disabled" } });
+}

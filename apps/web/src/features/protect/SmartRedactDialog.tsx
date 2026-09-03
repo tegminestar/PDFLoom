@@ -1,6 +1,6 @@
-import { detectPii, type NamedEntityType, type PiiType } from "@pdfloom/core";
+import { detectPii, preloadSmartRedactModel, type NamedEntityType, type PiiType } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
 
 const STRUCTURED_TOGGLES: { key: PiiType; label: string }[] = [
@@ -35,6 +35,14 @@ export function SmartRedactDialog({ open, onOpenChange }: { open: boolean; onOpe
   const [entityTypes, setEntityTypes] = useState<Set<NamedEntityType>>(new Set(["person"]));
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+
+  // Structured (regex) detection needs no model at all, but the NER model
+  // backing named-entity detection is the slow part — start it downloading
+  // as soon as the dialog opens rather than waiting for Scan document,
+  // since "person names" is on by default and almost always used.
+  useEffect(() => {
+    if (open) void preloadSmartRedactModel();
+  }, [open]);
 
   const toggleStructured = (key: PiiType) =>
     setStructuredTypes((prev) => {

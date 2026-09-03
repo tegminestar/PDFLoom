@@ -81,6 +81,18 @@ export async function embedQuery(query: string): Promise<number[]> {
   return embed(pipeline as FeatureExtractionPipeline, query);
 }
 
+/**
+ * Starts downloading/initializing the embedding model without embedding
+ * anything yet — call this the moment a chat/RAG UI opens (before the user
+ * has typed a question) so the download overlaps with them reading/typing
+ * instead of only starting once they hit send. loadPipeline's own cache
+ * means embedChunks/embedQuery below transparently reuse this same
+ * in-flight or completed load rather than starting a second one.
+ */
+export function preloadEmbeddingModel(): Promise<unknown> {
+  return loadPipeline("feature-extraction", EMBEDDING_MODEL_ID, {});
+}
+
 /** Builds the system prompt that grounds the chat model's answer in the retrieved excerpts, rather than letting a ~360M-parameter model answer from its own (unreliable, at that size) general knowledge. */
 export function buildRagSystemPrompt(relevantChunks: (DocumentChunk & { score: number })[]): string {
   if (relevantChunks.length === 0) {

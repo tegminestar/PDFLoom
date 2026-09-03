@@ -4,6 +4,7 @@ import {
   extractJsonObject,
   getPdfWorkerClient,
   isChatAvailable,
+  preloadChatModel,
   sendChatMessage,
   validateCommand,
   type CommandOperation,
@@ -48,6 +49,13 @@ export function CommandBarDialog({ open, onOpenChange }: { open: boolean; onOpen
       cancelled = true;
     };
   }, [open]);
+
+  // Same ~360MB WebLLM engine as ChatDialog, and the two share its
+  // module-level cache — start it here too so opening the command bar
+  // first doesn't leave the user waiting on a cold download.
+  useEffect(() => {
+    if (availability === "available") void preloadChatModel();
+  }, [availability]);
 
   const handleResolve = async () => {
     if (!request.trim() || !meta) return;

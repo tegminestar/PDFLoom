@@ -42,6 +42,13 @@ type MLCEngineLike = {
 };
 
 let enginePromise: Promise<MLCEngineLike> | null = null;
+// Every caller currently interested in load progress — not just whichever
+// call happened to create enginePromise. Without this, a later call (e.g.
+// the user hitting Send right after an eager preload already started the
+// same download on dialog-open) joins the in-flight promise but never
+// hears a single progress update, since CreateMLCEngine only takes one
+// initProgressCallback, fixed at creation time.
+const progressListeners = new Set<(info: ChatLoadStage) => void>();
 
 /**
  * Lazily creates (or reuses) the shared WebLLM chat engine. Always call
@@ -52,15 +59,16 @@ let enginePromise: Promise<MLCEngineLike> | null = null;
  * reaching this at all on an unsupported device.
  */
 async function loadEngine(options?: WebLlmChatOptions): Promise<MLCEngineLike> {
+  if (options?.onProgress) progressListeners.add(options.onProgress);
   if (enginePromise) return enginePromise;
 
   enginePromise = (async () => {
     const webllm = await import("@mlc-ai/web-llm");
     try {
       const engine = await webllm.CreateMLCEngine(CHAT_MODEL_ID, {
-        initProgressCallback: (report) => options?.onProgress?.({ stage: "loading-model", progressText: report.text }),
+        initProgressCallback: (report) => progressListeners.forEach((listener) => listener({ stage: "loading-model", progressText: report.text })),
       });
-      options?.onProgress?.({ stage: "ready" });
+      progressListeners.forEach((listener) => listener({ stage: "ready" }));
       return engine as unknown as MLCEngineLike;
     } catch (error) {
       // WebGPUNotAvailableError/WebGPUNotFoundError exist inside the
@@ -85,4 +93,16 @@ export async function sendChatMessage(messages: ChatMessage[], options?: WebLlmC
   const engine = await loadEngine(options);
   const response = await engine.chat.completions.create({ messages, temperature: 0.3, max_tokens: 400 });
   return response.choices[0]?.message.content?.trim() ?? "";
+}
+
+/**
+ * Starts downloading/compiling the chat engine without sending any message
+ * — call this the moment chat is confirmed available (isChatAvailable) so
+ * this multi-hundred-MB download overlaps with the user reading/typing
+ * their first question instead of only starting once they hit send.
+ * loadEngine's own cache means sendChatMessage transparently reuses this
+ * same in-flight or completed load.
+ */
+export function preloadChatModel(options?: WebLlmChatOptions): Promise<unknown> {
+  return loadEngine(options);
 }

@@ -99,3 +99,8 @@ export async function detectPii(text: string, options?: SmartRedactOptions): Pro
 
   return merged.sort((a, b) => a.startIndex - b.startIndex);
 }
+
+/** Starts downloading the NER model before any text is scanned — call the moment the smart-redact UI opens. Options must match detectPii's own loadPipeline call exactly, or this warms a different cache entry. */
+export function preloadSmartRedactModel(): Promise<unknown> {
+  return loadPipeline("token-classification", NER_MODEL_ID, { dtype: "q8" });
+}

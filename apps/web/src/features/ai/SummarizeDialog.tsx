@@ -1,4 +1,4 @@
-import { detectAiCapabilities, isWebgpuAdapterAvailable, summarizeText, type SummarizeResult } from "@pdfloom/core";
+import { detectAiCapabilities, isWebgpuAdapterAvailable, preloadSummarizeModel, summarizeText, type SummarizeResult } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { Check, Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -43,6 +43,14 @@ export function SummarizeDialog({ open, onOpenChange }: { open: boolean; onOpenC
       cancelled = true;
     };
   }, [capabilities.webgpu]);
+
+  // Start the model download the moment this dialog opens instead of
+  // waiting for the user to pick a scope and click Summarize.
+  // loadPipeline's own cache makes this safe even if handleRun's own call
+  // races ahead of it.
+  useEffect(() => {
+    if (open) void preloadSummarizeModel();
+  }, [open]);
 
   const handleRun = async () => {
     if (!doc || !meta) return;
