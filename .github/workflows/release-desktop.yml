@@ -83,7 +83,7 @@ jobs:
       # GitHub Release and uploads each platform's installers to it — left
       # as a draft deliberately so the actual artifacts can be checked
       # before anyone sees a public release.
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
