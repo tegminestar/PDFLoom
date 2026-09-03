@@ -13,9 +13,11 @@ import {
   FolderOpen,
   FormInput,
   GitCompare,
+  Grid3x3,
   Hash,
   Highlighter,
   ImagePlus,
+  Layers,
   LayoutGrid,
   LayoutTemplate,
   Lock,
@@ -38,6 +40,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { AllToolsDialog, type ToolGroup } from "./features/tools/AllToolsDialog";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
 import { CommandBarDialog } from "./features/ai/CommandBarDialog";
@@ -50,6 +53,7 @@ import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
 import { CompareDialog } from "./features/compare/CompareDialog";
 import { CompareView } from "./features/compare/CompareView";
+import { BatchDialog } from "./features/convert/BatchDialog";
 import { CompressDialog } from "./features/convert/CompressDialog";
 import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
@@ -96,6 +100,8 @@ export function App() {
   const zoomIn = useLoomStore((s) => s.zoomIn);
   const zoomOut = useLoomStore((s) => s.zoomOut);
   const rotateView = useLoomStore((s) => s.rotateView);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
   const { theme, toggleTheme } = useTheme();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
   const setActivePanel = useLoomStore((s) => s.setActivePanel);
@@ -120,6 +126,8 @@ export function App() {
   const compareTarget = useLoomStore((s) => s.compareTarget);
   const setCompareTarget = useLoomStore((s) => s.setCompareTarget);
   const [isInsertingImages, setIsInsertingImages] = useState(false);
+  const [allToolsOpen, setAllToolsOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
 
   const handleComparePicked = (nextTarget: CompareTarget) => {
     setCompareTarget(nextTarget);
@@ -173,7 +181,23 @@ export function App() {
         void openViaPicker();
         return;
       }
-      if (!meta || mainView !== "read") return;
+      if (!meta) return;
+      if (event.key.toLowerCase() === "z" && event.shiftKey) {
+        event.preventDefault();
+        void redo();
+        return;
+      }
+      if (event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        void undo();
+        return;
+      }
+      if (event.key.toLowerCase() === "y") {
+        event.preventDefault();
+        void redo();
+        return;
+      }
+      if (mainView !== "read") return;
       switch (event.key) {
         case "f":
         case "F":
@@ -197,7 +221,7 @@ export function App() {
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [meta, mainView, openViaPicker, setActivePanel, zoomIn, zoomOut, setFitMode]);
+  }, [meta, mainView, openViaPicker, setActivePanel, zoomIn, zoomOut, setFitMode, undo, redo]);
 
   const commandGroups: CommandPaletteGroup[] = useMemo(
     () => [
@@ -361,6 +385,96 @@ export function App() {
     ],
   );
 
+  const toolGroups: ToolGroup[] = useMemo(
+    () => [
+      {
+        title: "Organize & edit",
+        tools: [
+          { icon: FileStack, label: "Organize pages", description: "Merge, split, reorder, rotate, crop, extract.", onSelect: () => setMainView("organize") },
+          {
+            icon: Highlighter,
+            label: "Annotate",
+            description: "Highlights, freehand drawing, stamps, sticky notes.",
+            tone: "ai",
+            onSelect: () => {
+              setMainView("read");
+              setAnnotateOpen(true);
+            },
+          },
+          { icon: Edit3, label: "Edit", description: "Best-effort text and image replacement.", onSelect: () => { setMainView("read"); setEditOpen(true); } },
+          { icon: FormInput, label: "Fill form", description: "Detect and fill AcroForm fields.", onSelect: () => { setMainView("read"); void setFormFillOpen(true); } },
+        ],
+      },
+      {
+        title: "Sign & protect",
+        tools: [
+          { icon: Signature, label: "Sign", description: "Draw, type, or upload a signature.", onSelect: () => { setMainView("read"); setSignOpen(true); } },
+          { icon: EyeOff, label: "Redact", description: "Permanently remove sensitive content.", onSelect: () => { setMainView("read"); setRedactOpen(true); } },
+          { icon: Lock, label: "Protect", description: "Password, permissions, metadata cleanup.", onSelect: () => setProtectOpen(true) },
+          { icon: GitCompare, label: "Compare", description: "Visual and text diff between two PDFs.", onSelect: () => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true)) },
+        ],
+      },
+      {
+        title: "Convert",
+        tools: [
+          { icon: ImagePlus, label: "Insert images as pages", description: "Add images into the document as new pages.", onSelect: () => imagePicker.open() },
+          { icon: FilePlus2, label: "Add pages from text", description: "Markdown or HTML converted into new pages.", onSelect: () => setCreateFromTextOpen(true) },
+          { icon: FileDown, label: "Export pages as images", description: "Save one or more pages as PNG/JPEG.", onSelect: () => setExportImagesOpen(true) },
+          { icon: FileOutput, label: "Export to Office", description: "Best-effort Word/Excel/PowerPoint export.", onSelect: () => setExportOfficeOpen(true) },
+          { icon: ScanText, label: "Make searchable (OCR)", description: "Recognize text in scanned pages.", onSelect: () => setOcrOpen(true) },
+          { icon: Shrink, label: "Compress", description: "Reduce file size.", onSelect: () => setCompressOpen(true) },
+          { icon: Layers, label: "Batch process files", description: "Run one operation across many PDFs at once.", onSelect: () => setBatchOpen(true) },
+        ],
+      },
+      {
+        title: "Page design",
+        tools: [
+          { icon: PenTool, label: "Watermark", description: "Diagonal or tiled text watermark.", onSelect: () => setWatermarkOpen(true) },
+          { icon: FileStack, label: "Header & footer", description: "Repeating text across every page.", onSelect: () => setHeaderFooterOpen(true) },
+          { icon: Hash, label: "Page numbers & Bates", description: "Sequential numbering for legal/office use.", onSelect: () => setPageNumbersOpen(true) },
+        ],
+      },
+      {
+        title: "AI suite",
+        tools: [
+          { icon: Sparkles, label: "Summarize", description: "Condense a page or the whole document.", tone: "ai", onSelect: () => setSummarizeOpen(true) },
+          { icon: Sparkles, label: "Translate", description: "In-place translation overlay.", tone: "ai", onSelect: () => setTranslateOpen(true) },
+          { icon: Sparkles, label: "Image alt text", description: "Auto-generate accessibility descriptions.", tone: "ai", onSelect: () => setAccessibilityOpen(true) },
+          { icon: Sparkles, label: "Chat with your PDF", description: "Ask questions grounded in the document.", tone: "ai", onSelect: () => setChatOpen(true) },
+          { icon: Sparkles, label: "AI command bar", description: "Type a request, PDFLoom does the rest.", tone: "ai", onSelect: () => setCommandBarOpen(true) },
+          { icon: LayoutTemplate, label: "Quick Create", description: "Flyers, social posts, and slides from a template.", tone: "ai", onSelect: () => setQuickCreateOpen(true) },
+        ],
+      },
+    ],
+    [
+      setMainView,
+      setAnnotateOpen,
+      setEditOpen,
+      setFormFillOpen,
+      setSignOpen,
+      setRedactOpen,
+      setProtectOpen,
+      compareTarget,
+      setCompareDialogOpen,
+      imagePicker,
+      setCreateFromTextOpen,
+      setExportImagesOpen,
+      setExportOfficeOpen,
+      setOcrOpen,
+      setCompressOpen,
+      setWatermarkOpen,
+      setHeaderFooterOpen,
+      setPageNumbersOpen,
+      setSummarizeOpen,
+      setTranslateOpen,
+      setAccessibilityOpen,
+      setChatOpen,
+      setCommandBarOpen,
+      setQuickCreateOpen,
+      setBatchOpen,
+    ],
+  );
+
   return (
     <div className="flex h-dvh w-dvw overflow-hidden bg-bg text-text">
       {meta && (
@@ -474,11 +588,14 @@ export function App() {
               { id: "export-office", label: "Export to Word/Excel/PowerPoint…", icon: <FileOutput />, onSelect: () => setExportOfficeOpen(true) },
               { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
               { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
+              { id: "batch", label: "Batch process files…", icon: <Layers />, onSelect: () => setBatchOpen(true) },
             ]}
           />
+          <RailItem icon={<Grid3x3 />} label="All tools" onClick={() => setAllToolsOpen(true)} />
         </Rail>
       )}
       {imagePicker.input}
+      <AllToolsDialog open={allToolsOpen} onOpenChange={setAllToolsOpen} groups={toolGroups} />
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <h1 className="sr-only">PDFLoom</h1>
         {meta &&
@@ -551,6 +668,7 @@ export function App() {
           <PageNumbersDialog open={pageNumbersOpen} onOpenChange={setPageNumbersOpen} />
           <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
           <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
+          <BatchDialog open={batchOpen} onOpenChange={setBatchOpen} />
           <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
           <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />

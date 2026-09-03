@@ -13,6 +13,7 @@ import {
   type StampPreset,
 } from "@pdfloom/core";
 import { create } from "zustand";
+import { trackEvent } from "./analytics";
 
 export type FitMode = "width" | "page" | "custom";
 export type ScrollMode = "continuous" | "single" | "two-page";
@@ -79,6 +80,13 @@ interface LoomState {
   storage: WebStorageAdapter;
   document: PdfDocument | null;
   meta: DocumentMeta | null;
+  /** Undo/redo history — raw byte snapshots from before each mutation. Capped (see MAX_HISTORY) since each entry is a full document copy. */
+  undoStack: Uint8Array[];
+  redoStack: Uint8Array[];
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
   isLoading: boolean;
   loadError: string | null;
   /** Set when opening a file throws pdf.js's PasswordException — the file is held here (not opened yet) until submitPassword/cancelPasswordPrompt resolves it. */
@@ -229,6 +237,9 @@ interface LoomState {
   clearSearch: () => void;
 }
 
+// Each entry is a full copy of the document's bytes, so this bounds memory
+// rather than aiming for an unlimited history like a text editor could.
+const MAX_HISTORY = 20;
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 0.1;
@@ -256,6 +267,10 @@ async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, open
     isLoading: false,
     currentPage: 1,
     pageNavigationNonce: s.pageNavigationNonce + 1,
+    undoStack: [],
+    redoStack: [],
+    canUndo: false,
+    canRedo: false,
     zoom: 1,
     fitMode: "width",
     viewRotation: 0,
@@ -330,6 +345,10 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   storage: new WebStorageAdapter(),
   document: null,
   meta: null,
+  undoStack: [],
+  redoStack: [],
+  canUndo: false,
+  canRedo: false,
   isLoading: false,
   loadError: null,
   passwordPromptOpen: false,
@@ -474,7 +493,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       signPlacementKind: null,
       pendingSignaturePlacement: null,
     }),
-  setAnnotateOpen: (annotateOpen) =>
+  setAnnotateOpen: (annotateOpen) => {
+    if (annotateOpen) trackEvent("feature_opened", { feature: "annotate" });
     set({
       annotateOpen,
       formFillOpen: false,
@@ -485,7 +505,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       signOpen: false,
       signPlacementKind: null,
       pendingSignaturePlacement: null,
-    }),
+    });
+  },
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
@@ -497,6 +518,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     }
     const { document: doc } = get();
     if (!doc) return;
+    trackEvent("feature_opened", { feature: "fill_form" });
     set({
       formFillOpen: true,
       annotateOpen: false,
@@ -531,7 +553,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   setFormMode: (formMode) => set({ formMode, formDesignTool: formMode === "design" ? "text" : null }),
   setFormDesignTool: (formDesignTool) => set({ formDesignTool }),
 
-  setEditOpen: (editOpen) =>
+  setEditOpen: (editOpen) => {
+    if (editOpen) trackEvent("feature_opened", { feature: "edit" });
     set({
       editOpen,
       annotateOpen: false,
@@ -542,10 +565,12 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       signOpen: false,
       signPlacementKind: null,
       pendingSignaturePlacement: null,
-    }),
+    });
+  },
   setEditTool: (editTool) => set({ editTool }),
 
-  setRedactOpen: (redactOpen) =>
+  setRedactOpen: (redactOpen) => {
+    if (redactOpen) trackEvent("feature_opened", { feature: "redact" });
     set({
       redactOpen,
       annotateOpen: false,
@@ -564,7 +589,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       // look "mid-edit" after the editing surface itself has unmounted.
       selectedRedactBoxIndex: null,
       ...(redactOpen ? {} : { redactBoxes: [] }),
-    }),
+    });
+  },
   addRedactBox: (pageIndex, rect) =>
     set((s) => ({ redactBoxes: [...s.redactBoxes, { pageIndex, rect }], selectedRedactBoxIndex: s.redactBoxes.length })),
   updateRedactBox: (index, rect) =>
@@ -609,7 +635,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     }
   },
 
-  setSignOpen: (signOpen) =>
+  setSignOpen: (signOpen) => {
+    if (signOpen) trackEvent("feature_opened", { feature: "sign" });
     set({
       signOpen,
       annotateOpen: false,
@@ -619,7 +646,8 @@ export const useLoomStore = create<LoomState>((set, get) => ({
       editOpen: false,
       redactOpen: false,
       ...(signOpen ? {} : { signPlacementKind: null, pendingSignaturePlacement: null }),
-    }),
+    });
+  },
   // Switching sub-tool mid-adjustment abandons any pending draft rather than
   // leaving it on screen with a tool selection that no longer matches it.
   setSignPlacementKind: (signPlacementKind) => set({ signPlacementKind, pendingSignaturePlacement: null }),
@@ -715,17 +743,69 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   },
 
   applyPdfMutation: async (newBytes) => {
-    const { document: oldDoc, meta } = get();
+    const { document: oldDoc, meta, undoStack } = get();
     if (!oldDoc || !meta) return;
+    const oldBytes = await oldDoc.getRawBytes();
     const newDoc = await PdfDocument.load(newBytes);
     oldDoc.destroy();
     const outline = await newDoc.getOutline();
+    const nextUndoStack = [...undoStack, oldBytes].slice(-MAX_HISTORY);
     set((s) => ({
       document: newDoc,
       meta: { ...meta, pageCount: newDoc.pageCount },
       outline,
       currentPage: Math.min(s.currentPage, newDoc.pageCount),
       pageNavigationNonce: s.pageNavigationNonce + 1,
+      undoStack: nextUndoStack,
+      redoStack: [],
+      canUndo: true,
+      canRedo: false,
+    }));
+  },
+
+  undo: async () => {
+    const { document: oldDoc, meta, undoStack, redoStack } = get();
+    if (!oldDoc || !meta || undoStack.length === 0) return;
+    const oldBytes = await oldDoc.getRawBytes();
+    const prevBytes = undoStack[undoStack.length - 1]!;
+    const nextUndoStack = undoStack.slice(0, -1);
+    const newDoc = await PdfDocument.load(prevBytes);
+    oldDoc.destroy();
+    const outline = await newDoc.getOutline();
+    const nextRedoStack = [...redoStack, oldBytes].slice(-MAX_HISTORY);
+    set((s) => ({
+      document: newDoc,
+      meta: { ...meta, pageCount: newDoc.pageCount },
+      outline,
+      currentPage: Math.min(s.currentPage, newDoc.pageCount),
+      pageNavigationNonce: s.pageNavigationNonce + 1,
+      undoStack: nextUndoStack,
+      redoStack: nextRedoStack,
+      canUndo: nextUndoStack.length > 0,
+      canRedo: true,
+    }));
+  },
+
+  redo: async () => {
+    const { document: oldDoc, meta, undoStack, redoStack } = get();
+    if (!oldDoc || !meta || redoStack.length === 0) return;
+    const oldBytes = await oldDoc.getRawBytes();
+    const nextBytes = redoStack[redoStack.length - 1]!;
+    const nextRedoStack = redoStack.slice(0, -1);
+    const newDoc = await PdfDocument.load(nextBytes);
+    oldDoc.destroy();
+    const outline = await newDoc.getOutline();
+    const nextUndoStack = [...undoStack, oldBytes].slice(-MAX_HISTORY);
+    set((s) => ({
+      document: newDoc,
+      meta: { ...meta, pageCount: newDoc.pageCount },
+      outline,
+      currentPage: Math.min(s.currentPage, newDoc.pageCount),
+      pageNavigationNonce: s.pageNavigationNonce + 1,
+      undoStack: nextUndoStack,
+      redoStack: nextRedoStack,
+      canUndo: true,
+      canRedo: nextRedoStack.length > 0,
     }));
   },
 

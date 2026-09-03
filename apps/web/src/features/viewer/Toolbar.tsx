@@ -12,11 +12,13 @@ import {
   Maximize,
   Minimize,
   Moon,
+  Redo2,
   RectangleVertical,
   RotateCw,
   Rows,
   Search,
   Sun,
+  Undo2,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -49,6 +51,10 @@ export function Toolbar() {
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
   const storage = useLoomStore((s) => s.storage);
   const document_ = useLoomStore((s) => s.document);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
+  const canUndo = useLoomStore((s) => s.canUndo);
+  const canRedo = useLoomStore((s) => s.canRedo);
 
   const { theme, toggleTheme } = useTheme();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
@@ -91,6 +97,13 @@ export function Toolbar() {
     <TopBar>
       <TopBarSection>
         <IconButton icon={<FolderOpen />} label="Open a PDF" onClick={() => void openViaPicker()} shortcut="Ctrl O" />
+        {meta && (
+          <>
+            <Separator orientation="vertical" className="mx-1 h-6" />
+            <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
+            <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
+          </>
+        )}
         <Separator orientation="vertical" className="mx-1 h-6" />
         <IconButton
           icon={<LayoutGrid />}
