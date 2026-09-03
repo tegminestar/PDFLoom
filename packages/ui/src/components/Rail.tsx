@@ -6,7 +6,15 @@ export function Rail({ children, className }: { children: ReactNode; className?:
   return (
     <nav
       className={cn(
-        "flex w-14 shrink-0 flex-col items-center gap-1 border-r border-border bg-bg-elevated py-3",
+        // overflow-y-auto: this rail's icon list has grown across many
+        // features added over time, and a real user already lost one
+        // (the newest at the bottom) to it silently overflowing past the
+        // viewport height with no way to scroll to it — measured directly:
+        // it only fit with ~12px to spare on a 720px-tall window, so any
+        // shorter real window, or the next feature added here, would push
+        // something below the fold invisibly. Same fix as TopBar's own
+        // overflow-x for the identical horizontal case.
+        "flex w-14 shrink-0 flex-col items-center gap-1 overflow-y-auto border-r border-border bg-bg-elevated py-3",
         className,
       )}
     >

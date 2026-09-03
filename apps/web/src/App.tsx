@@ -35,6 +35,7 @@ import {
   Sparkles,
   Stamp,
   Sun,
+  Users,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -56,6 +57,7 @@ import { AnnotateToolbar } from "./features/annotate/AnnotateToolbar";
 import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolbar";
 import { CompareDialog } from "./features/compare/CompareDialog";
 import { CompareView } from "./features/compare/CompareView";
+import { LiveReviewDialog } from "./features/collab/LiveReviewDialog";
 import { BatchDialog } from "./features/convert/BatchDialog";
 import { MailMergeDialog } from "./features/convert/MailMergeDialog";
 import { CompressDialog } from "./features/convert/CompressDialog";
@@ -133,6 +135,7 @@ export function App() {
   const [allToolsOpen, setAllToolsOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
   const [mailMergeOpen, setMailMergeOpen] = useState(false);
+  const [liveReviewOpen, setLiveReviewOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleComparePicked = (nextTarget: CompareTarget) => {
@@ -552,6 +555,7 @@ export function App() {
             active={mainView === "compare"}
             onClick={() => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true))}
           />
+          <RailItem icon={<Users />} label="Live Review" active={liveReviewOpen} onClick={() => setLiveReviewOpen(true)} />
           <DropdownMenu
             align="start"
             trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen || commandBarOpen} />}
@@ -680,6 +684,7 @@ export function App() {
           <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
           <BatchDialog open={batchOpen} onOpenChange={setBatchOpen} />
           <MailMergeDialog open={mailMergeOpen} onOpenChange={setMailMergeOpen} />
+          <LiveReviewDialog open={liveReviewOpen} onOpenChange={setLiveReviewOpen} />
           <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
           <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />

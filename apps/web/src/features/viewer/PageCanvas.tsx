@@ -1,6 +1,7 @@
 import type { PdfDocument, TextLayer } from "@pdfloom/core";
 import { useEffect, useRef, useState } from "react";
 import { AnnotationDrawOverlay } from "../annotate/AnnotationDrawOverlay";
+import { ReviewCommentOverlay } from "../collab/ReviewCommentOverlay";
 import { EditOverlay } from "../edit/EditOverlay";
 import { FieldDesignerOverlay } from "../forms/FieldDesignerOverlay";
 import { FormFieldOverlay } from "../forms/FormFieldOverlay";
@@ -123,6 +124,7 @@ export function PageCanvas({ doc, pageNumber, scale, rotation, isActiveSearchRes
         {isVisible && <SearchHighlightOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <AnnotationDrawOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FormFieldOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
+        {isVisible && <ReviewCommentOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <FieldDesignerOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}
         {isVisible && <EditOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} pageContainerRef={pageRef} />}
         {isVisible && <RedactOverlay doc={doc} pageNumber={pageNumber} scale={scale} rotation={rotation} />}

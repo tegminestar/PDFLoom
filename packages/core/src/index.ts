@@ -44,6 +44,18 @@ export { detectAiCapabilities, isWebgpuAdapterAvailable } from "./ai/capabilitie
 export type { AiCapabilities } from "./ai/capabilities";
 export { chunkText } from "./ai/chunk-text";
 export { parseCsv } from "./utils/csv";
+export {
+  createReviewSession,
+  addReviewComment,
+  removeReviewComment,
+  listReviewComments,
+  onReviewCommentsChange,
+  applyRemoteUpdate,
+  onLocalDocUpdate,
+  encodeFullState,
+  generateSessionCode,
+} from "./collab/review-session";
+export type { ReviewComment, ReviewSession } from "./collab/review-session";
 export { loadPipeline } from "./ai/model-loader";
 export type { ModelLoadStage, ModelLoadProgressCallback, LoadPipelineOptions } from "./ai/model-loader";
 export { summarizeText, preloadSummarizeModel } from "./ai/summarize";

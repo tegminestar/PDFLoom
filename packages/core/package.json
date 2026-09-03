@@ -20,7 +20,8 @@
     "idb": "^8.0.3",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.2.108",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
