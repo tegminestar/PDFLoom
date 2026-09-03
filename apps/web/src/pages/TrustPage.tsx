@@ -1,5 +1,5 @@
 import { Button, Mark } from "@pdfloom/ui";
-import { Code, Eye, FileCheck2, Lock, Mail, MessageCircle, ShieldCheck, Signature } from "lucide-react";
+import { BarChart3, Code, Eye, FileCheck2, Lock, Mail, MessageCircle, ShieldCheck, Signature } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface ExceptionCard {
@@ -11,6 +11,16 @@ interface ExceptionCard {
 }
 
 const EXCEPTIONS: ExceptionCard[] = [
+  {
+    icon: BarChart3,
+    title: "Basic page-view analytics",
+    whatItDoes:
+      "PDFLoom records a small, anonymous event when you open a page or a tool panel — just enough to tell which features actually get used.",
+    whatItTouches:
+      "An event name and the current path, plus a coarse device/browser/OS and country/city derived from your request's User-Agent and IP address — the same information any server you visit already sees. The IP address itself is never stored, only what's momentarily derived from it.",
+    whatItNeverDoes:
+      "No cookie, no device fingerprint, no identifier that follows you across visits or sites — nothing here is tied to you individually. It's self-hosted on PDFLoom's own infrastructure, never handed to a third-party analytics vendor.",
+  },
   {
     icon: Signature,
     title: "Multi-party signature requests",
@@ -63,7 +73,7 @@ export function TrustPage() {
           <h1 className="font-serif text-4xl font-medium tracking-tight text-text sm:text-5xl">Trust & security</h1>
           <p className="max-w-2xl text-lg leading-relaxed text-text-muted">
             PDFLoom's whole premise is that your files never leave your device. This page is the specific, honest
-            account of what that means in practice — including the two places it isn't quite absolute, and why.
+            account of what that means in practice — including the three places it isn't quite absolute, and why.
           </p>
         </section>
 
@@ -89,10 +99,10 @@ export function TrustPage() {
 
         <section className="flex flex-col gap-8">
           <div className="flex flex-col gap-3">
-            <h2 className="font-serif text-2xl font-medium tracking-tight text-text">The two disclosed exceptions</h2>
+            <h2 className="font-serif text-2xl font-medium tracking-tight text-text">The three disclosed exceptions</h2>
             <p className="text-sm leading-relaxed text-text-muted">
-              Everything else in PDFLoom is local by construction — these are the only two features anywhere in the
-              app that route anything through a server at all, and both are scoped as narrowly as the feature allows.
+              Everything else in PDFLoom is local by construction — these are the only three features anywhere in the
+              app that route anything through a server at all, and each is scoped as narrowly as the feature allows.
             </p>
           </div>
           <div className="flex flex-col gap-6">

@@ -15,4 +15,4 @@ export const supabase: SupabaseClient | null = isAuthConfigured
   ? createClient(url!, anonKey!, { auth: { persistSession: true, autoRefreshToken: true } })
   : null;
 
-export const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:7071";
+export const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";

@@ -109,6 +109,7 @@ jobs:
               STRIPE_PRO_PRICE_ID="${{ secrets.STRIPE_PRO_PRICE_ID }}" \
               SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
               SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              ANALYTICS_OWNER_EMAIL="${{ secrets.ANALYTICS_OWNER_EMAIL }}" \
               APP_URL="${{ secrets.APP_URL }}" \
               SCM_DO_BUILD_DURING_DEPLOYMENT=false \
               WEBSITE_NODE_DEFAULT_VERSION=~24 \

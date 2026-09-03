@@ -1,5 +1,5 @@
 import { ThemeProvider, ToastProvider, TooltipProvider } from "@pdfloom/ui";
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { App } from "./App";
@@ -7,6 +7,12 @@ import { LandingPage } from "./pages/LandingPage";
 import { SignerPage } from "./pages/SignerPage";
 import { TrustPage } from "./pages/TrustPage";
 import "./index.css";
+
+// Lazy: pulls in recharts (and its d3-* dependencies) purely for an
+// owner-only page nobody reaches from any nav link — loading that weight
+// eagerly would tax every visit to /app for a chart library the golden
+// path never touches.
+const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage").then((m) => ({ default: m.AnalyticsDashboardPage })));
 
 // A tab left open across a deploy still holds the *old* index.html, which
 // references JS chunks by their old content hash — hashes that no longer
@@ -43,6 +49,14 @@ createRoot(rootElement).render(
               <Route path="/" element={<LandingPage />} />
               <Route path="/app" element={<App />} />
               <Route path="/trust" element={<TrustPage />} />
+              <Route
+                path="/analytics"
+                element={
+                  <Suspense fallback={null}>
+                    <AnalyticsDashboardPage />
+                  </Suspense>
+                }
+              />
               <Route path="/sign/:token" element={<SignerPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

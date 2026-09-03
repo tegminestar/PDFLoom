@@ -1,4 +1,5 @@
 import express from "express";
+import { getAnalyticsSummary, trackAnalyticsEvent } from "./routes/analytics";
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
 import { submitFeedback } from "./routes/feedback";
@@ -59,6 +60,19 @@ app.post("/api/checkout", (req, res) => {
 app.post("/api/billing-portal", (req, res) => {
   createPortalSession(req, res).catch((error: unknown) => {
     console.error("Unhandled error in createPortalSession", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/analytics/track", (req, res) => {
+  trackAnalyticsEvent(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in trackAnalyticsEvent", error);
+  });
+});
+
+app.get("/api/analytics/summary", (req, res) => {
+  getAnalyticsSummary(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in getAnalyticsSummary", error);
     res.status(500).json({ error: "Internal error" });
   });
 });

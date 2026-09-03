@@ -90,3 +90,30 @@ alter table public.signature_request_signers enable row level security;
 
 create index if not exists signature_request_signers_request_id_idx
   on public.signature_request_signers (request_id);
+
+-- Self-hosted analytics — replaces the paid Plausible Cloud script. Every
+-- row is one beacon from trackEvent() (apps/web/src/app/analytics.ts),
+-- enriched server-side (apps/api/src/routes/analytics.ts) from the
+-- request's User-Agent and IP — the client never sends device/geo data
+-- itself. Only the /api/analytics/summary route (gated to one owner email
+-- via ANALYTICS_OWNER_EMAIL, checked against a verified Supabase session)
+-- reads this table, and only apps/api's service-role key ever touches it —
+-- same no-RLS-policy shape as signature_requests above, for the same reason.
+create table if not exists public.analytics_events (
+  id uuid primary key default gen_random_uuid(),
+  event_name text not null,
+  path text,
+  referrer text,
+  device text,
+  browser text,
+  os text,
+  country text,
+  city text,
+  created_at timestamptz not null default now()
+);
+alter table public.analytics_events enable row level security;
+
+create index if not exists analytics_events_created_at_idx
+  on public.analytics_events (created_at);
+create index if not exists analytics_events_event_name_idx
+  on public.analytics_events (event_name);
