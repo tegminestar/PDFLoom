@@ -351,6 +351,216 @@ async function contractorTaxInfo() {
   });
 }
 
+// --- 6. General Power of Attorney -------------------------------------------
+async function powerOfAttorney() {
+  return build((d) => {
+    d.title("General Power of Attorney");
+    d.paragraph(
+      'This General Power of Attorney ("Instrument") is made by the Principal identified below, appointing the Agent (also called "Attorney-in-Fact") identified below to act on the Principal\'s behalf as set out here.',
+    );
+    d.fieldRow([
+      { name: "principal_name", label: "Principal Name", width: 260 },
+      { name: "agent_name", label: "Agent / Attorney-in-Fact Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "principal_address", label: "Principal Address", width: CONTENT_W }]);
+    d.paragraph(
+      "1. Grant of Authority. The Principal grants the Agent full power and authority to act on the Principal's behalf in the areas checked below, to the same extent the Principal could act personally.",
+    );
+    d.checkboxRow("scope_financial", "Financial and banking transactions");
+    d.checkboxRow("scope_property", "Real estate and property transactions");
+    d.checkboxRow("scope_business", "Business operating decisions");
+    d.checkboxRow("scope_legal", "Legal claims and litigation matters");
+    d.checkboxRow("scope_other", "Other (describe below)");
+    d.fieldRow([{ name: "scope_other_description", label: "Other Authority Granted (if applicable)", width: CONTENT_W }]);
+    d.paragraph(
+      "2. Effective Date and Duration. This Instrument is effective as of the date below and continues until revoked in writing by the Principal, or until the Principal's death, unless it states elsewhere that it survives incapacity (a \"durable\" power of attorney, which typically requires specific statutory language and witnessing/notarization in most jurisdictions).",
+    );
+    d.fieldRow([{ name: "effective_date", label: "Effective Date", width: 200 }]);
+    d.checkboxRow("is_durable", "This power of attorney is intended to be durable (survives Principal's incapacity)");
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "principal_signature", label: "Principal — Signature (type full name)", width: (CONTENT_W - 24) / 2 },
+      { name: "agent_signature", label: "Agent — Signature (type full name, acknowledging appointment)", width: (CONTENT_W - 24) / 2 },
+    ]);
+    d.fieldRow([
+      { name: "principal_date", label: "Date", width: (CONTENT_W - 24) / 2 },
+      { name: "agent_date", label: "Date", width: (CONTENT_W - 24) / 2 },
+    ]);
+    d.disclaimer(
+      "Power of attorney requirements (witnessing, notarization, specific statutory language for durability) vary significantly by jurisdiction and this template does not include any of that formality. This is not legal advice — have a qualified attorney prepare or review this document before signing or relying on it.",
+    );
+  });
+}
+
+// --- 7. Last Will and Testament (simple) ------------------------------------
+async function lastWillTestament() {
+  return build((d) => {
+    d.title("Last Will and Testament");
+    d.paragraph(
+      "I, the Testator identified below, being of sound mind, declare this to be my Last Will and Testament, revoking all prior wills and codicils I have previously made.",
+      { size: 8.5, color: FAINT },
+    );
+    d.fieldRow([
+      { name: "testator_name", label: "Testator (Full Legal Name)", width: 300 },
+      { name: "testator_address", label: "Address", width: 220 },
+    ]);
+    d.paragraph("1. Executor. I appoint the person below to serve as Executor of my estate, to act without bond if permitted by law.");
+    d.fieldRow([
+      { name: "executor_name", label: "Executor Name", width: 260 },
+      { name: "alternate_executor_name", label: "Alternate Executor (if unable/unwilling to serve)", width: 220 },
+    ]);
+    d.paragraph("2. Beneficiaries and Distribution. My estate shall be distributed as follows:");
+    d.fieldRow([{ name: "distribution", label: "Distribution of Assets", width: CONTENT_W, multiline: true }]);
+    d.paragraph("3. Guardian for Minor Children (if applicable).");
+    d.fieldRow([{ name: "guardian_name", label: "Nominated Guardian", width: 300 }]);
+    d.paragraph(
+      "4. Witnesses. Most jurisdictions require a will to be signed in the presence of two witnesses (who are not beneficiaries), who then also sign — some jurisdictions additionally require or allow notarization for a \"self-proving\" affidavit.",
+      { size: 8.5, color: FAINT },
+    );
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.fieldRow([{ name: "testator_signature", label: "Testator — Signature (type full name)", width: 300 }]);
+    d.fieldRow([
+      { name: "witness_1_signature", label: "Witness 1 — Signature (type full name)", width: (CONTENT_W - 24) / 2 },
+      { name: "witness_2_signature", label: "Witness 2 — Signature (type full name)", width: (CONTENT_W - 24) / 2 },
+    ]);
+    d.fieldRow([{ name: "date", label: "Date", width: 200 }]);
+    d.disclaimer(
+      "Wills are one of the most formality-sensitive documents in law — signing/witnessing/notarization requirements, what can and can't be left outside probate, and validity rules vary sharply by jurisdiction. A will that doesn't meet your jurisdiction's exact execution requirements can be ruled invalid. This template is a starting-point reference only — have a qualified estate-planning attorney prepare or review your actual will.",
+    );
+  });
+}
+
+// --- 8. Bill of Sale ---------------------------------------------------------
+async function billOfSale() {
+  return build((d) => {
+    d.title("Bill of Sale");
+    d.paragraph(
+      'This Bill of Sale documents the transfer of the item(s) described below from the Seller to the Buyer identified here, in exchange for the payment described below.',
+    );
+    d.fieldRow([
+      { name: "seller_name", label: "Seller Name", width: 260 },
+      { name: "buyer_name", label: "Buyer Name", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "sale_date", label: "Date of Sale", width: 180 },
+      { name: "purchase_price", label: "Purchase Price", width: 180 },
+    ]);
+    d.fieldRow([{ name: "item_description", label: "Description of Item(s) Sold (include serial/VIN number if applicable)", width: CONTENT_W, multiline: true }]);
+    d.paragraph(
+      "1. Condition. The item(s) are sold \"as is, where is,\" with no warranties of any kind, express or implied, unless stated otherwise below. 2. Title. Seller represents that they hold clear title to the item(s) and have the right to sell them.",
+    );
+    d.checkboxRow("sold_as_is", "Sold as-is, with no warranty");
+    d.fieldRow([{ name: "warranty_terms", label: "Warranty Terms (if any, otherwise leave blank)", width: CONTENT_W }]);
+    d.spacer(6);
+    d.signatureBlock("Seller", "Buyer");
+    d.disclaimer(
+      "For vehicles, vessels, and other titled property, most jurisdictions require a specific official bill-of-sale form and separate title transfer with the relevant motor vehicle or licensing authority — this general template may not satisfy those requirements on its own.",
+    );
+  });
+}
+
+// --- 9. Promissory Note ------------------------------------------------------
+async function promissoryNote() {
+  return build((d) => {
+    d.title("Promissory Note");
+    d.paragraph(
+      "For value received, the Borrower identified below promises to pay to the order of the Lender identified below the principal sum stated, together with interest as specified, according to the terms of this Note.",
+    );
+    d.fieldRow([
+      { name: "borrower_name", label: "Borrower Name", width: 260 },
+      { name: "lender_name", label: "Lender Name", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "principal_amount", label: "Principal Amount", width: 180 },
+      { name: "interest_rate", label: "Annual Interest Rate (%)", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "issue_date", label: "Date of Note", width: 180 },
+      { name: "maturity_date", label: "Maturity Date (final payment due)", width: 220 },
+    ]);
+    d.dropdownRow("repayment_schedule", "Repayment Schedule", ["Lump sum at maturity", "Monthly installments", "Weekly installments", "On demand"]);
+    d.fieldRow([{ name: "payment_amount", label: "Payment Amount (if installments)", width: 220 }]);
+    d.paragraph(
+      "1. Default. If Borrower fails to make any payment when due and does not cure within any notice period required by law, the entire unpaid balance becomes due immediately at Lender's option. 2. Prepayment. Borrower may prepay all or part of this Note at any time without penalty, unless stated otherwise below.",
+    );
+    d.checkboxRow("prepayment_penalty", "A prepayment penalty applies (describe in additional terms)");
+    d.fieldRow([{ name: "additional_terms", label: "Additional Terms", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Borrower", "Lender");
+    d.disclaimer(
+      "Interest rate limits (usury laws), required disclosures, and enforceability rules for promissory notes vary by jurisdiction and by whether the note is secured or unsecured. Have a qualified attorney review this document, particularly for amounts beyond a small personal loan.",
+    );
+  });
+}
+
+// --- 10. Non-Compete / Non-Solicitation Agreement ---------------------------
+async function nonCompeteAgreement() {
+  return build((d) => {
+    d.title("Non-Compete & Non-Solicitation Agreement");
+    d.paragraph(
+      "This Agreement is entered into between the Company and the Individual identified below, in connection with the Individual's employment or engagement with the Company.",
+    );
+    d.fieldRow([
+      { name: "company_name", label: "Company Name", width: 260 },
+      { name: "individual_name", label: "Individual Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "effective_date", label: "Effective Date", width: 200 }]);
+    d.paragraph(
+      "1. Non-Competition. During the Restricted Period and within the Restricted Territory below, the Individual agrees not to engage in any business that directly competes with the Company's business as described below.",
+    );
+    d.fieldRow([
+      { name: "restricted_period", label: "Restricted Period (e.g. 12 months after termination)", width: 300 },
+      { name: "restricted_territory", label: "Restricted Territory", width: 220 },
+    ]);
+    d.fieldRow([{ name: "business_description", label: "Description of Company's Business", width: CONTENT_W, multiline: true }]);
+    d.paragraph(
+      "2. Non-Solicitation. During the Restricted Period, the Individual agrees not to solicit the Company's employees, contractors, or customers for a competing purpose. 3. Reasonableness. The parties agree the restrictions above are reasonable in scope, geography, and duration to protect the Company's legitimate business interests.",
+    );
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Company", "Individual");
+    d.disclaimer(
+      "Non-compete agreements are heavily regulated and, in a growing number of U.S. states and other jurisdictions, banned or narrowly restricted for most workers (including, as of recent FTC rulemaking activity, potentially unenforceable for most employees in the United States generally — verify current law before relying on this). Enforceability turns entirely on jurisdiction-specific law. Have a qualified employment attorney review this before use.",
+    );
+  });
+}
+
+// --- 11. Employment Offer Letter ---------------------------------------------
+async function employmentOfferLetter() {
+  return build((d) => {
+    d.title("Employment Offer Letter");
+    d.paragraph(
+      "This letter confirms an offer of employment from the Company to the Candidate on the terms below. This offer is contingent on any conditions stated here (e.g. background check, reference check) and does not create a contract for a fixed term of employment unless explicitly stated.",
+    );
+    d.fieldRow([
+      { name: "company_name", label: "Company Name", width: 260 },
+      { name: "candidate_name", label: "Candidate Name", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "job_title", label: "Job Title", width: 260 },
+      { name: "start_date", label: "Proposed Start Date", width: 220 },
+    ]);
+    d.dropdownRow("employment_type", "Employment Type", ["Full-time", "Part-time", "Contract", "Temporary"]);
+    d.fieldRow([
+      { name: "compensation", label: "Compensation (salary/rate)", width: 220 },
+      { name: "pay_frequency", label: "Pay Frequency", width: 200 },
+    ]);
+    d.fieldRow([{ name: "benefits_summary", label: "Benefits Summary", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("at_will", "This is an at-will employment relationship (where permitted by applicable law)");
+    d.fieldRow([{ name: "contingencies", label: "Contingencies (e.g. background check, right to work)", width: CONTENT_W }]);
+    d.paragraph("Please indicate acceptance of this offer by signing and dating below.");
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Company", "Candidate");
+    d.disclaimer(
+      "Employment terms, required disclosures, and \"at-will\" enforceability vary by jurisdiction (some require specific language or don't recognize at-will employment at all). This is a general template, not a substitute for review by qualified employment counsel or HR guidance specific to your location.",
+    );
+  });
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const templates = [
@@ -359,6 +569,12 @@ async function main() {
     { file: "residential-lease.pdf", make: residentialLease },
     { file: "general-release.pdf", make: generalRelease },
     { file: "contractor-tax-info.pdf", make: contractorTaxInfo },
+    { file: "power-of-attorney.pdf", make: powerOfAttorney },
+    { file: "last-will-testament.pdf", make: lastWillTestament },
+    { file: "bill-of-sale.pdf", make: billOfSale },
+    { file: "promissory-note.pdf", make: promissoryNote },
+    { file: "non-compete-agreement.pdf", make: nonCompeteAgreement },
+    { file: "employment-offer-letter.pdf", make: employmentOfferLetter },
   ];
   for (const t of templates) {
     const bytes = await t.make();

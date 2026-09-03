@@ -1,16 +1,21 @@
 import { getPdfWorkerClient, recentsStore, type RecentFileEntry } from "@pdfloom/core";
 import { Button, Mark, cn, toast } from "@pdfloom/ui";
 import {
+  BadgeDollarSign,
+  BriefcaseBusiness,
   Cpu,
   FileCheck,
   FileLock2,
   FilePlus2,
+  FileSignature,
   FileText,
   FolderOpen,
   Home,
   ImagePlus,
   Landmark,
   Receipt,
+  ScrollText,
+  ShieldBan,
   ShieldCheck,
   UploadCloud,
   WifiOff,
@@ -45,6 +50,12 @@ const TEMPLATES: TemplateInfo[] = [
   { file: "residential-lease.pdf", name: "Residential Lease", description: "Landlord/tenant lease agreement", icon: Home },
   { file: "general-release.pdf", name: "General Release", description: "Release-of-claims agreement", icon: FileCheck },
   { file: "contractor-tax-info.pdf", name: "Contractor Tax Info", description: "Unofficial W-9-style info request", icon: Landmark },
+  { file: "power-of-attorney.pdf", name: "Power of Attorney", description: "Appoint someone to act on your behalf", icon: FileSignature },
+  { file: "last-will-testament.pdf", name: "Last Will & Testament", description: "Simple will template", icon: ScrollText },
+  { file: "bill-of-sale.pdf", name: "Bill of Sale", description: "Document a sale of goods", icon: BadgeDollarSign },
+  { file: "promissory-note.pdf", name: "Promissory Note", description: "Loan repayment agreement", icon: Receipt },
+  { file: "non-compete-agreement.pdf", name: "Non-Compete Agreement", description: "Restrict competing activity", icon: ShieldBan },
+  { file: "employment-offer-letter.pdf", name: "Employment Offer Letter", description: "Offer terms for a new hire", icon: BriefcaseBusiness },
 ];
 
 function formatBytes(bytes: number): string {
