@@ -13,7 +13,9 @@ src/App.tsx                   The editor shell at "/app" — rail, toolbar,
 src/app/store.ts               Single Zustand store — all editor state
 src/features/                  One folder per tool: viewer, organize, edit,
                                 convert, forms, sign, protect, annotate, ai,
-                                quick-create, compare, account
+                                quick-create, compare, account, collab
+                                (Live Review), analytics (owner dashboard),
+                                feedback
 ```
 
 Every feature folder under `src/features/` follows the same shape: a
