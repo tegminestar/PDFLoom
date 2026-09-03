@@ -43,6 +43,7 @@ export type { WordDiffOp, WordDiffOpType, PageTextDiffResult, PageComparisonSumm
 export { detectAiCapabilities, isWebgpuAdapterAvailable } from "./ai/capabilities";
 export type { AiCapabilities } from "./ai/capabilities";
 export { chunkText } from "./ai/chunk-text";
+export { parseCsv } from "./utils/csv";
 export { loadPipeline } from "./ai/model-loader";
 export type { ModelLoadStage, ModelLoadProgressCallback, LoadPipelineOptions } from "./ai/model-loader";
 export { summarizeText, preloadSummarizeModel } from "./ai/summarize";

@@ -8,6 +8,7 @@ import {
   FileDown,
   FileOutput,
   FilePlus2,
+  FileSpreadsheet,
   FileStack,
   FileUp,
   FolderOpen,
@@ -56,6 +57,7 @@ import { SelectionMarkupToolbar } from "./features/annotate/SelectionMarkupToolb
 import { CompareDialog } from "./features/compare/CompareDialog";
 import { CompareView } from "./features/compare/CompareView";
 import { BatchDialog } from "./features/convert/BatchDialog";
+import { MailMergeDialog } from "./features/convert/MailMergeDialog";
 import { CompressDialog } from "./features/convert/CompressDialog";
 import { CreateFromTextDialog } from "./features/convert/CreateFromTextDialog";
 import { ExportImagesDialog } from "./features/convert/ExportImagesDialog";
@@ -130,6 +132,7 @@ export function App() {
   const [isInsertingImages, setIsInsertingImages] = useState(false);
   const [allToolsOpen, setAllToolsOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
+  const [mailMergeOpen, setMailMergeOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleComparePicked = (nextTarget: CompareTarget) => {
@@ -427,6 +430,7 @@ export function App() {
           { icon: ScanText, label: "Make searchable (OCR)", description: "Recognize text in scanned pages.", onSelect: () => setOcrOpen(true) },
           { icon: Shrink, label: "Compress", description: "Reduce file size.", onSelect: () => setCompressOpen(true) },
           { icon: Layers, label: "Batch process files", description: "Run one operation across many PDFs at once.", onSelect: () => setBatchOpen(true) },
+          { icon: FileSpreadsheet, label: "Mail merge", description: "Fill one form template once per row of a spreadsheet.", onSelect: () => setMailMergeOpen(true) },
         ],
       },
       {
@@ -592,6 +596,7 @@ export function App() {
               { id: "ocr", label: "Make searchable (OCR)…", icon: <ScanText />, onSelect: () => setOcrOpen(true) },
               { id: "compress", label: "Compress…", icon: <Shrink />, onSelect: () => setCompressOpen(true) },
               { id: "batch", label: "Batch process files…", icon: <Layers />, onSelect: () => setBatchOpen(true) },
+              { id: "mail-merge", label: "Mail merge…", icon: <FileSpreadsheet />, onSelect: () => setMailMergeOpen(true) },
             ]}
           />
           <RailItem icon={<Grid3x3 />} label="All tools" onClick={() => setAllToolsOpen(true)} />
@@ -674,6 +679,7 @@ export function App() {
           <ExportImagesDialog open={exportImagesOpen} onOpenChange={setExportImagesOpen} />
           <CompressDialog open={compressOpen} onOpenChange={setCompressOpen} />
           <BatchDialog open={batchOpen} onOpenChange={setBatchOpen} />
+          <MailMergeDialog open={mailMergeOpen} onOpenChange={setMailMergeOpen} />
           <CreateFromTextDialog open={createFromTextOpen} onOpenChange={setCreateFromTextOpen} />
           <OcrDialog open={ocrOpen} onOpenChange={setOcrOpen} />
           <ExportOfficeDialog open={exportOfficeOpen} onOpenChange={setExportOfficeOpen} />
