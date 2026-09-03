@@ -66,7 +66,7 @@ jobs:
       - name: Confirm the SPA fallback config made it into the build output
         run: test -f apps/web/dist/staticwebapp.config.json
 
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 

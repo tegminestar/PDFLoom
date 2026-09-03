@@ -64,7 +64,7 @@ jobs:
           ls -la ./api-deploy-package/node_modules | head -20
           node -e "console.log(require.resolve('express', {paths:['./api-deploy-package/node_modules']}))"
 
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
