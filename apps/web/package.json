@@ -23,7 +23,7 @@
     "exceljs": "^4.4.0",
     "immer": "^11.1.18",
     "jszip": "^3.10.1",
-    "lucide-react": "^1.35.0",
+    "lucide-react": "^1.38.0",
     "pptxgenjs": "^4.0.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
