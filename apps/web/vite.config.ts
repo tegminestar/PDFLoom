@@ -57,4 +57,25 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  // Cross-origin isolation (COOP+COEP) is what unlocks SharedArrayBuffer,
+  // which onnxruntime-web's WASM backend needs to run multi-threaded —
+  // without it, every AI feature runs single-threaded no matter how many
+  // cores the user's machine has. Measured directly: summarizing a
+  // realistic 500-page document took ~21 minutes on this single-threaded
+  // path. Set here (not just in staticwebapp.config.json) so `pnpm dev`
+  // reproduces the same isolation the deployed site has — this can only be
+  // verified by actually running the app under it, not by inspection, so
+  // local dev needs to match production exactly.
+  server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
+  preview: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
 });

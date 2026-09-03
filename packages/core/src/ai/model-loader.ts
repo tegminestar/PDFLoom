@@ -24,6 +24,19 @@ function loadTransformers(): Promise<TransformersModule> {
   transformersPromise ??= import("@huggingface/transformers").then((mod) => {
     mod.env.allowLocalModels = false;
     mod.env.useBrowserCache = true;
+    // onnxruntime-web only has SharedArrayBuffer (and so only picks its
+    // multi-threaded WASM binary) when the page is cross-origin isolated
+    // (see vite.config.ts's COOP/COEP headers and staticwebapp.config.json's
+    // matching production headers) — explicit here rather than trusting the
+    // library's own default, since that default is a conservative constant
+    // rather than a check of what's actually available in this specific
+    // browser tab. Measured directly: a realistic 500-page document's
+    // Summarize run — sequential per-chunk inference, the one part of "AI
+    // at scale" that page-rendering's own virtualization can't help with —
+    // took ~21 minutes single-threaded.
+    if (globalThis.crossOriginIsolated && mod.env.backends.onnx.wasm) {
+      mod.env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency || 4;
+    }
     return mod;
   });
   return transformersPromise;
