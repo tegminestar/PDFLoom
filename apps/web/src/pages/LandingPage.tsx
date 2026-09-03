@@ -1,5 +1,7 @@
 import { Button, Mark, cn } from "@pdfloom/ui";
 import {
+  AppWindow,
+  Apple,
   ChevronDown,
   Cpu,
   Edit3,
@@ -162,6 +164,9 @@ export function LandingPage() {
             <a href="#faq" className="hover:text-text">
               FAQ
             </a>
+            <a href="#desktop" className="hover:text-text">
+              Desktop app
+            </a>
           </nav>
           <Button asChild variant="primary" size="sm">
             <Link to="/app">Open the app</Link>
@@ -271,6 +276,36 @@ export function LandingPage() {
               value is ever uploaded to a server. There's no account to create and no data to hand over. Open a
               file, do the work, and close the tab.
             </p>
+          </div>
+        </section>
+
+        <section id="desktop" className="border-t border-border px-6 py-20 sm:py-28">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-8 text-center">
+            <SectionHeading
+              eyebrow="Also on desktop"
+              title="Prefer a real app? Download PDFLoom"
+              description="Same editor, same local-only AI, running as a native app — no browser tab required. Not code-signed yet, so your OS will show a first-run warning; that's expected for a new indie app, not a sign anything's wrong."
+            />
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button asChild variant="primary" size="lg">
+                <a href="https://pdfloomdownloads.blob.core.windows.net/downloads/PDFLoom-latest-setup.exe">
+                  <AppWindow className="h-4 w-4" /> Windows
+                </a>
+              </Button>
+              <Button asChild variant="secondary" size="lg">
+                <a href="https://pdfloomdownloads.blob.core.windows.net/downloads/PDFLoom-latest.dmg">
+                  <Apple className="h-4 w-4" /> macOS
+                </a>
+              </Button>
+              <Button asChild variant="secondary" size="lg">
+                <a href="https://pdfloomdownloads.blob.core.windows.net/downloads/PDFLoom-latest.AppImage">
+                  <FileStack className="h-4 w-4" /> Linux (AppImage)
+                </a>
+              </Button>
+            </div>
+            <a href="https://github.com/tegminestar/PDFLoom/releases/latest" className="text-xs text-text-faint hover:text-text">
+              Other formats (.msi, .deb, .rpm) on the GitHub releases page →
+            </a>
           </div>
         </section>
 

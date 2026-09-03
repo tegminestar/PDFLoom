@@ -231,13 +231,16 @@ export function WelcomeScreen() {
             {imagePicker.input}
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-2 px-1">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-1">
             {TRUST_BADGES.map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-1.5 text-xs text-text-faint">
                 <Icon className="h-3.5 w-3.5" />
                 {label}
               </div>
             ))}
+            <a href="/#desktop" className="text-xs text-text-faint underline decoration-dotted hover:text-text">
+              Prefer a desktop app?
+            </a>
           </div>
 
           <div className="flex flex-col gap-2">
