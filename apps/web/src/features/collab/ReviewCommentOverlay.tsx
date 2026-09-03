@@ -82,13 +82,22 @@ export function ReviewCommentOverlay({ doc, pageNumber, scale, rotation }: Revie
   };
 
   return (
-    <div className={isPlacingComment ? "absolute inset-0 z-20 cursor-crosshair" : "absolute inset-0 z-20"} onClick={(e) => void handlePageClick(e)}>
+    // pointer-events-none unless actively placing a pin — without this, a
+    // review session being merely *open* silently ate every click meant
+    // for whatever tool is actually in use (Edit, Annotate, Forms...),
+    // since this div covers the full page at z-20 regardless. Existing
+    // pins re-enable pointer-events individually so they stay clickable
+    // either way.
+    <div
+      className={isPlacingComment ? "absolute inset-0 z-20 cursor-crosshair" : "pointer-events-none absolute inset-0 z-20"}
+      onClick={(e) => void handlePageClick(e)}
+    >
       {commentsOnPage.map((comment) => {
         const rect = screenRects.get(comment.id);
         if (!rect) return null;
         const isOpen = openPinId === comment.id;
         return (
-          <div key={comment.id} className="absolute" style={{ left: rect.x, top: rect.y }}>
+          <div key={comment.id} className="pointer-events-auto absolute" style={{ left: rect.x, top: rect.y }}>
             <button
               type="button"
               onClick={(e) => {
@@ -126,7 +135,7 @@ export function ReviewCommentOverlay({ doc, pageNumber, scale, rotation }: Revie
       {draftScreenPoint && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-30 flex w-56 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
+          className="pointer-events-auto absolute z-30 flex w-56 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
           style={{ left: draftScreenPoint.x, top: draftScreenPoint.y }}
         >
           <textarea

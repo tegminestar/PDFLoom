@@ -19,7 +19,6 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
   const participantName = useReviewStore((s) => s.participantName);
   const setParticipantName = useReviewStore((s) => s.setParticipantName);
   const comments = useReviewStore((s) => s.comments);
-  const isPlacingComment = useReviewStore((s) => s.isPlacingComment);
   const setIsPlacingComment = useReviewStore((s) => s.setIsPlacingComment);
   const startSession = useReviewStore((s) => s.startSession);
   const joinSession = useReviewStore((s) => s.joinSession);
@@ -117,13 +116,22 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
             {!isConnected && <p className="text-xs text-text-faint">Couldn't connect — check your connection and try leaving and starting again.</p>}
 
             <Button
-              variant={isPlacingComment ? "primary" : "secondary"}
+              variant="secondary"
               size="sm"
-              onClick={() => setIsPlacingComment(!isPlacingComment)}
+              onClick={() => {
+                // The dialog is modal (blocks pointer events on the page
+                // behind its overlay), so placing a pin needs it closed
+                // first — isPlacingComment itself lives in the review
+                // store, not this dialog, so it survives the close and
+                // ReviewCommentOverlay picks the click up on the page.
+                setIsPlacingComment(true);
+                onOpenChange(false);
+                toast.info("Click anywhere on the page to place your comment");
+              }}
               className="self-start"
             >
               <MapPin className="h-4 w-4" />
-              {isPlacingComment ? "Click the page to place it…" : "Add a comment pin"}
+              Add a comment pin
             </Button>
 
             <div className="flex flex-col gap-2">
