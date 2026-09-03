@@ -12,12 +12,14 @@ import {
   GitCompare,
   Languages,
   Lock,
+  Mail,
   MessageSquareText,
   Mic,
   ScanText,
   ShieldCheck,
   Signature,
   Sparkles,
+  Users,
   Wand2,
   WifiOff,
   type LucideIcon,
@@ -45,7 +47,7 @@ const FEATURES: FeatureCard[] = [
   {
     icon: Edit3,
     title: "Edit & annotate",
-    description: "Best-effort text and image edits, highlights, freehand drawing, stamps, and sticky notes.",
+    description: "Best-effort text and image edits — matched to the surrounding font automatically — highlights, freehand drawing, stamps, and sticky notes.",
   },
   {
     icon: FileOutput,
@@ -55,7 +57,12 @@ const FEATURES: FeatureCard[] = [
   {
     icon: FormInput,
     title: "Forms",
-    description: "Detect AcroForm fields automatically, or design your own — fill, save, and flatten.",
+    description: "Detect AcroForm fields automatically, or design your own — fill, save, flatten, with required-field validation.",
+  },
+  {
+    icon: Mail,
+    title: "Mail merge",
+    description: "Fill one copy of a form template per row of a spreadsheet — dozens of personalized PDFs in one pass.",
   },
   {
     icon: Signature,
@@ -76,6 +83,11 @@ const FEATURES: FeatureCard[] = [
     icon: GitCompare,
     title: "Compare",
     description: "Visual and text diff between two PDFs to catch what changed.",
+  },
+  {
+    icon: Users,
+    title: "Live Review",
+    description: "Share a session code and drop synced comment pins with anyone viewing the same document — never the file itself.",
   },
 ];
 
