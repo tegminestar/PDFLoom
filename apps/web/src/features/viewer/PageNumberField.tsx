@@ -22,14 +22,14 @@ export function PageNumberField() {
   };
 
   return (
-    <div className="flex items-center gap-1.5 text-sm text-text-muted">
+    <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm text-text-muted">
       <input
         aria-label="Current page"
         value={pageInput}
         onChange={(e) => setPageInput(e.target.value)}
         onBlur={commit}
         onKeyDown={onKeyDown}
-        className="h-8 w-12 rounded-[--radius-sm] border border-border-strong bg-surface text-center tabular-nums text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+        className="h-8 w-12 shrink-0 rounded-[--radius-sm] border border-border-strong bg-surface text-center tabular-nums text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
       />
       <span className="text-text-faint">/ {meta.pageCount}</span>
     </div>
