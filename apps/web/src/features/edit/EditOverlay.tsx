@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -29,9 +30,26 @@ interface ScreenRect extends ScreenPoint {
   height: number;
 }
 
+interface RgbColor {
+  r: number;
+  g: number;
+  b: number;
+}
+
 interface PendingTextEdit {
   rect: ScreenRect;
   originalText: string;
+  /** Sampled from the rendered canvas at click time — see sampleTextColor. Falls back to near-black when nothing ink-like is found. */
+  color: RgbColor;
+  /**
+   * Fixed at detection time from the original span's own height — kept
+   * stable across resizes so dragging the box to fit more/less text
+   * changes wrapping, not the letter size (previously fontSize was
+   * recomputed from the live box height on every resize, which also meant
+   * a box left at its detected single-line height silently clipped any
+   * replacement that needed to wrap to more lines than that).
+   */
+  fontSizePx: number;
 }
 
 interface PendingImageEdit {
@@ -78,7 +96,7 @@ const EDGE_MARGIN = 10;
 
 type DragMode =
   | { kind: "move"; startPointer: ScreenPoint; startRect: ScreenRect }
-  | { kind: "resize"; handle: HandleId; startPointer: ScreenPoint; startRect: ScreenRect };
+  | { kind: "resize"; handle: HandleId; startPointer: ScreenPoint; startRect: ScreenRect; startFontSizePx?: number };
 
 /**
  * Best-effort "edit" tools: pdf.js/pdf-lib can't locate-and-rewrite an
@@ -93,6 +111,55 @@ type DragMode =
  * shorter than the original otherwise has no way to avoid the font
  * shrinking to fit (or looking sparse in a box sized for longer text).
  */
+const FALLBACK_TEXT_COLOR: RgbColor = { r: 0.06, g: 0.06, b: 0.08 };
+
+/**
+ * pdf.js's text-layer spans exist only for selection/accessibility — they're
+ * rendered fully transparent (`color: rgba(0,0,0,0)`) and report a generic
+ * `font-weight: 400` regardless of the source PDF's actual styling, so
+ * neither is readable from the DOM. The real glyph color IS on the page's
+ * own canvas, so sample it directly: a grid of points across the span's
+ * box, skipping near-white background pixels, keeping whichever non-white
+ * color recurs most often (anti-aliased edge pixels are one-offs; the
+ * solid glyph fill color is not).
+ */
+function sampleTextColor(canvas: HTMLCanvasElement, canvasRect: DOMRect, spanRect: DOMRect): RgbColor {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return FALLBACK_TEXT_COLOR;
+  const scaleX = canvas.width / canvasRect.width;
+  const scaleY = canvas.height / canvasRect.height;
+  const counts = new Map<string, { r: number; g: number; b: number; n: number }>();
+
+  for (let fy = 0.2; fy <= 0.8; fy += 0.15) {
+    const y = Math.round((spanRect.top - canvasRect.top + spanRect.height * fy) * scaleY);
+    if (y < 0 || y >= canvas.height) continue;
+    for (let fx = 0.02; fx <= 0.98; fx += 0.02) {
+      const x = Math.round((spanRect.left - canvasRect.left + spanRect.width * fx) * scaleX);
+      if (x < 0 || x >= canvas.width) continue;
+      const [r, g, b] = ctx.getImageData(x, y, 1, 1).data;
+      if (r! > 235 && g! > 235 && b! > 235) continue; // background (white/near-white)
+      // Bucket to the nearest 16 per channel so anti-aliased near-duplicates count together.
+      const key = `${Math.round(r! / 16)},${Math.round(g! / 16)},${Math.round(b! / 16)}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.r += r!;
+        existing.g += g!;
+        existing.b += b!;
+        existing.n += 1;
+      } else {
+        counts.set(key, { r: r!, g: g!, b: b!, n: 1 });
+      }
+    }
+  }
+
+  let best: { r: number; g: number; b: number; n: number } | null = null;
+  for (const bucket of counts.values()) {
+    if (!best || bucket.n > best.n) best = bucket;
+  }
+  if (!best) return FALLBACK_TEXT_COLOR;
+  return { r: best.r / best.n / 255, g: best.g / best.n / 255, b: best.b / best.n / 255 };
+}
+
 export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef }: EditOverlayProps) {
   const editOpen = useLoomStore((s) => s.editOpen);
   const tool = useLoomStore((s) => s.editTool);
@@ -102,6 +169,21 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
   const [textValue, setTextValue] = useState("");
   const [isSavingText, setIsSavingText] = useState(false);
   const [textDragMode, setTextDragMode] = useState<DragMode | null>(null);
+
+  const measureRef = useRef<HTMLDivElement>(null);
+  // Grows the box to fit whatever's typed at the current font size — never
+  // shrinks on its own, only ever covers for content that no longer fits
+  // (typing more, or a width resize forcing an extra wrapped line). A
+  // manual height-resize (which changes fontSizePx above) changes what
+  // "fits" means, so this re-checks after that too rather than fighting it.
+  useLayoutEffect(() => {
+    if (!textEdit || !measureRef.current) return;
+    const needed = measureRef.current.offsetHeight;
+    if (needed > textEdit.rect.height + 0.5) {
+      setTextEdit((prev) => (prev ? { ...prev, rect: { ...prev.rect, height: needed } } : prev));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textValue, textEdit?.rect.width, textEdit?.fontSizePx]);
 
   const [imageEdit, setImageEdit] = useState<PendingImageEdit | null>(null);
   const [dragStart, setDragStart] = useState<ScreenPoint | null>(null);
@@ -131,8 +213,10 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
         width: spanRect.width + padding * 2,
         height: spanRect.height + padding * 2,
       };
+      const canvas = container.querySelector("canvas");
+      const color = canvas ? sampleTextColor(canvas, canvas.getBoundingClientRect(), spanRect) : FALLBACK_TEXT_COLOR;
       setTextValue(span.textContent);
-      setTextEdit({ rect, originalText: span.textContent });
+      setTextEdit({ rect, originalText: span.textContent, color, fontSizePx: Math.max(6, rect.height * 0.72) });
     };
 
     container.addEventListener("click", handler, true);
@@ -155,11 +239,15 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
         width: Math.abs(p2.x - p1.x),
         height: Math.abs(p2.y - p1.y),
       };
-      const fontSize = Math.max(6, rect.height * 0.72);
+      // fontSizePx is in the same screen-pixel space as textEdit.rect, and
+      // PDF points relate to screen pixels by the same `scale` factor
+      // uniformly in both dimensions, so dividing by scale carries it into
+      // PDF-point space without needing a second screenPointToPdfPoint call.
+      const fontSize = Math.max(6, textEdit.fontSizePx / scale);
       const client = await getPdfWorkerClient();
       const bytes = await client.addFreeText(await doc.getRawBytes(), pageNumber - 1, rect, newText, {
         fontSize,
-        color: { r: 0.06, g: 0.06, b: 0.08 },
+        color: textEdit.color,
         box: { fill: { r: 1, g: 1, b: 1 } },
       });
       await applyPdfMutation(bytes);
@@ -253,7 +341,13 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    const mode: DragMode = { kind: "resize", handle, startPointer: localPoint(e), startRect: rect };
+    const mode: DragMode = {
+      kind: "resize",
+      handle,
+      startPointer: localPoint(e),
+      startRect: rect,
+      ...(which === "text" ? { startFontSizePx: textEdit!.fontSizePx } : {}),
+    };
     if (which === "text") setTextDragMode(mode);
     else setImageDragMode(mode);
   };
@@ -317,6 +411,18 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
     e.preventDefault();
     const bounds = pageContainerRef.current!.getBoundingClientRect();
     const rect = computeDraggedRect(textDragMode, localPoint(e), bounds);
+    // Dragging a top/bottom (height-changing) handle is a deliberate manual
+    // override of the auto-matched font size — scale it proportionally so
+    // the box's own resize handles double as a font-size control, for
+    // whenever auto-matching the original doesn't land right.
+    if (textDragMode.kind === "resize" && textDragMode.startFontSizePx && textDragMode.startRect.height > 0) {
+      const spec = HANDLE_SPEC[textDragMode.handle];
+      if (spec.top || spec.bottom) {
+        const fontSizePx = Math.max(6, textDragMode.startFontSizePx * (rect.height / textDragMode.startRect.height));
+        setTextEdit((prev) => (prev ? { ...prev, rect, fontSizePx } : prev));
+        return;
+      }
+    }
     setTextEdit((prev) => (prev ? { ...prev, rect } : prev));
   };
   const handleTextDragEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -348,19 +454,42 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
             onPointerMove={handleTextDragMove}
             onPointerUp={handleTextDragEnd}
             onPointerCancel={handleTextDragEnd}
-            className="absolute z-10 cursor-move overflow-hidden border-2 border-dashed border-primary bg-white outline-none"
+            className="absolute z-10 cursor-move border-2 border-dashed border-primary bg-white outline-none"
             style={{ left: textEdit.rect.x, top: textEdit.rect.y, width: textEdit.rect.width, height: textEdit.rect.height }}
           >
             {/* Live preview of the replacement — mirrors addFreeTextInternal's
-                sizing (fontSize = 72% of box height, 4pt/[scale] padding) so
-                what's shown while dragging matches what gets baked in on commit. */}
+                sizing (4pt/[scale] padding) at the box's fixed, detected
+                font size, so what's shown while typing/dragging matches
+                what gets baked in on commit. */}
             <div
               aria-hidden
-              className="pointer-events-none h-full w-full overflow-hidden whitespace-pre-wrap break-words text-[#0f0f14]"
+              className="pointer-events-none h-full w-full overflow-hidden whitespace-pre-wrap break-words"
               style={{
                 padding: 4 * scale,
                 fontFamily: "Helvetica, Arial, sans-serif",
-                fontSize: Math.max(6, textEdit.rect.height * 0.72),
+                fontSize: textEdit.fontSizePx,
+                lineHeight: 1.25,
+                color: `rgb(${Math.round(textEdit.color.r * 255)}, ${Math.round(textEdit.color.g * 255)}, ${Math.round(textEdit.color.b * 255)})`,
+              }}
+            >
+              {textValue}
+            </div>
+
+            {/* Off-screen twin of the preview above, at the same width/font
+                but height:auto — measures how tall the current text
+                actually needs, so the box can grow to fit it (see the
+                effect below). Prevents the failure mode where a box left
+                at its detected single-line height silently clips any
+                replacement that wraps to more lines. */}
+            <div
+              ref={measureRef}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0 -z-10 whitespace-pre-wrap break-words opacity-0"
+              style={{
+                width: textEdit.rect.width,
+                padding: 4 * scale,
+                fontFamily: "Helvetica, Arial, sans-serif",
+                fontSize: textEdit.fontSizePx,
                 lineHeight: 1.25,
               }}
             >
