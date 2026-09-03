@@ -18,3 +18,10 @@ auditConfig:
   ignoreGhsas:
     - GHSA-w3rx-r6r6-pgpr
     - GHSA-5p2g-fcmc-qvqq
+minimumReleaseAgeExclude:
+  - '@supabase/auth-js@2.114.0'
+  - '@supabase/functions-js@2.114.0'
+  - '@supabase/postgrest-js@2.114.0'
+  - '@supabase/realtime-js@2.114.0'
+  - '@supabase/storage-js@2.114.0'
+  - '@supabase/supabase-js@2.114.0'

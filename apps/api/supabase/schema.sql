@@ -40,3 +40,53 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Multi-party signing: a signed-in user (the "owner") uploads a document and
+-- lists one or more signers by email; each signer gets an unguessable link
+-- (access_token) requiring no account of their own. This is the one feature
+-- in the product where a document is intentionally stored server-side —
+-- everywhere else stays 100% client-side. See SECURITY.md / the landing
+-- page FAQ for the disclosure copy this is paired with.
+--
+-- No RLS policies are defined on either table below — deliberately. Owners
+-- and signers both go through apps/api (using the service-role key, which
+-- bypasses RLS) rather than querying these tables directly from the
+-- browser, since signers don't have a Supabase Auth session to key a policy
+-- off of. Leaving RLS enabled with zero policies means the anon/authenticated
+-- keys can't read or write these tables at all — only the service-role key
+-- (never shipped to the browser) can.
+create table if not exists public.signature_requests (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  original_filename text not null,
+  storage_path text not null,
+  status text not null default 'pending' check (status in ('pending', 'completed', 'voided')),
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+alter table public.signature_requests enable row level security;
+
+create table if not exists public.signature_request_signers (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.signature_requests(id) on delete cascade,
+  email text not null,
+  name text,
+  access_token text not null unique,
+  status text not null default 'pending' check (status in ('pending', 'signed', 'declined')),
+  -- Where this signer's signature gets placed, in PDF points (bottom-left
+  -- origin) — set by the owner when creating the request, the same
+  -- coordinate convention EditOverlay/SignaturePlaceOverlay already use.
+  page_number int not null,
+  rect_x double precision not null,
+  rect_y double precision not null,
+  rect_width double precision not null,
+  rect_height double precision not null,
+  signature_data_url text,
+  signed_at timestamptz,
+  signed_ip text,
+  created_at timestamptz not null default now()
+);
+alter table public.signature_request_signers enable row level security;
+
+create index if not exists signature_request_signers_request_id_idx
+  on public.signature_request_signers (request_id);

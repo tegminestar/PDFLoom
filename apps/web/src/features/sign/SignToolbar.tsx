@@ -1,9 +1,10 @@
 import { IconButton, Separator, TopBar, TopBarSection } from "@pdfloom/ui";
-import { CalendarDays, PenLine, Stamp, Type, X } from "lucide-react";
+import { CalendarDays, PenLine, Send, Stamp, Type, X } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
+import { RequestSignaturesDialog } from "./RequestSignaturesDialog";
 import { SignatureCreatorDialog } from "./SignatureCreatorDialog";
 
 export function SignToolbar() {
@@ -19,6 +20,7 @@ export function SignToolbar() {
   const isPlacing = useLoomStore((s) => s.isPlacingSignature);
 
   const [creatorSlot, setCreatorSlot] = useState<"signature" | "initials" | null>(null);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const hint =
     kind === "timestamp"
@@ -88,12 +90,15 @@ export function SignToolbar() {
           </span>
         )}
         {isPlacing && <span className="text-xs text-text-faint">Placing…</span>}
+        <IconButton icon={<Send />} label="Request signatures from others" onClick={() => setRequestOpen(true)} />
+        <Separator orientation="vertical" className="mx-1.5 h-6" />
         <IconButton icon={<X />} label="Exit sign mode" onClick={() => setSignOpen(false)} showTooltip={false} />
       </TopBarSection>
 
       {creatorSlot && (
         <SignatureCreatorDialog open={creatorSlot !== null} onOpenChange={(open) => !open && setCreatorSlot(null)} slot={creatorSlot} />
       )}
+      <RequestSignaturesDialog open={requestOpen} onOpenChange={setRequestOpen} />
     </TopBar>
   );
 }

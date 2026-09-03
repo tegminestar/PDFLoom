@@ -1,6 +1,7 @@
 import express from "express";
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
+import { createSignatureRequest, getSignatureRequestStatus, getSignerView, submitSignature } from "./routes/signatureRequests";
 import { stripeWebhook } from "./routes/stripeWebhook";
 
 const app = express();
@@ -21,7 +22,7 @@ const corsOrigin = process.env.APP_URL ?? "http://localhost:5173";
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   if (req.method === "OPTIONS") {
     res.sendStatus(204);
     return;
@@ -50,6 +51,34 @@ app.post("/api/checkout", (req, res) => {
 app.post("/api/billing-portal", (req, res) => {
   createPortalSession(req, res).catch((error: unknown) => {
     console.error("Unhandled error in createPortalSession", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/signature-requests", (req, res) => {
+  createSignatureRequest(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in createSignatureRequest", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.get("/api/signature-requests/:id", (req, res) => {
+  getSignatureRequestStatus(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in getSignatureRequestStatus", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.get("/api/sign/:token", (req, res) => {
+  getSignerView(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in getSignerView", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/sign/:token", (req, res) => {
+  submitSignature(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in submitSignature", error);
     res.status(500).json({ error: "Internal error" });
   });
 });
