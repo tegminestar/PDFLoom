@@ -1,0 +1,191 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram name="Global Reference Architecture" id="pdfloom-global-reference-architecture">
+    <mxGraphModel dx="1700" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Global, Cloud-Agnostic Reference Architecture" style="text;html=1;align=left;fontSize=18;fontStyle=1;fontColor=#1a1a1a;" vertex="1" parent="1">
+          <mxGeometry x="60" y="8" width="700" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Illustrative target-state design for worldwide, multi-region deployment — vendor-neutral roles, mappable to any major cloud (Azure / AWS / GCP)" style="text;html=1;align=left;fontSize=11;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="36" width="900" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Global edge tier -->
+        <mxCell id="users" value="Users — Worldwide&#10;(Americas · Europe · Middle East/Africa · Asia-Pacific)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="70" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="global-dns" value="Global DNS / Traffic Manager&#10;latency- or geo-based routing, active health checks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="520" y="140" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="global-cdn" value="Global CDN + Edge&#10;WAF · DDoS protection · TLS termination · static asset caching" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="470" y="210" width="400" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Region 1: Americas -->
+        <mxCell id="zone-region1" value="Region: Americas" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="300" width="380" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="lb1" value="Regional Load Balancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="340" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="app1" value="App Tier — auto-scaling&#10;stateless containers / serverless compute" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="395" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cache1" value="Regional Cache (in-memory)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="465" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="replica1" value="Read Replica DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="80" y="520" width="340" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Region 2: Europe -->
+        <mxCell id="zone-region2" value="Region: Europe" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="380" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="lb2" value="Regional Load Balancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="340" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="app2" value="App Tier — auto-scaling&#10;stateless containers / serverless compute" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="395" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cache2" value="Regional Cache (in-memory)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="465" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="replica2" value="Read Replica DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="500" y="520" width="340" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Region 3: Asia-Pacific -->
+        <mxCell id="zone-region3" value="Region: Asia-Pacific" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="900" y="300" width="380" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="lb3" value="Regional Load Balancer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="920" y="340" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="app3" value="App Tier — auto-scaling&#10;stateless containers / serverless compute" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="920" y="395" width="340" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cache3" value="Regional Cache (in-memory)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="920" y="465" width="340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="replica3" value="Read Replica DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="920" y="520" width="340" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Global data + ops tier -->
+        <mxCell id="primary-db" value="Primary Database&#10;single write-home region · multi-AZ · automated failover" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="140" y="650" width="340" height="65" as="geometry" />
+        </mxCell>
+
+        <mxCell id="zone-shared" value="Shared Global Services" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;verticalAlign=top;align=left;spacingLeft=10;spacingTop=8;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="560" y="630" width="420" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="object-storage" value="Global Object Storage — geo-replicated, versioned" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="580" y="665" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="message-queue" value="Message Queue / Event Bus — async processing, decoupling" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="580" y="710" width="380" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="observability" value="Centralized Observability — logs, metrics, traces, alerting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="580" y="755" width="380" height="35" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cicd" value="CI/CD Pipeline — Infrastructure as Code · automated tests · progressive (blue-green / canary) delivery to every region" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="140" y="830" width="860" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Well-Architected Framework legend -->
+        <mxCell id="legend-title" value="Well-Architected Framework — pillars applied" style="text;html=1;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="270" width="340" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar-reliability" value="&lt;b&gt;RELIABILITY&lt;/b&gt;&lt;br&gt;Multi-region active/active or active/passive&lt;br&gt;Automated failover, health probes&lt;br&gt;Tested backup/restore, defined RPO/RTO" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="300" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar-security" value="&lt;b&gt;SECURITY&lt;/b&gt;&lt;br&gt;WAF + DDoS protection at the edge&lt;br&gt;Private networking, least-privilege IAM&lt;br&gt;Centralized secrets; encryption in transit &amp;amp; at rest" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="412" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar-performance" value="&lt;b&gt;PERFORMANCE EFFICIENCY&lt;/b&gt;&lt;br&gt;CDN edge caching + regional read replicas&lt;br&gt;Auto-scaling compute per region&lt;br&gt;Async processing for heavy workloads" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="524" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar-cost" value="&lt;b&gt;COST OPTIMIZATION&lt;/b&gt;&lt;br&gt;Scale-to-zero where workload allows&lt;br&gt;Reserved capacity for steady baseline&lt;br&gt;Storage tiering, right-sized instances" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="636" width="340" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="pillar-operational" value="&lt;b&gt;OPERATIONAL EXCELLENCE&lt;/b&gt;&lt;br&gt;Infrastructure as Code&lt;br&gt;CI/CD with progressive delivery&lt;br&gt;Centralized observability, on-call alerting" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1320" y="748" width="340" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: global edge tier -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="users" target="global-dns">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="global-dns" target="global-cdn">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- CDN fan-out to each region's load balancer -->
+        <mxCell id="e3a" value="routed to nearest healthy region" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="global-cdn" target="lb1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="global-cdn" target="lb2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3c" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="global-cdn" target="lb3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Per-region internal flow -->
+        <mxCell id="e4a" edge="1" parent="1" source="lb1" target="app1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4b" edge="1" parent="1" source="lb2" target="app2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4c" edge="1" parent="1" source="lb3" target="app3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="e5a" edge="1" parent="1" source="app1" target="cache1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5b" edge="1" parent="1" source="app2" target="cache2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5c" edge="1" parent="1" source="app3" target="cache3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="e6a" value="reads locally; writes forwarded to primary" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="app1" target="replica1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6b" value="reads locally; writes forwarded to primary" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="app2" target="replica2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6c" value="reads locally; writes forwarded to primary" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="app3" target="replica3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Replication backbone: primary fans out to every regional replica -->
+        <mxCell id="e7a" value="async replication" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;dashed=1;strokeColor=#9673a6;exitX=0.2;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="primary-db" target="replica1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7b" value="async replication" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;dashed=1;strokeColor=#9673a6;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="primary-db" target="replica2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7c" value="async replication" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;dashed=1;strokeColor=#9673a6;exitX=0.8;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="primary-db" target="replica3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Each region reaches shared global services -->
+        <mxCell id="e8a" value="telemetry, storage, events" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.15;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app1" target="zone-shared">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8b" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app2" target="zone-shared">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8c" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.85;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app3" target="zone-shared">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Failover chain across regional load balancers -->
+        <mxCell id="e9a" value="automatic failover" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;dashed=1;strokeColor=#b85450;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="lb1" target="lb2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9b" value="automatic failover" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;dashed=1;strokeColor=#b85450;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="lb2" target="lb3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

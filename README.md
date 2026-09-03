@@ -21,7 +21,7 @@ packages/core     Framework-agnostic PDF/AI/storage engine (no React, no DOM ass
 packages/ui       "Loom UI" design system (Radix + Tailwind), shared by every shell
 apps/web          The Vite/React app — editor + marketing landing page
 apps/desktop      Tauri wrapper around apps/web's own build output (same code, packaged native)
-apps/api          Minimal Express server — Stripe + Supabase only, for Pro-tier billing
+apps/api          Express server for the handful of things that can't be client-side (billing, signing, feedback, analytics — see below)
 ```
 
 `packages/core` and `packages/ui` have no build step of their own — both are
@@ -30,10 +30,31 @@ consumed as raw TypeScript source (`main`/`types` point straight at
 
 ## Why there's a server at all
 
-Every actual PDF and AI feature is client-side — that's the whole point of
-the product. `apps/api` exists for exactly one reason: checking Stripe/
-Supabase for Pro-tier entitlement, which needs a secret key that can never
-live in a browser. It doesn't touch PDFs and never will.
+Every actual PDF *editing and AI* feature is client-side — that's the whole
+point of the product. `apps/api` exists for the handful of things that
+structurally can't happen in a browser, each one disclosed on
+[/trust](https://pdfloom.app/trust):
+
+- **Billing** — checking Stripe/Supabase for Pro-tier entitlement, which
+  needs a secret key that can never live in a browser.
+- **Multi-party signing** — compositing a signer's signature onto a
+  document only they and the owner can reach, since collecting a
+  signature from someone who isn't the file's owner needs a shared place
+  for that document to briefly exist.
+- **Feedback relay** — proxies a submission to FormSubmit so the recipient
+  address never appears in the bundle, and saves a copy for the dashboard
+  below so a FormSubmit hiccup never loses someone's note.
+- **Self-hosted analytics** — a `/api/analytics/track` beacon replacing
+  the old paid Plausible integration (device/browser/OS/coarse-geo derived
+  server-side from the request itself via `ua-parser-js`/`geoip-lite`,
+  never a third-party vendor), plus an owner-only `/analytics` dashboard
+  (`GET /api/analytics/summary`, gated to one Supabase account via
+  `ANALYTICS_OWNER_EMAIL`) covering usage, signups, and feedback.
+
+None of it touches PDF content. Real-time comment sync for **Live Review**
+is the one exception that *isn't* apps/api at all — the browser talks
+directly to a Supabase Realtime broadcast channel, carrying only small Yjs
+comment updates (position, text, author), never the document.
 
 ## Local development
 
@@ -48,10 +69,14 @@ Requires Node ≥20 and the pnpm version pinned in `package.json`
 (`packageManager`, currently `pnpm@11.24.0` — `corepack enable` picks it up
 automatically).
 
-`apps/web` needs three `VITE_*` env vars for the account/billing UI to do
-anything (core editing needs none of them) — copy `apps/web/.env.example`
-to `apps/web/.env.local` and fill in a Supabase project's URL + publishable
-key, plus the API URL you're running against.
+`apps/web` needs three `VITE_*` env vars — one Supabase project's URL +
+publishable key (for the account/billing UI and Live Review; core editing
+needs neither), plus the API URL you're running against (also used for
+feedback and analytics beacons, which no-op without it). Copy
+`apps/web/.env.example` to `apps/web/.env.local` and fill them in.
+Analytics tracking itself only ever fires in a production build
+(`import.meta.env.PROD`) — `pnpm dev` never depends on `apps/api` running
+just to click around.
 
 ## Verifying changes
 

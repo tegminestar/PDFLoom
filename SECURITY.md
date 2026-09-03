@@ -38,6 +38,19 @@ PDFLoom's web app does all PDF editing and AI inference client-side, in
 the browser — a user's document is never uploaded to a server. This means
 most classic server-side data-exposure risks (a breach exposing stored
 documents, a document visible to other tenants, etc.) don't apply to the
-core editing product by construction. The account/billing API
-(`apps/api`) is a separate, smaller surface handling only checkout and
-subscription status — it never sees document content.
+core editing product by construction. `apps/api` is a separate, smaller
+surface for the handful of things disclosed on
+[/trust](https://pdfloom.app/trust) — billing, multi-party signature
+compositing, the feedback relay, and self-hosted usage analytics — and it
+never sees the content of a document being edited outside the signing
+flow (the one place a file briefly exists server-side at all, and only
+between its owner and the specific people they've named as signers).
+
+Analytics specifically: event data (`analytics_events`) never stores a
+raw IP address, only what's momentarily derived from it (coarse country/
+city via `geoip-lite`); it carries no cookie, device fingerprint, or
+cross-session identifier. The `/api/analytics/summary` and
+`/api/analytics/is-owner` endpoints are gated to one Supabase account via
+a server-only `ANALYTICS_OWNER_EMAIL` — never shipped to the browser
+bundle, mirroring how the feedback relay's recipient address is kept
+server-only.

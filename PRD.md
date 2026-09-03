@@ -118,14 +118,20 @@ forms, scanned documents, and everyday PDF editing.
 - **Convert** — PDF⇄images, image/Markdown/HTML→PDF, best-effort
   PDF→Office export, compression, OCR for scanned documents.
 - **Forms** — field detection, a visual field designer, fill & save,
-  flatten, JSON/CSV/FDF import-export, a bundled template library,
-  voice-to-fill via the browser's native speech API.
+  flatten, required-field validation, JSON/CSV/FDF import-export, a
+  bundled template library, voice-to-fill via the browser's native speech
+  API, and mail merge (one filled copy per row of an uploaded spreadsheet).
 - **Sign & Certify** — draw/type/upload signatures, placement with real
   resize/move/align before committing, optional local integrity hash —
   explicitly labeled as a visual attestation, not a certified PKI
   signature (see honesty flags below).
 - **Protect & Secure** — password protection, permission restrictions,
   metadata/hidden-data sanitization, visual+text document comparison.
+- **Review & Collaborate** — session-based Live Review: comment pins
+  synced in real time with anyone else viewing the same document (Yjs
+  CRDT over a Supabase Realtime channel), without uploading the file
+  itself — see the scope note under "Explicitly out of scope" below for
+  why this is comments-only, not co-editing.
 - **AI Suite** (the differentiator, all local/free/no key) — an AI
   command bar that resolves natural-language requests to real toolbar
   operations, document summarization, PII-aware smart redaction,
@@ -164,9 +170,11 @@ AI, no account, no server round-trip, for every feature listed above,
 forever. Pro is scoped narrowly to things that *structurally* require a
 server (this is the actual line, not an arbitrary one): cross-device sync,
 real shareable links, send-for-signature tracking, published web forms
-collecting submissions, team collaboration. Core editing stays local and
-free even for paying users — Pro unlocks server-dependent conveniences, it
-does not relocate where PDF processing happens.
+collecting submissions, and true multi-person co-editing of a document's
+content (Live Review's comment-pin sync is a free, narrower thing — see
+the scope note under "Explicitly out of scope"). Core editing stays local
+and free even for paying users — Pro unlocks server-dependent
+conveniences, it does not relocate where PDF processing happens.
 
 **Currently implemented**: Supabase auth + Stripe Checkout/Billing Portal
 gate a Pro flag; no Pro-only *feature* is built yet (no sync, no share
@@ -179,10 +187,22 @@ not built yet), not something implied by today's infrastructure choices.
 ### Explicitly out of scope (for the free/local product)
 
 Anything that structurally needs a server to mean anything for someone
-*other* than the file's owner: real-time co-editing, shared team
-workspaces, published forms that collect other people's submissions,
-send-for-signature status tracking. These aren't missing by oversight —
-they're the actual, considered definition of what Pro is for.
+*other* than the file's owner: real-time **co-editing of document
+content**, shared team workspaces, published forms that collect other
+people's submissions, send-for-signature status tracking. These aren't
+missing by oversight — they're the actual, considered definition of what
+Pro is for.
+
+**Live Review is a deliberate, narrow exception to this, not a
+contradiction of it.** It's free because it's scoped to a shared list of
+*comment pins* — position, author, text — never the document's actual
+content, which stays exactly as opaque pdf-lib bytes on each participant's
+own device the entire time. The line this product draws isn't "no
+real-time server involvement, ever" — it's "no server-mediated editing of
+the file itself." A Yjs CRDT merging comment metadata satisfies that; two
+people's edits merging into one document would not, which is why *that*
+(true co-editing) stays a Pro-eventually idea, not something Live Review
+quietly backdoors for free.
 
 ### Distribution
 
@@ -206,3 +226,10 @@ with CORS/Stripe redirect targets pointed at the custom domain. Desktop
 installers exist for v0.1.0 and are publicly downloadable. No app-store
 submission (Microsoft Store / Mac App Store) — GitHub Releases + Blob
 Storage is the only distribution channel today.
+
+**Internal tooling, not a product feature**: a self-hosted `/analytics`
+dashboard exists (owner-only, gated to one Supabase account) covering
+usage, signups, and feedback — replacing a paid Plausible integration at
+zero added infrastructure cost. It's mentioned here for the same honesty-
+of-record reason as everything else in this section, not because it's
+something end users interact with.

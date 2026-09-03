@@ -1,0 +1,123 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram name="Analytics &amp; Dashboard Flow" id="pdfloom-analytics-flow">
+    <mxGraphModel dx="1200" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1060" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Lane backgrounds -->
+        <mxCell id="lane-visitor" value="Any Visitor's Browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-owner" value="Owner (you)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="330" y="40" width="260" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-api" value="apps/api" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="620" y="40" width="260" height="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="lane-supabase" value="Supabase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;align=center;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="910" y="40" width="260" height="1000" as="geometry" />
+        </mxCell>
+
+        <!-- Section label -->
+        <mxCell id="section-write" value="1 — Tracking a beacon (every visitor)" style="text;html=1;align=left;fontSize=12;fontStyle=1;fontColor=#31708f;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="400" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Write path: Visitor lane -->
+        <mxCell id="v1" value="Opens a tool panel&#10;(Annotate, Sign, Edit, ...)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="90" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="v2" value="trackEvent(eventName, props) called&#10;— props fold into the name, e.g. feature_opened_sign" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="175" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" value="import.meta.env.PROD?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="70" y="270" width="200" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" value="sendBeacon() — or a keepalive fetch if unsupported" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="375" width="220" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Write path: dead-end branch parked in the Owner lane (unused at this point in the flow) -->
+        <mxCell id="v3no" value="No — nothing sent&#10;dev/e2e never depends on a backend being up" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="350" y="285" width="220" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- Write path: apps/api lane -->
+        <mxCell id="api1" value="POST /api/analytics/track&#10;responds 204 immediately, then keeps working" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="640" y="375" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="api2" value="Parse User-Agent (ua-parser-js)&#10;geoip-lite lookup on the request IP (X-Forwarded-For, port stripped)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="640" y="450" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="api3" value="Insert into analytics_events&#10;event, path, device/browser/OS, country/city — never the raw IP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="640" y="535" width="220" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Write path: Supabase lane -->
+        <mxCell id="supa1" value="analytics_events row stored" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="930" y="535" width="220" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Section divider -->
+        <mxCell id="section-read" value="2 — Viewing the dashboard (owner only)" style="text;html=1;align=left;fontSize=12;fontStyle=1;fontColor=#31708f;" vertex="1" parent="1">
+          <mxGeometry x="350" y="660" width="400" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Read path: Owner lane -->
+        <mxCell id="o1" value="Opens /analytics&#10;(or Analytics in the account menu)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="690" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="o2" value="Signs in with a magic link, if not already" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="765" width="220" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="d2no" value="No — 403 Not authorized&#10;fails closed if ANALYTICS_OWNER_EMAIL is unset, too" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="350" y="860" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="o3" value="Dashboard renders&#10;usage charts, users, popular features, feedback" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="350" y="950" width="220" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Read path: apps/api lane -->
+        <mxCell id="api4" value="GET /api/analytics/summary&#10;Authorization: Bearer &lt;session token&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="640" y="690" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" value="Session email matches&#10;ANALYTICS_OWNER_EMAIL?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="650" y="775" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="api5" value="Query analytics_events (90d), join auth.users + profiles, and feedback_submissions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="640" y="885" width="220" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Read path: Supabase lane -->
+        <mxCell id="supa2" value="auth.getUser(token)&#10;verifies the session is real and unexpired" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="930" y="690" width="220" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="supa3" value="Returns matching rows&#10;service-role key — bypasses RLS by design" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="930" y="885" width="220" height="65" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: write path -->
+        <mxCell id="e1" edge="1" parent="1" source="v1" target="v2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="v2" target="v3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="v3" target="v3no"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="v3" target="v4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;" edge="1" parent="1" source="v4" target="api1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="api1" target="api2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="api2" target="api3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" value="service-role key" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="api3" target="supa1"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- Edges: read path -->
+        <mxCell id="e9" edge="1" parent="1" source="o1" target="o2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" value="fetch with Authorization header" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="o2" target="api4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="api4" target="supa2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="supa2" target="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e13" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="d2" target="d2no"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=11;" edge="1" parent="1" source="d2" target="api5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="api5" target="supa3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" value="JSON response" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;fontSize=10;" edge="1" parent="1" source="supa3" target="o3"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

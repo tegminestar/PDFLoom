@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" version="24.0.0">
   <diagram name="PDFLoom Architecture" id="pdfloom-architecture">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="950" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -21,7 +21,7 @@
         <mxCell id="sw" value="Service Worker&#10;(offline cache)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="210" y="225" width="130" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="supa-client" value="Supabase JS client&#10;(auth session only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="supa-client" value="Supabase JS client&#10;(auth session + Realtime channels)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="60" y="295" width="280" height="50" as="geometry" />
         </mxCell>
 
@@ -38,40 +38,48 @@
           <mxGeometry x="60" y="560" width="280" height="55" as="geometry" />
         </mxCell>
 
+        <!-- Actor: another Live Review participant -->
+        <mxCell id="reviewer" value="Live Review participant&#10;(their own copy of the same doc, no account needed)" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="640" width="280" height="55" as="geometry" />
+        </mxCell>
+
         <!-- Zone: Azure -->
         <mxCell id="zone-azure" value="Azure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="440" y="40" width="340" height="360" as="geometry" />
+          <mxGeometry x="440" y="40" width="340" height="400" as="geometry" />
         </mxCell>
         <mxCell id="swa" value="Static Web App&#10;pdfloom.app — serves the built web bundle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
           <mxGeometry x="460" y="80" width="300" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="app-service" value="App Service (Express API)&#10;/checkout  /billing-portal&#10;/signature-requests  /sign/:token" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="460" y="155" width="300" height="70" as="geometry" />
+        <mxCell id="app-service" value="App Service (Express API)&#10;/checkout  /billing-portal&#10;/signature-requests  /sign/:token&#10;/feedback&#10;/analytics/track  /analytics/summary  /analytics/is-owner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="460" y="155" width="300" height="110" as="geometry" />
         </mxCell>
         <mxCell id="blob" value="Blob Storage&#10;pdfloomdownloads — desktop installers (public read)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="460" y="245" width="300" height="55" as="geometry" />
+          <mxGeometry x="460" y="285" width="300" height="55" as="geometry" />
         </mxCell>
         <mxCell id="rg-note" value="Resource group: pdfloom-rg" style="text;html=1;align=left;fontColor=#d79b00;fontSize=10;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="460" y="320" width="300" height="20" as="geometry" />
+          <mxGeometry x="460" y="360" width="300" height="20" as="geometry" />
         </mxCell>
 
         <!-- Zone: Supabase -->
         <mxCell id="zone-supabase" value="Supabase Project" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="440" y="430" width="340" height="185" as="geometry" />
+          <mxGeometry x="440" y="470" width="340" height="260" as="geometry" />
         </mxCell>
         <mxCell id="supa-auth" value="Auth&#10;(magic-link sign-in)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="460" y="470" width="140" height="55" as="geometry" />
+          <mxGeometry x="460" y="510" width="140" height="55" as="geometry" />
         </mxCell>
-        <mxCell id="supa-pg" value="Postgres&#10;profiles, signature_requests, signers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="615" y="470" width="145" height="55" as="geometry" />
+        <mxCell id="supa-realtime" value="Realtime&#10;broadcast channels" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="615" y="510" width="145" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="supa-pg" value="Postgres&#10;profiles, signature_requests, signers,&#10;analytics_events, feedback_submissions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="460" y="580" width="300" height="65" as="geometry" />
         </mxCell>
         <mxCell id="supa-storage" value="Storage&#10;signature-requests bucket (private — service-role key only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="1">
-          <mxGeometry x="460" y="540" width="300" height="55" as="geometry" />
+          <mxGeometry x="460" y="660" width="300" height="55" as="geometry" />
         </mxCell>
 
         <!-- Zone: Third party -->
         <mxCell id="zone-thirdparty" value="Third-party" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="820" y="40" width="220" height="185" as="geometry" />
+          <mxGeometry x="820" y="40" width="220" height="245" as="geometry" />
         </mxCell>
         <mxCell id="stripe" value="Stripe&#10;Checkout + Billing Portal" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="840" y="80" width="180" height="50" as="geometry" />
@@ -79,23 +87,26 @@
         <mxCell id="resend" value="Resend (SMTP)&#10;transactional auth emails" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
           <mxGeometry x="840" y="150" width="180" height="50" as="geometry" />
         </mxCell>
+        <mxCell id="formsubmit" value="FormSubmit&#10;feedback email relay" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="840" y="220" width="180" height="50" as="geometry" />
+        </mxCell>
 
         <!-- Zone: GitHub -->
         <mxCell id="zone-github" value="GitHub" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="820" y="245" width="220" height="240" as="geometry" />
+          <mxGeometry x="820" y="300" width="220" height="240" as="geometry" />
         </mxCell>
         <mxCell id="gh-actions" value="GitHub Actions&#10;CI · deploy-web · deploy-api&#10;release-desktop · publish-downloads" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="840" y="285" width="180" height="80" as="geometry" />
+          <mxGeometry x="840" y="340" width="180" height="80" as="geometry" />
         </mxCell>
         <mxCell id="gh-releases" value="GitHub Releases&#10;desktop installers (draft → published)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="840" y="385" width="180" height="55" as="geometry" />
+          <mxGeometry x="840" y="440" width="180" height="55" as="geometry" />
         </mxCell>
 
         <!-- Edges -->
         <mxCell id="e1" value="serves static bundle" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="swa" target="web-app">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e2" value="REST, Bearer token" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="web-app" target="app-service">
+        <mxCell id="e2" value="REST — some routes public, some Bearer-gated" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="web-app" target="app-service">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e3" value="service-role key" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="app-service" target="supa-pg">
@@ -110,7 +121,16 @@
         <mxCell id="e4" value="secret key" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="app-service" target="stripe">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
+        <mxCell id="e4b" value="server-to-server, Origin/Referer set" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="app-service" target="formsubmit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="e5" value="anon key, own profile only" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="supa-client" target="supa-auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5b" value="Yjs comment-pin updates only, never the document" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="supa-client" target="supa-realtime">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5c" value="same channel, base64 JSON" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;dashed=1;" edge="1" parent="1" source="supa-realtime" target="reviewer">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e6" value="same REST API" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" parent="1" source="desktop-shell" target="app-service">
