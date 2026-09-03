@@ -1,6 +1,7 @@
 import express from "express";
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
+import { submitFeedback } from "./routes/feedback";
 import { createSignatureRequest, getSignatureRequestStatus, getSignerView, submitSignature } from "./routes/signatureRequests";
 import { stripeWebhook } from "./routes/stripeWebhook";
 
@@ -39,6 +40,13 @@ app.get("/api/health", (_req, res) => {
 // look like it's broken.
 app.get("/", (_req, res) => {
   res.status(200).json({ service: "PDFLoom API", ok: true, health: "/api/health" });
+});
+
+app.post("/api/feedback", (req, res) => {
+  submitFeedback(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in submitFeedback", error);
+    res.status(500).json({ error: "Internal error" });
+  });
 });
 
 app.post("/api/checkout", (req, res) => {

@@ -19,6 +19,7 @@ import {
   ImagePlus,
   Layers,
   LayoutGrid,
+  MessageCircle,
   LayoutTemplate,
   Lock,
   Maximize,
@@ -40,6 +41,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { FeedbackDialog } from "./features/feedback/FeedbackDialog";
 import { AllToolsDialog, type ToolGroup } from "./features/tools/AllToolsDialog";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
@@ -128,6 +130,7 @@ export function App() {
   const [isInsertingImages, setIsInsertingImages] = useState(false);
   const [allToolsOpen, setAllToolsOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleComparePicked = (nextTarget: CompareTarget) => {
     setCompareTarget(nextTarget);
@@ -592,10 +595,12 @@ export function App() {
             ]}
           />
           <RailItem icon={<Grid3x3 />} label="All tools" onClick={() => setAllToolsOpen(true)} />
+          <RailItem icon={<MessageCircle />} label="Send feedback" onClick={() => setFeedbackOpen(true)} />
         </Rail>
       )}
       {imagePicker.input}
       <AllToolsDialog open={allToolsOpen} onOpenChange={setAllToolsOpen} groups={toolGroups} />
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <h1 className="sr-only">PDFLoom</h1>
         {meta &&
