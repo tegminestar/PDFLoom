@@ -167,6 +167,9 @@ export function LandingPage() {
             <a href="#desktop" className="hover:text-text">
               Desktop app
             </a>
+            <Link to="/trust" className="hover:text-text">
+              Trust & security
+            </Link>
           </nav>
           <Button asChild variant="primary" size="sm">
             <Link to="/app">Open the app</Link>
@@ -347,7 +350,12 @@ export function LandingPage() {
             <Mark size={18} className={cn("rounded-[--radius-sm]")} />
             PDFLoom · Weave every page
           </div>
-          <p className="text-xs text-text-faint">Runs entirely in your browser. No account required.</p>
+          <div className="flex items-center gap-4">
+            <Link to="/trust" className="text-xs text-text-faint hover:text-text">
+              Trust & security
+            </Link>
+            <p className="text-xs text-text-faint">Runs entirely in your browser. No account required.</p>
+          </div>
         </div>
       </footer>
     </div>
