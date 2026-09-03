@@ -123,6 +123,23 @@ function classifyFontFamily(fontFamily: string): "serif" | "sans-serif" | "monos
   return "sans-serif";
 }
 
+/**
+ * Real system font stacks approximating each standard PDF font family's
+ * actual letter widths — the live preview (and the off-screen twin that
+ * measures wrap height) previously always used "Helvetica, Arial,
+ * sans-serif" regardless of the detected family. For a serif/monospace
+ * original, that meant resizing the box by eye against the WRONG metrics:
+ * the final PDF (drawn in an actual serif/monospace standard font) wraps
+ * and fits differently than what was just dragged to look right, reading
+ * as "the box goes back to something else" even though its position and
+ * size are exactly what was set.
+ */
+const PREVIEW_FONT_STACKS: Record<"serif" | "sans-serif" | "monospace", string> = {
+  "sans-serif": "Helvetica, Arial, sans-serif",
+  serif: "Georgia, 'Times New Roman', Times, serif",
+  monospace: "'Courier New', Courier, monospace",
+};
+
 type DragMode =
   | { kind: "move"; startPointer: ScreenPoint; startRect: ScreenRect }
   | { kind: "resize"; handle: HandleId; startPointer: ScreenPoint; startRect: ScreenRect; startFontSizePx?: number };
@@ -568,7 +585,9 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
               className="pointer-events-none h-full w-full overflow-hidden whitespace-pre-wrap break-words"
               style={{
                 padding: 4 * scale,
-                fontFamily: "Helvetica, Arial, sans-serif",
+                fontFamily: PREVIEW_FONT_STACKS[textEdit.fontFamily],
+                fontWeight: textEdit.bold ? 700 : 400,
+                fontStyle: textEdit.italic ? "italic" : "normal",
                 fontSize: textEdit.fontSizePx,
                 lineHeight: 1.25,
                 color: `rgb(${Math.round(textEdit.color.r * 255)}, ${Math.round(textEdit.color.g * 255)}, ${Math.round(textEdit.color.b * 255)})`,
@@ -590,7 +609,9 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
               style={{
                 width: textEdit.rect.width,
                 padding: 4 * scale,
-                fontFamily: "Helvetica, Arial, sans-serif",
+                fontFamily: PREVIEW_FONT_STACKS[textEdit.fontFamily],
+                fontWeight: textEdit.bold ? 700 : 400,
+                fontStyle: textEdit.italic ? "italic" : "normal",
                 fontSize: textEdit.fontSizePx,
                 lineHeight: 1.25,
               }}

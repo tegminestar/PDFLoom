@@ -1,5 +1,5 @@
-import { TopBar, TopBarSection, Button as ToolbarButton, Separator, toast } from "@pdfloom/ui";
-import { Sparkles } from "lucide-react";
+import { IconButton, TopBar, TopBarSection, Button as ToolbarButton, Separator, toast } from "@pdfloom/ui";
+import { Redo2, Sparkles, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
@@ -15,6 +15,10 @@ export function RedactToolbar() {
   const setRedactOpen = useLoomStore((s) => s.setRedactOpen);
   const clearRedactBoxes = useLoomStore((s) => s.clearRedactBoxes);
   const applyRedactions = useLoomStore((s) => s.applyRedactions);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
+  const canUndo = useLoomStore((s) => s.canUndo);
+  const canRedo = useLoomStore((s) => s.canRedo);
   const [smartDetectOpen, setSmartDetectOpen] = useState(false);
 
   const pageIndices = [...new Set(redactBoxes.map((b) => b.pageIndex))];
@@ -48,6 +52,9 @@ export function RedactToolbar() {
     <TopBar>
       <TopBarSection>
         <span className="mr-2 text-sm font-semibold text-text">Redact</span>
+        <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
+        <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
+        <Separator orientation="vertical" className="mx-1.5 h-6" />
         <PageNumberField />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <ZoomControls />

@@ -1,5 +1,5 @@
 import { IconButton, Separator, TopBar, TopBarSection } from "@pdfloom/ui";
-import { CalendarDays, PenLine, Send, Stamp, Type, X } from "lucide-react";
+import { CalendarDays, PenLine, Redo2, Send, Stamp, Type, Undo2, X } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
@@ -9,6 +9,10 @@ import { SignatureCreatorDialog } from "./SignatureCreatorDialog";
 
 export function SignToolbar() {
   const kind = useLoomStore((s) => s.signPlacementKind);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
+  const canUndo = useLoomStore((s) => s.canUndo);
+  const canRedo = useLoomStore((s) => s.canRedo);
   const setSignPlacementKind = useLoomStore((s) => s.setSignPlacementKind);
   const activeSignature = useLoomStore((s) => s.activeSignature);
   const activeInitials = useLoomStore((s) => s.activeInitials);
@@ -33,6 +37,9 @@ export function SignToolbar() {
     <TopBar>
       <TopBarSection>
         <span className="mr-2 text-sm font-semibold text-text">Sign</span>
+        <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
+        <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
+        <Separator orientation="vertical" className="mx-1.5 h-6" />
         <PageNumberField />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <ZoomControls />

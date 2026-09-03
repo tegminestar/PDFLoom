@@ -5,11 +5,13 @@ import {
   Highlighter,
   MoveUpRight,
   Pencil,
+  Redo2,
   Square,
   Stamp,
   Strikethrough,
   Type,
   Underline,
+  Undo2,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -47,11 +49,18 @@ export function AnnotateToolbar() {
   const stampPreset = useLoomStore((s) => s.annotateStampPreset);
   const setStampPreset = useLoomStore((s) => s.setAnnotateStampPreset);
   const setAnnotateOpen = useLoomStore((s) => s.setAnnotateOpen);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
+  const canUndo = useLoomStore((s) => s.canUndo);
+  const canRedo = useLoomStore((s) => s.canRedo);
 
   return (
     <TopBar>
       <TopBarSection>
         <span className="mr-2 text-sm font-semibold text-text">Annotate</span>
+        <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
+        <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
+        <Separator orientation="vertical" className="mx-1.5 h-6" />
         <PageNumberField />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <ZoomControls />

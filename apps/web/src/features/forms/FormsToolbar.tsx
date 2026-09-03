@@ -1,5 +1,5 @@
 import { IconButton, Separator, TopBar, TopBarSection, Button as ToolbarButton, cn, toast } from "@pdfloom/ui";
-import { CheckSquare, ChevronDown, Circle, Type } from "lucide-react";
+import { CheckSquare, ChevronDown, Circle, Redo2, Type, Undo2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useLoomStore, type FieldDesignTool } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
@@ -23,6 +23,10 @@ export function FormsToolbar() {
   const setFormMode = useLoomStore((s) => s.setFormMode);
   const designTool = useLoomStore((s) => s.formDesignTool);
   const setFormDesignTool = useLoomStore((s) => s.setFormDesignTool);
+  const undo = useLoomStore((s) => s.undo);
+  const redo = useLoomStore((s) => s.redo);
+  const canUndo = useLoomStore((s) => s.canUndo);
+  const canRedo = useLoomStore((s) => s.canRedo);
   const fieldCount = new Set(formFields.map((f) => f.name)).size;
 
   const describeMissing = (missing: ReturnType<typeof getMissingRequiredFields>) => {
@@ -80,6 +84,9 @@ export function FormsToolbar() {
             Add fields
           </button>
         </div>
+        <Separator orientation="vertical" className="mx-1.5 h-6" />
+        <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
+        <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <PageNumberField />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
