@@ -360,7 +360,10 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2 text-sm text-text-faint">
             <Mark size={18} className={cn("rounded-[--radius-sm]")} />
-            PDFLoom · Weave every page
+            PDFLoom · Weave every page ·{" "}
+            <a href="https://tegminestar.com" target="_blank" rel="noreferrer" className="hover:text-text">
+              A Tegminestar company
+            </a>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/trust" className="text-xs text-text-faint hover:text-text">
