@@ -1,4 +1,6 @@
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from "./components/Button";
+export { Card, type CardProps } from "./components/Card";
+export { ListRow, type ListRowProps } from "./components/ListRow";
 export { Mark } from "./components/Mark";
 export { IconButton, type IconButtonProps, type IconButtonVariant, type IconButtonSize } from "./components/IconButton";
 export { Tooltip, TooltipProvider, type TooltipProps } from "./components/Tooltip";
