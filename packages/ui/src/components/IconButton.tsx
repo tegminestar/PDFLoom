@@ -16,7 +16,13 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 
 const variantClasses: Record<IconButtonVariant, string> = {
   default: "text-text-muted hover:text-text hover:bg-surface-hover",
-  active: "text-primary-text bg-primary hover:bg-primary-hover",
+  // Tinted background, not a solid fill — matches RailItem's own active
+  // treatment (bg-primary-muted text-primary) instead of the heavier
+  // full-color fill this used to have. A solid-fill "selected" state reads
+  // as a primary CTA (Upgrade to Pro, dialog confirms) more than a toggled
+  // tool state, and it was the one visual inconsistency between Rail's and
+  // every toolbar's idea of "this is the current selection."
+  active: "bg-primary-muted text-primary",
   ai: "text-ai hover:text-ai-hover hover:bg-ai-muted",
   ghost: "text-text-muted hover:text-text hover:bg-white/5",
 };
