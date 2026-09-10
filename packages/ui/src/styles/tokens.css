@@ -93,6 +93,28 @@
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  /* Alias, not a separate typeface: reserved for marketing/first-run
+     surfaces (LandingPage, TrustPage, SignerPage, WelcomeScreen's
+     wordmark) — never in Rail, TopBar, mode toolbars, Panel, Dialog, or
+     AnalyticsDashboardPage, which stay Inter-only. This was already the
+     de facto pattern everywhere except AnalyticsDashboardPage's H1; this
+     token just names the convention instead of leaving it implicit. */
+  --font-editorial: var(--font-serif);
+
+  /* Formal type scale — additive, and text-body/text-caption are
+     numerically identical to the plain text-sm/text-xs Tailwind classes
+     already used everywhere, so introducing this scale is a zero-diff
+     change until a component actually opts into text-display/title/heading. */
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.1;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.25;
+  --text-heading: 1rem;
+  --text-heading--line-height: 1.4;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
 
   --color-bg: var(--loom-bg);
   --color-bg-elevated: var(--loom-bg-elevated);
