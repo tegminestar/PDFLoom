@@ -18,10 +18,19 @@ export async function createCheckoutSession(req: Request, res: Response): Promis
     return;
   }
 
+  const plan = (req.body as { plan?: unknown })?.plan;
+  if (plan !== undefined && plan !== "monthly" && plan !== "annual") {
+    res.status(400).json({ error: "plan must be 'monthly' or 'annual'" });
+    return;
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const priceId = process.env.STRIPE_PRO_PRICE_ID;
+  // Defaults to monthly when omitted — the only plan that existed before
+  // annual billing was added, so any caller that hasn't been updated yet
+  // keeps its exact prior behavior.
+  const priceId = plan === "annual" ? process.env.STRIPE_PRO_PRICE_ID_ANNUAL : process.env.STRIPE_PRO_PRICE_ID_MONTHLY;
   const appUrl = process.env.APP_URL ?? "http://localhost:5173";
 
   if (!supabaseUrl || !supabaseServiceRoleKey || !stripeSecretKey || !priceId) {

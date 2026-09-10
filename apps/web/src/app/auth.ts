@@ -19,11 +19,11 @@ interface AuthState {
   initialize: () => void;
   signInWithEmail: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  startCheckout: () => Promise<{ error: string | null }>;
+  startCheckout: (plan: "monthly" | "annual") => Promise<{ error: string | null }>;
   openBillingPortal: () => Promise<{ error: string | null }>;
 }
 
-async function callApi(path: string): Promise<{ url?: string; error?: string }> {
+async function callApi(path: string, body?: Record<string, unknown>): Promise<{ url?: string; error?: string }> {
   if (!supabase) return { error: "Auth isn't configured" };
   const { data } = await supabase.auth.getSession();
   const accessToken = data.session?.access_token;
@@ -31,11 +31,15 @@ async function callApi(path: string): Promise<{ url?: string; error?: string }> 
   try {
     const res = await fetch(`${apiUrl}${path}`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
     });
-    const body = (await res.json()) as { url?: string; error?: string };
-    if (!res.ok) return { error: body.error ?? `Request failed (${res.status})` };
-    return body;
+    const responseBody = (await res.json()) as { url?: string; error?: string };
+    if (!res.ok) return { error: responseBody.error ?? `Request failed (${res.status})` };
+    return responseBody;
   } catch {
     return { error: "Couldn't reach the billing service" };
   }
@@ -97,9 +101,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: null, isPro: false });
   },
 
-  startCheckout: async () => {
+  startCheckout: async (plan) => {
     set({ actionPending: true });
-    const result = await callApi("/api/checkout");
+    const result = await callApi("/api/checkout", { plan });
     set({ actionPending: false });
     if (result.url) window.location.href = result.url;
     return { error: result.error ?? null };

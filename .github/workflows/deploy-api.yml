@@ -106,7 +106,8 @@ jobs:
             --settings \
               STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
               STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
-              STRIPE_PRO_PRICE_ID="${{ secrets.STRIPE_PRO_PRICE_ID }}" \
+              STRIPE_PRO_PRICE_ID_MONTHLY="${{ secrets.STRIPE_PRO_PRICE_ID_MONTHLY }}" \
+              STRIPE_PRO_PRICE_ID_ANNUAL="${{ secrets.STRIPE_PRO_PRICE_ID_ANNUAL }}" \
               SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
               SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               ANALYTICS_OWNER_EMAIL="${{ secrets.ANALYTICS_OWNER_EMAIL }}" \

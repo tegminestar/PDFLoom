@@ -17,6 +17,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const [email, setEmail] = useState("");
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [plan, setPlan] = useState<"monthly" | "annual">("monthly");
 
   // Never checks the signed-in email against anything client-side — the
   // owner's address (ANALYTICS_OWNER_EMAIL) stays server-only, same as
@@ -51,7 +52,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   };
 
   const handleUpgrade = async () => {
-    const { error } = await startCheckout();
+    const { error } = await startCheckout(plan);
     if (error) toast.error("Couldn't start checkout", error);
   };
 
@@ -121,10 +122,38 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               {actionPending ? "Opening…" : "Manage subscription"}
             </Button>
           ) : (
-            <Button variant="ai" size="sm" disabled={actionPending} onClick={() => void handleUpgrade()}>
-              <Sparkles className="h-4 w-4" />
-              {actionPending ? "Starting checkout…" : "Upgrade to Pro"}
-            </Button>
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-2 gap-1.5 rounded-[--radius-md] border border-border bg-surface p-1">
+                <button
+                  type="button"
+                  onClick={() => setPlan("monthly")}
+                  className={
+                    plan === "monthly"
+                      ? "rounded-[--radius-sm] bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
+                      : "rounded-[--radius-sm] px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
+                  }
+                >
+                  Monthly
+                  <span className="block text-xs font-normal text-text-faint">$9/mo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlan("annual")}
+                  className={
+                    plan === "annual"
+                      ? "rounded-[--radius-sm] bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
+                      : "rounded-[--radius-sm] px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
+                  }
+                >
+                  Annual
+                  <span className="block text-xs font-normal text-text-faint">$100/yr · save $8</span>
+                </button>
+              </div>
+              <Button variant="ai" size="sm" disabled={actionPending} onClick={() => void handleUpgrade()}>
+                <Sparkles className="h-4 w-4" />
+                {actionPending ? "Starting checkout…" : "Upgrade to Pro"}
+              </Button>
+            </div>
           )}
 
           <Button variant="ghost" size="sm" onClick={() => void signOut()}>
