@@ -1,4 +1,4 @@
-import { Button, Dialog, IconButton, toast } from "@pdfloom/ui";
+import { Button, Dialog, IconButton, cn, toast } from "@pdfloom/ui";
 import { ShieldCheck, ShieldOff, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "../app/auth";
@@ -84,6 +84,7 @@ export function AnalyticsDashboardPage() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DashboardUser | null>(null);
+  const [activeRecordTab, setActiveRecordTab] = useState<"activity" | "users" | "feedback">("activity");
 
   useEffect(() => {
     if (isAuthConfigured) initialize();
@@ -229,7 +230,7 @@ export function AnalyticsDashboardPage() {
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-text">Analytics</h1>
+            <h1 className="font-serif text-2xl font-medium text-text">Analytics</h1>
             <p className="text-sm text-text-muted">Last 90 days — self-hosted, nothing shared with a third party.</p>
           </div>
           <div className="flex items-center gap-3">
@@ -290,33 +291,59 @@ export function AnalyticsDashboardPage() {
               <BreakdownBars title="Top pages" rows={summary.topPaths} accent="var(--color-ai)" />
             </div>
 
-            {summary.feedback && (
-              <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
-                <span className="text-sm text-text-muted">
-                  Product feedback{summary.feedback.total > 0 ? ` (${summary.feedback.total})` : ""}
-                </span>
-                {summary.feedback.recent.length === 0 ? (
-                  <p className="text-sm text-text-faint">No feedback submitted yet.</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {summary.feedback.recent.map((f, i) => (
-                      <div key={`${f.createdAt}-${i}`} className="flex flex-col gap-1 rounded-[--radius-sm] border border-border-strong bg-bg p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">{f.category ?? "General feedback"}</span>
-                          <span className="text-xs text-text-faint">{formatRelativeTime(f.createdAt)}</span>
-                        </div>
-                        <p className="text-sm leading-relaxed text-text">{f.message}</p>
-                        {f.replyTo && <span className="text-xs text-text-faint">Reply to: {f.replyTo}</span>}
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+              <div className="flex items-center gap-1 border-b border-border pb-2">
+                {(
+                  [
+                    { id: "activity" as const, label: "Recent activity", count: summary.recent.length },
+                    ...(summary.users ? [{ id: "users" as const, label: "Users", count: summary.users.recent.length }] : []),
+                    ...(summary.feedback ? [{ id: "feedback" as const, label: "Feedback", count: summary.feedback.total }] : []),
+                  ]
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveRecordTab(tab.id)}
+                    className={cn(
+                      "rounded-[--radius-sm] px-3 py-1.5 text-sm font-medium transition-colors",
+                      activeRecordTab === tab.id ? "bg-primary-muted text-primary" : "text-text-muted hover:bg-surface-hover hover:text-text",
+                    )}
+                  >
+                    {tab.label}
+                    {tab.count > 0 && <span className="ml-1.5 text-xs text-text-faint">{tab.count}</span>}
+                  </button>
+                ))}
               </div>
-            )}
 
-            {summary.users && (
-              <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
-                <span className="text-sm text-text-muted">Users</span>
+              {activeRecordTab === "activity" && (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[560px] text-left text-sm">
+                    <thead>
+                      <tr className="text-xs text-text-faint">
+                        <th className="pb-2 font-medium">Event</th>
+                        <th className="pb-2 font-medium">Page</th>
+                        <th className="pb-2 font-medium">Device</th>
+                        <th className="pb-2 font-medium">Location</th>
+                        <th className="pb-2 text-right font-medium">When</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.recent.map((r, i) => (
+                        <tr key={`${r.createdAt}-${i}`} className="border-t border-border">
+                          <td className="py-1.5 pr-2 text-text">{r.eventName}</td>
+                          <td className="max-w-40 truncate py-1.5 pr-2 text-text-muted">{r.path ?? "—"}</td>
+                          <td className="py-1.5 pr-2 text-text-muted">{[r.device, r.browser, r.os].filter(Boolean).join(" · ") || "—"}</td>
+                          <td className="py-1.5 pr-2 text-text-muted">{[r.city, r.country].filter(Boolean).join(", ") || "—"}</td>
+                          <td className="py-1.5 text-right tabular-nums text-text-faint">{formatRelativeTime(r.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {summary.recent.length === 0 && <p className="py-3 text-sm text-text-faint">No events yet</p>}
+                </div>
+              )}
+
+              {activeRecordTab === "users" && summary.users && (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] text-left text-sm">
                     <thead>
@@ -390,36 +417,28 @@ export function AnalyticsDashboardPage() {
                   </table>
                   {summary.users.recent.length === 0 && <p className="py-3 text-sm text-text-faint">No users yet</p>}
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
-              <span className="text-sm text-text-muted">Recent activity</span>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left text-sm">
-                  <thead>
-                    <tr className="text-xs text-text-faint">
-                      <th className="pb-2 font-medium">Event</th>
-                      <th className="pb-2 font-medium">Page</th>
-                      <th className="pb-2 font-medium">Device</th>
-                      <th className="pb-2 font-medium">Location</th>
-                      <th className="pb-2 text-right font-medium">When</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {summary.recent.map((r, i) => (
-                      <tr key={`${r.createdAt}-${i}`} className="border-t border-border">
-                        <td className="py-1.5 pr-2 text-text">{r.eventName}</td>
-                        <td className="max-w-40 truncate py-1.5 pr-2 text-text-muted">{r.path ?? "—"}</td>
-                        <td className="py-1.5 pr-2 text-text-muted">{[r.device, r.browser, r.os].filter(Boolean).join(" · ") || "—"}</td>
-                        <td className="py-1.5 pr-2 text-text-muted">{[r.city, r.country].filter(Boolean).join(", ") || "—"}</td>
-                        <td className="py-1.5 text-right tabular-nums text-text-faint">{formatRelativeTime(r.createdAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {summary.recent.length === 0 && <p className="py-3 text-sm text-text-faint">No events yet</p>}
-              </div>
+              {activeRecordTab === "feedback" && summary.feedback && (
+                <>
+                  {summary.feedback.recent.length === 0 ? (
+                    <p className="text-sm text-text-faint">No feedback submitted yet.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {summary.feedback.recent.map((f, i) => (
+                        <div key={`${f.createdAt}-${i}`} className="flex flex-col gap-1 rounded-[--radius-sm] border border-border-strong bg-bg p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">{f.category ?? "General feedback"}</span>
+                            <span className="text-xs text-text-faint">{formatRelativeTime(f.createdAt)}</span>
+                          </div>
+                          <p className="text-sm leading-relaxed text-text">{f.message}</p>
+                          {f.replyTo && <span className="text-xs text-text-faint">Reply to: {f.replyTo}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </>
         )}
