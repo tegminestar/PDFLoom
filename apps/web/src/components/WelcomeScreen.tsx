@@ -1,5 +1,5 @@
 import { getPdfWorkerClient, recentsStore, type RecentFileEntry } from "@pdfloom/core";
-import { Button, Mark, cn, toast } from "@pdfloom/ui";
+import { Button, Card, ListRow, Mark, cn, toast } from "@pdfloom/ui";
 import {
   BadgeDollarSign,
   BriefcaseBusiness,
@@ -247,19 +247,15 @@ export function WelcomeScreen() {
             <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-text-faint">Start from a template</h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {TEMPLATES.map((template) => (
-                <button
+                <Card
                   key={template.file}
-                  type="button"
+                  icon={template.icon}
+                  title={template.name}
+                  description={loadingTemplate === template.file ? "Loading…" : template.description}
+                  size="sm"
                   onClick={() => void handleOpenTemplate(template)}
-                  disabled={loadingTemplate !== null}
-                  className="flex flex-col items-start gap-1.5 rounded-[--radius-md] border border-border bg-bg-elevated/60 p-3 text-left transition-colors hover:border-primary/50 hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <template.icon className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-medium text-text">{template.name}</span>
-                  <span className="text-[11px] leading-snug text-text-faint">
-                    {loadingTemplate === template.file ? "Loading…" : template.description}
-                  </span>
-                </button>
+                  className={loadingTemplate !== null ? "pointer-events-none opacity-50" : undefined}
+                />
               ))}
             </div>
           </div>
@@ -270,25 +266,17 @@ export function WelcomeScreen() {
           {recents.length === 0 ? (
             <p className="px-1 text-sm text-text-faint">Files you open will show up here.</p>
           ) : (
-            <ul className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-0.5">
               {recents.map((entry) => (
-                <li key={entry.id}>
-                  <button
-                    type="button"
-                    onClick={() => void handleOpenRecent(entry)}
-                    className="flex w-full items-center gap-3 rounded-[--radius-md] px-2.5 py-2 text-left hover:bg-surface-hover"
-                  >
-                    <FileText className="h-5 w-5 shrink-0 text-text-faint" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-text">{entry.name}</span>
-                      <span className="block text-xs text-text-faint">
-                        {entry.pageCount} pages · {formatBytes(entry.sizeBytes)} · {formatRelativeTime(entry.lastOpenedAt)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
+                <ListRow
+                  key={entry.id}
+                  icon={<FileText className="h-5 w-5" />}
+                  title={entry.name}
+                  subtitle={`${entry.pageCount} pages · ${formatBytes(entry.sizeBytes)} · ${formatRelativeTime(entry.lastOpenedAt)}`}
+                  onClick={() => void handleOpenRecent(entry)}
+                />
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </div>
