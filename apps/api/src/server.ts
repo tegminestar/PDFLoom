@@ -10,7 +10,21 @@ import {
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
 import { submitFeedback } from "./routes/feedback";
-import { createSignatureRequest, getSignatureRequestStatus, getSignerView, submitSignature } from "./routes/signatureRequests";
+import {
+  createSignatureRequest,
+  declineSignature,
+  getSignatureRequestStatus,
+  getSignerView,
+  listSignatureRequests,
+  submitSignature,
+  voidSignatureRequest,
+} from "./routes/signatureRequests";
+import {
+  createSignatureTemplate,
+  deleteSignatureTemplate,
+  getSignatureTemplate,
+  listSignatureTemplates,
+} from "./routes/signatureTemplates";
 import { stripeWebhook } from "./routes/stripeWebhook";
 
 const app = express();
@@ -119,9 +133,51 @@ app.post("/api/signature-requests", (req, res) => {
   });
 });
 
+app.get("/api/signature-requests", (req, res) => {
+  listSignatureRequests(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in listSignatureRequests", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
 app.get("/api/signature-requests/:id", (req, res) => {
   getSignatureRequestStatus(req, res).catch((error: unknown) => {
     console.error("Unhandled error in getSignatureRequestStatus", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/signature-requests/:id/void", (req, res) => {
+  voidSignatureRequest(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in voidSignatureRequest", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/signature-templates", (req, res) => {
+  createSignatureTemplate(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in createSignatureTemplate", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.get("/api/signature-templates", (req, res) => {
+  listSignatureTemplates(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in listSignatureTemplates", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.get("/api/signature-templates/:id", (req, res) => {
+  getSignatureTemplate(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in getSignatureTemplate", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.delete("/api/signature-templates/:id", (req, res) => {
+  deleteSignatureTemplate(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in deleteSignatureTemplate", error);
     res.status(500).json({ error: "Internal error" });
   });
 });
@@ -136,6 +192,13 @@ app.get("/api/sign/:token", (req, res) => {
 app.post("/api/sign/:token", (req, res) => {
   submitSignature(req, res).catch((error: unknown) => {
     console.error("Unhandled error in submitSignature", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/sign/:token/decline", (req, res) => {
+  declineSignature(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in declineSignature", error);
     res.status(500).json({ error: "Internal error" });
   });
 });
