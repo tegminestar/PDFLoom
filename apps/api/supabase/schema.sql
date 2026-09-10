@@ -135,3 +135,14 @@ alter table public.feedback_submissions enable row level security;
 
 create index if not exists feedback_submissions_created_at_idx
   on public.feedback_submissions (created_at);
+
+-- Lets the owner (ANALYTICS_OWNER_EMAIL) grant other accounts read-only
+-- access to /analytics without sharing the owner's own credentials. Role
+-- changes, Pro overrides, and account deletion from the dashboard all stay
+-- restricted to ANALYTICS_OWNER_EMAIL itself (apps/api/src/routes/analytics.ts's
+-- checkOwnerAuth) even for an 'admin' account, so promoting someone to
+-- 'admin' can only ever grant visibility, never the ability to grant more
+-- access, override billing, or delete accounts.
+alter table public.profiles add column if not exists role text not null default 'user';
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('user', 'admin'));

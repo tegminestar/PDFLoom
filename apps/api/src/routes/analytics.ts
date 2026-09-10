@@ -148,8 +148,18 @@ interface OwnerCheck {
   ok: boolean;
   status: number;
   error?: string;
+  userId?: string;
+  isOwnerEmail?: boolean;
 }
 
+/**
+ * Strict single-account check — true iff the session's email matches
+ * ANALYTICS_OWNER_EMAIL. This is the gate for every mutation (role changes,
+ * Pro overrides, account deletion): an 'admin'-role account can *view* the
+ * dashboard (see checkDashboardAccess) but can never grant itself or anyone
+ * else more access, so promoting an account to 'admin' can't be leveraged
+ * into a privilege-escalation chain.
+ */
 async function checkOwnerAuth(req: Request, supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>): Promise<OwnerCheck> {
   const authHeader = req.headers.authorization ?? "";
   const accessToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -164,13 +174,41 @@ async function checkOwnerAuth(req: Request, supabase: NonNullable<ReturnType<typ
   if (userData.user.email?.toLowerCase() !== ownerEmail.toLowerCase()) {
     return { ok: false, status: 403, error: "Not authorized" };
   }
-  return { ok: true, status: 200 };
+  return { ok: true, status: 200, userId: userData.user.id };
+}
+
+/**
+ * View-only gate for the dashboard itself: the true owner, OR any account
+ * the owner has promoted to profiles.role = 'admin'. Deliberately looser
+ * than checkOwnerAuth — every mutation endpoint still requires the strict
+ * owner-only check, so this only ever grants read access.
+ */
+async function checkDashboardAccess(req: Request, supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>): Promise<OwnerCheck> {
+  const authHeader = req.headers.authorization ?? "";
+  const accessToken = authHeader.replace(/^Bearer\s+/i, "");
+  if (!accessToken) return { ok: false, status: 401, error: "Missing Authorization header" };
+
+  const ownerEmail = process.env.ANALYTICS_OWNER_EMAIL;
+  if (!ownerEmail) return { ok: false, status: 500, error: "Analytics dashboard is not configured yet" };
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+  if (userError || !userData.user) return { ok: false, status: 401, error: "Invalid or expired session" };
+
+  if (userData.user.email?.toLowerCase() === ownerEmail.toLowerCase()) {
+    return { ok: true, status: 200, userId: userData.user.id, isOwnerEmail: true };
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", userData.user.id).maybeSingle();
+  if ((profile as { role?: string } | null)?.role === "admin") {
+    return { ok: true, status: 200, userId: userData.user.id, isOwnerEmail: false };
+  }
+  return { ok: false, status: 403, error: "Not authorized" };
 }
 
 /**
  * Cheap yes/no check the signed-in-only "Analytics" menu item uses to
  * decide whether to show itself — deliberately separate from
- * getAnalyticsSummary so checking "am I the owner" never requires shipping
+ * getAnalyticsSummary so checking "can I view this" never requires shipping
  * ANALYTICS_OWNER_EMAIL to the browser bundle (same reasoning as
  * feedback.ts keeping its recipient address server-side only) or running
  * the full analytics query just to render a menu item. Always 200 — "no"
@@ -182,16 +220,16 @@ export async function checkAnalyticsAccess(req: Request, res: Response): Promise
     res.status(200).json({ isOwner: false });
     return;
   }
-  const result = await checkOwnerAuth(req, supabase);
+  const result = await checkDashboardAccess(req, supabase);
   res.status(200).json({ isOwner: result.ok });
 }
 
 /**
- * Owner-only dashboard data. Gated the same way createCheckoutSession is —
- * a verified Supabase session — plus one extra check: the session's email
- * must match ANALYTICS_OWNER_EMAIL. Everyone else (including other signed-in
- * PDFLoom accounts) gets 403; an unset env var fails closed (nobody passes)
- * rather than open.
+ * Dashboard data. Viewable by the owner or any profiles.role = 'admin'
+ * account; the response's canManageUsers flag tells the UI whether *this*
+ * viewer may also see the user-management action buttons (owner only —
+ * see checkOwnerAuth). An unset ANALYTICS_OWNER_EMAIL fails closed (nobody
+ * passes) rather than open.
  */
 export async function getAnalyticsSummary(req: Request, res: Response): Promise<void> {
   const supabase = getSupabaseAdmin();
@@ -200,11 +238,12 @@ export async function getAnalyticsSummary(req: Request, res: Response): Promise<
     return;
   }
 
-  const auth = await checkOwnerAuth(req, supabase);
+  const auth = await checkDashboardAccess(req, supabase);
   if (!auth.ok) {
     res.status(auth.status).json({ error: auth.error });
     return;
   }
+  const canManageUsers = auth.isOwnerEmail === true;
 
   const since = new Date();
   since.setDate(since.getDate() - 90);
@@ -235,6 +274,7 @@ export async function getAnalyticsSummary(req: Request, res: Response): Promise<
   ]);
 
   res.status(200).json({
+    canManageUsers,
     totalEvents: rows.length,
     last7Days,
     last30Days,
@@ -275,16 +315,16 @@ function dailyBuckets(isoDates: string[], days: number, now: number): { date: st
 
 /**
  * "Total users" / "Paying" / signups-over-time — PDFLoom's equivalent of
- * MyQRCreate's user-admin panel, read-only for now (no role concept exists
- * here to gate mutations on, and account deletion/role changes are a
- * separate, deliberately-deferred decision). auth.users has emails and
- * signup dates; profiles has is_pro — joined here since neither table
- * alone has both.
+ * MyQRCreate's user-admin panel. auth.users has emails and signup dates;
+ * profiles has is_pro/role — joined here since neither table alone has
+ * both. isOwnerAccount flags the ANALYTICS_OWNER_EMAIL row specifically so
+ * the dashboard UI can hide the mutation buttons on it (the owner can't
+ * demote, de-Pro, or delete themselves through this panel).
  */
 async function fetchUserSummary(supabase: NonNullable<ReturnType<typeof getSupabaseAdmin>>, now: number) {
   const [{ data: userPage, error: userError }, { data: profileRows, error: profileError }] = await Promise.all([
     supabase.auth.admin.listUsers({ perPage: 1000 }),
-    supabase.from("profiles").select("id, is_pro"),
+    supabase.from("profiles").select("id, is_pro, role"),
   ]);
 
   if (userError || profileError) {
@@ -292,10 +332,16 @@ async function fetchUserSummary(supabase: NonNullable<ReturnType<typeof getSupab
     return null;
   }
 
-  const proById = new Map((profileRows ?? []).map((p: { id: string; is_pro: boolean }) => [p.id, p.is_pro]));
+  const profileById = new Map(
+    (profileRows ?? []).map((p: { id: string; is_pro: boolean; role: string | null }) => [p.id, p]),
+  );
+  const ownerEmail = process.env.ANALYTICS_OWNER_EMAIL?.toLowerCase();
   const users = (userPage?.users ?? []).map((u) => ({
+    id: u.id,
     email: u.email ?? "(no email)",
-    isPro: proById.get(u.id) ?? false,
+    isPro: profileById.get(u.id)?.is_pro ?? false,
+    role: profileById.get(u.id)?.role === "admin" ? "admin" : "user",
+    isOwnerAccount: ownerEmail != null && u.email?.toLowerCase() === ownerEmail,
     joinedAt: u.created_at,
   }));
 
@@ -339,4 +385,127 @@ async function fetchFeedbackSummary(supabase: NonNullable<ReturnType<typeof getS
       createdAt: f.created_at as string,
     })),
   };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function getIdParam(req: Request): string {
+  const id = req.params.id;
+  return Array.isArray(id) ? (id[0] ?? "") : (id ?? "");
+}
+
+/**
+ * Owner-only: promote/demote an account's dashboard-view access. Granting
+ * 'admin' only ever grants read access to /analytics (checkDashboardAccess)
+ * — it can never be used to reach any of the mutation endpoints below,
+ * which all re-check checkOwnerAuth (the single ANALYTICS_OWNER_EMAIL
+ * account) independent of this column.
+ */
+export async function setUserRole(req: Request, res: Response): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    res.status(500).json({ error: "Analytics dashboard is not configured yet" });
+    return;
+  }
+  const auth = await checkOwnerAuth(req, supabase);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+
+  const targetId = getIdParam(req);
+  if (!UUID_RE.test(targetId)) {
+    res.status(400).json({ error: "Invalid user id" });
+    return;
+  }
+  const role = (req.body as { role?: unknown }).role;
+  if (role !== "admin" && role !== "user") {
+    res.status(400).json({ error: "role must be 'admin' or 'user'" });
+    return;
+  }
+
+  const { error } = await supabase.from("profiles").update({ role }).eq("id", targetId);
+  if (error) {
+    console.error("Error updating user role", error);
+    res.status(500).json({ error: "Couldn't update role" });
+    return;
+  }
+  res.status(200).json({ ok: true });
+}
+
+/**
+ * Owner-only: manual Pro-access override, independent of Stripe. PDFLoom
+ * has no trial/grace-period concept to "extend" (that's MyQRCreate's model,
+ * not this one) — the honest equivalent of comping someone access is
+ * toggling the same is_pro flag Stripe's webhook writes, without touching
+ * stripe_subscription_id, so a real subscription's own status isn't
+ * clobbered by this override and vice versa.
+ */
+export async function setUserPro(req: Request, res: Response): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    res.status(500).json({ error: "Analytics dashboard is not configured yet" });
+    return;
+  }
+  const auth = await checkOwnerAuth(req, supabase);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+
+  const targetId = getIdParam(req);
+  if (!UUID_RE.test(targetId)) {
+    res.status(400).json({ error: "Invalid user id" });
+    return;
+  }
+  const isPro = (req.body as { isPro?: unknown }).isPro;
+  if (typeof isPro !== "boolean") {
+    res.status(400).json({ error: "isPro must be a boolean" });
+    return;
+  }
+
+  const { error } = await supabase.from("profiles").update({ is_pro: isPro }).eq("id", targetId);
+  if (error) {
+    console.error("Error updating user Pro status", error);
+    res.status(500).json({ error: "Couldn't update Pro status" });
+    return;
+  }
+  res.status(200).json({ ok: true });
+}
+
+/**
+ * Owner-only, irreversible: deletes the account from auth.users; profiles'
+ * own row cascades via its `on delete cascade` foreign key (schema.sql).
+ * Refuses to delete the owner's own account so this panel can never be
+ * used to lock the owner out of the dashboard.
+ */
+export async function deleteUserAccount(req: Request, res: Response): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    res.status(500).json({ error: "Analytics dashboard is not configured yet" });
+    return;
+  }
+  const auth = await checkOwnerAuth(req, supabase);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+
+  const targetId = getIdParam(req);
+  if (!UUID_RE.test(targetId)) {
+    res.status(400).json({ error: "Invalid user id" });
+    return;
+  }
+  if (targetId === auth.userId) {
+    res.status(400).json({ error: "Can't delete the owner's own account" });
+    return;
+  }
+
+  const { error } = await supabase.auth.admin.deleteUser(targetId);
+  if (error) {
+    console.error("Error deleting user account", error);
+    res.status(500).json({ error: "Couldn't delete account" });
+    return;
+  }
+  res.status(200).json({ ok: true });
 }

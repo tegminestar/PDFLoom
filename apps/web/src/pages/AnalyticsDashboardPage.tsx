@@ -1,5 +1,6 @@
-import { Button } from "@pdfloom/ui";
-import { useEffect, useState } from "react";
+import { Button, Dialog, IconButton, toast } from "@pdfloom/ui";
+import { ShieldCheck, ShieldOff, Sparkles, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthStore } from "../app/auth";
 import { apiUrl, isAuthConfigured, supabase } from "../app/supabase";
 import { AccountDialog } from "../features/account/AccountDialog";
@@ -7,7 +8,17 @@ import { BreakdownBars } from "../features/analytics/BreakdownBars";
 import { EventsOverTimeChart } from "../features/analytics/EventsOverTimeChart";
 import { StatTile } from "../features/analytics/StatTile";
 
+interface DashboardUser {
+  id: string;
+  email: string;
+  isPro: boolean;
+  role: "admin" | "user";
+  isOwnerAccount: boolean;
+  joinedAt: string;
+}
+
 interface AnalyticsSummary {
+  canManageUsers: boolean;
   totalEvents: number;
   last7Days: number;
   last30Days: number;
@@ -34,7 +45,7 @@ interface AnalyticsSummary {
     free: number;
     last7Days: number;
     dailySignups: { date: string; count: number }[];
-    recent: { email: string; isPro: boolean; joinedAt: string }[];
+    recent: DashboardUser[];
   } | null;
   feedback: {
     total: number;
@@ -71,47 +82,117 @@ export function AnalyticsDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardUser | null>(null);
 
   useEffect(() => {
     if (isAuthConfigured) initialize();
   }, [initialize]);
 
-  useEffect(() => {
-    if (!user || !supabase) return;
-    let cancelled = false;
+  const loadSummary = useCallback(async (): Promise<void> => {
+    if (!supabase) return;
     setLoadingSummary(true);
     setError(null);
-
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token;
-      if (!accessToken) {
-        if (!cancelled) setError("Not signed in");
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+    if (!accessToken) {
+      setError("Not signed in");
+      setLoadingSummary(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${apiUrl}/api/analytics/summary`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 403) {
+        setError("This account isn't authorized to view analytics.");
         return;
       }
-      try {
-        const res = await fetch(`${apiUrl}/api/analytics/summary`, { headers: { Authorization: `Bearer ${accessToken}` } });
-        if (res.status === 403) {
-          if (!cancelled) setError("This account isn't authorized to view analytics.");
-          return;
-        }
-        if (!res.ok) {
-          if (!cancelled) setError(`Couldn't load analytics (${res.status})`);
-          return;
-        }
-        const body = (await res.json()) as AnalyticsSummary;
-        if (!cancelled) setSummary(body);
-      } catch {
-        if (!cancelled) setError("Couldn't reach the analytics service");
-      } finally {
-        if (!cancelled) setLoadingSummary(false);
+      if (!res.ok) {
+        setError(`Couldn't load analytics (${res.status})`);
+        return;
       }
-    })();
+      const body = (await res.json()) as AnalyticsSummary;
+      setSummary(body);
+    } catch {
+      setError("Couldn't reach the analytics service");
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, []);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  useEffect(() => {
+    if (!user) return;
+    void loadSummary();
+  }, [user, loadSummary]);
+
+  /**
+   * Every user-row action (role toggle, Pro override, delete) shares this:
+   * grab a fresh access token, hit the owner-only endpoint, then reload the
+   * whole summary rather than patching local state — the row count, plan
+   * totals, and signup chart all depend on the same data a mutation just
+   * changed, and re-fetching is the only way to keep them all consistent.
+   */
+  const runUserAction = useCallback(
+    async (targetId: string, path: string, method: "POST" | "DELETE", body?: Record<string, unknown>): Promise<boolean> => {
+      if (!supabase) return false;
+      setPendingUserId(targetId);
+      try {
+        const { data } = await supabase.auth.getSession();
+        const accessToken = data.session?.access_token;
+        if (!accessToken) {
+          toast.error("Not signed in");
+          return false;
+        }
+        const res = await fetch(`${apiUrl}${path}`, {
+          method,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            ...(body ? { "Content-Type": "application/json" } : {}),
+          },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        if (!res.ok) {
+          const errorBody = (await res.json().catch(() => ({}))) as { error?: string };
+          toast.error("Action failed", errorBody.error ?? `HTTP ${res.status}`);
+          return false;
+        }
+        return true;
+      } catch {
+        toast.error("Couldn't reach the server");
+        return false;
+      } finally {
+        setPendingUserId(null);
+      }
+    },
+    [],
+  );
+
+  const handleToggleRole = async (targetUser: DashboardUser) => {
+    const nextRole = targetUser.role === "admin" ? "user" : "admin";
+    const ok = await runUserAction(targetUser.id, `/api/analytics/users/${targetUser.id}/role`, "POST", { role: nextRole });
+    if (ok) {
+      toast.success(nextRole === "admin" ? "Granted dashboard access" : "Removed dashboard access", targetUser.email);
+      await loadSummary();
+    }
+  };
+
+  const handleTogglePro = async (targetUser: DashboardUser) => {
+    const nextIsPro = !targetUser.isPro;
+    const ok = await runUserAction(targetUser.id, `/api/analytics/users/${targetUser.id}/pro`, "POST", { isPro: nextIsPro });
+    if (ok) {
+      toast.success(nextIsPro ? "Granted Pro access" : "Revoked Pro access", targetUser.email);
+      await loadSummary();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const ok = await runUserAction(deleteTarget.id, `/api/analytics/users/${deleteTarget.id}`, "DELETE");
+    setDeleteTarget(null);
+    if (ok) {
+      toast.success("Account deleted", deleteTarget.email);
+      await loadSummary();
+    }
+  };
 
   if (!isAuthConfigured) {
     return (
@@ -242,12 +323,14 @@ export function AnalyticsDashboardPage() {
                       <tr className="text-xs text-text-faint">
                         <th className="pb-2 font-medium">Email</th>
                         <th className="pb-2 font-medium">Plan</th>
-                        <th className="pb-2 text-right font-medium">Joined</th>
+                        <th className="pb-2 font-medium">Role</th>
+                        <th className="pb-2 font-medium">Joined</th>
+                        {summary.canManageUsers && <th className="pb-2 text-right font-medium">Actions</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {summary.users.recent.map((u) => (
-                        <tr key={u.email} className="border-t border-border">
+                        <tr key={u.id} className="border-t border-border">
                           <td className="max-w-56 truncate py-1.5 pr-2 text-text">{u.email}</td>
                           <td className="py-1.5 pr-2">
                             <span
@@ -260,7 +343,47 @@ export function AnalyticsDashboardPage() {
                               {u.isPro ? "Pro" : "Free"}
                             </span>
                           </td>
-                          <td className="py-1.5 text-right tabular-nums text-text-faint">{new Date(u.joinedAt).toLocaleDateString()}</td>
+                          <td className="py-1.5 pr-2">
+                            {u.isOwnerAccount ? (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Owner</span>
+                            ) : u.role === "admin" ? (
+                              <span className="rounded-full bg-ai-muted px-2 py-0.5 text-xs font-semibold text-ai">Admin</span>
+                            ) : (
+                              <span className="text-xs text-text-faint">—</span>
+                            )}
+                          </td>
+                          <td className="py-1.5 pr-2 tabular-nums text-text-faint">{new Date(u.joinedAt).toLocaleDateString()}</td>
+                          {summary.canManageUsers && (
+                            <td className="py-1.5 pl-2">
+                              {u.isOwnerAccount ? (
+                                <span className="block text-right text-xs text-text-faint">—</span>
+                              ) : (
+                                <div className="flex items-center justify-end gap-1">
+                                  <IconButton
+                                    icon={u.role === "admin" ? <ShieldOff /> : <ShieldCheck />}
+                                    label={u.role === "admin" ? "Remove admin access" : "Make admin"}
+                                    size="sm"
+                                    disabled={pendingUserId === u.id}
+                                    onClick={() => void handleToggleRole(u)}
+                                  />
+                                  <IconButton
+                                    icon={<Sparkles />}
+                                    label={u.isPro ? "Revoke Pro access" : "Grant Pro access"}
+                                    size="sm"
+                                    disabled={pendingUserId === u.id}
+                                    onClick={() => void handleTogglePro(u)}
+                                  />
+                                  <IconButton
+                                    icon={<Trash2 />}
+                                    label="Delete account"
+                                    size="sm"
+                                    disabled={pendingUserId === u.id}
+                                    onClick={() => setDeleteTarget(u)}
+                                  />
+                                </div>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -301,6 +424,30 @@ export function AnalyticsDashboardPage() {
           </>
         )}
       </div>
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this account?"
+        description={
+          deleteTarget
+            ? `This permanently deletes ${deleteTarget.email}'s PDFLoom account and sign-in. This can't be undone.`
+            : undefined
+        }
+        width={400}
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" size="sm" disabled={pendingUserId === deleteTarget?.id} onClick={() => void handleDelete()}>
+              {pendingUserId === deleteTarget?.id ? "Deleting…" : "Delete account"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-muted">The account's Pro status, if any, is not refunded or cancelled by this action.</p>
+      </Dialog>
     </div>
   );
 }

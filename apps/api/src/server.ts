@@ -1,5 +1,12 @@
 import express from "express";
-import { checkAnalyticsAccess, getAnalyticsSummary, trackAnalyticsEvent } from "./routes/analytics";
+import {
+  checkAnalyticsAccess,
+  deleteUserAccount,
+  getAnalyticsSummary,
+  setUserPro,
+  setUserRole,
+  trackAnalyticsEvent,
+} from "./routes/analytics";
 import { createCheckoutSession } from "./routes/createCheckoutSession";
 import { createPortalSession } from "./routes/createPortalSession";
 import { submitFeedback } from "./routes/feedback";
@@ -81,6 +88,27 @@ app.get("/api/analytics/is-owner", (req, res) => {
   checkAnalyticsAccess(req, res).catch((error: unknown) => {
     console.error("Unhandled error in checkAnalyticsAccess", error);
     res.status(200).json({ isOwner: false });
+  });
+});
+
+app.post("/api/analytics/users/:id/role", (req, res) => {
+  setUserRole(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in setUserRole", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.post("/api/analytics/users/:id/pro", (req, res) => {
+  setUserPro(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in setUserPro", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.delete("/api/analytics/users/:id", (req, res) => {
+  deleteUserAccount(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in deleteUserAccount", error);
+    res.status(500).json({ error: "Internal error" });
   });
 });
 
