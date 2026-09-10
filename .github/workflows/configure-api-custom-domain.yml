@@ -76,3 +76,12 @@ jobs:
           echo "Bound. Waiting a few seconds for it to take effect..."
           sleep 15
           curl -s -w "\nSTATUS:%{http_code}\n" "https://$HOSTNAME/api/health" --max-time 30 || true
+
+      - name: List all hostnames actually bound to this app (ground truth from Azure)
+        run: |
+          az webapp config hostname list \
+            --webapp-name "$AZURE_WEBAPP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            -o table
+          echo "--- SSL states ---"
+          az webapp config ssl list --resource-group "$AZURE_RESOURCE_GROUP" -o table
