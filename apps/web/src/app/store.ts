@@ -17,7 +17,7 @@ import { trackEvent } from "./analytics";
 
 export type FitMode = "width" | "page" | "custom";
 export type ScrollMode = "continuous" | "single" | "two-page";
-export type PanelId = "thumbnails" | "outline" | "search" | null;
+export type PanelId = "thumbnails" | "outline" | "search" | "attachments" | null;
 export type MainView = "read" | "organize" | "compare";
 export type AnnotateTool = "highlight" | "underline" | "strikeout" | "ink" | "square" | "circle" | "line" | "text" | "stamp";
 export type FormMode = "fill" | "design";

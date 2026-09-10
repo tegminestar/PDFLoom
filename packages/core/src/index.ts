@@ -9,6 +9,7 @@ export { STANDARD_PAGE_SIZES } from "./pdf/organize";
 export type { Quad, Point, Rect, RgbColor, StampPreset } from "./pdf/annotations";
 export { recognizeShape } from "./pdf/shape-recognition";
 export type { RecognizedShape } from "./pdf/shape-recognition";
+export type { PortfolioFile } from "./pdf/portfolio";
 export type {
   TextWatermarkOptions,
   ImageWatermarkOptions,

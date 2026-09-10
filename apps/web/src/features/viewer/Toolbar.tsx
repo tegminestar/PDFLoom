@@ -12,6 +12,7 @@ import {
   Maximize,
   Minimize,
   Moon,
+  Paperclip,
   Redo2,
   RectangleVertical,
   RotateCw,
@@ -123,6 +124,12 @@ export function Toolbar() {
           variant={activePanel === "search" ? "active" : "default"}
           onClick={() => toggleActivePanel("search")}
           shortcut="Ctrl F"
+        />
+        <IconButton
+          icon={<Paperclip />}
+          label="Attachments"
+          variant={activePanel === "attachments" ? "active" : "default"}
+          onClick={() => toggleActivePanel("attachments")}
         />
       </TopBarSection>
 

@@ -93,6 +93,28 @@ export class PdfDocument {
     };
   }
 
+  /**
+   * Files bundled into this document as PDF attachments (see
+   * pdf/portfolio.ts's `attachFiles`, the write side — this is the read
+   * side, going through pdf.js rather than pdf-lib since it's already
+   * parsed the document once to render it). Returns `[]` for the vast
+   * majority of PDFs, which have no attachments at all.
+   */
+  async listAttachments(): Promise<{ name: string; bytes: Uint8Array }[]> {
+    const attachments = await this.proxy.getAttachments();
+    if (!attachments) return [];
+    const entries = await Promise.all(
+      [...attachments.entries()].map(async ([id, info]) => {
+        // `content` isn't always populated eagerly on the metadata map —
+        // pdf.js's own attachment-panel UI (and this) has to fall back to
+        // fetching it by id separately.
+        const bytes = info.content ?? (await this.proxy.getAttachmentContent(id));
+        return bytes ? { name: info.filename, bytes } : null;
+      }),
+    );
+    return entries.filter((e): e is { name: string; bytes: Uint8Array } => e !== null);
+  }
+
   private async getPage(pageNumber: number): Promise<PDFPageProxy> {
     const cached = this.pageCache.get(pageNumber);
     if (cached) return cached;

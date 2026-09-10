@@ -76,6 +76,7 @@ import { QuickCreateDialog } from "./features/quick-create/QuickCreateDialog";
 import { HeaderFooterDialog } from "./features/stamps/HeaderFooterDialog";
 import { PageNumbersDialog } from "./features/stamps/PageNumbersDialog";
 import { WatermarkDialog } from "./features/stamps/WatermarkDialog";
+import { AttachmentsPanel } from "./features/viewer/AttachmentsPanel";
 import { OutlinePanel } from "./features/viewer/OutlinePanel";
 import { SearchPanel } from "./features/viewer/SearchPanel";
 import { ThumbnailsPanel } from "./features/viewer/ThumbnailsPanel";
@@ -652,6 +653,14 @@ export function App() {
             !redactOpen &&
             !signOpen &&
             activePanel === "search" && <SearchPanel />}
+          {meta &&
+            mainView === "read" &&
+            !annotateOpen &&
+            !formFillOpen &&
+            !editOpen &&
+            !redactOpen &&
+            !signOpen &&
+            activePanel === "attachments" && <AttachmentsPanel />}
           <div className="min-w-0 flex-1">
             {!meta ? (
               <WelcomeScreen />
