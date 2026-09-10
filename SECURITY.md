@@ -31,6 +31,16 @@ reports (e.g. a dependency advisory that's already public).
   at `0.18.5` transitively by Tauri's `gtk` dependency (`gtk 0.18.x`
   requires `glib ^0.18`). Not fixable from this repo until Tauri ships a
   release built against a newer `gtk`/`glib`. Tracked via Dependabot.
+- **`adm-zip` (via `onnxruntime-node`)** — GHSA-vwc7-r8mq-g2x9: zip
+  extraction follows destination symlinks, allowing an arbitrary file
+  overwrite from a crafted archive. No patched release exists yet. Not
+  reachable in this app: `onnxruntime-node`'s native/Node build is
+  explicitly disabled (`pnpm-workspace.yaml`'s `allowBuilds`) since every
+  AI feature runs on `@huggingface/transformers`' browser/WASM bundle only
+  — the package that pulls in `adm-zip` is never actually executed, so its
+  zip-extraction code path can't run regardless of the CVE. Medium severity
+  (below this repo's `--audit-level high` CI gate), listed here anyway for
+  the same completeness reason as the two items above.
 
 ## Security model
 
