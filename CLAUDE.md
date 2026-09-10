@@ -79,6 +79,12 @@ Maintain context and prevent drift across session restarts, reboots, or project 
 2. CONTEXT RECOVERY: Upon session start or restart, reference prior project state, historical architectural decisions, and explicit directives to align context instantly without losing historical progress.
 </session_memory_persistence>
 
+<multi_task_context_retention>
+1. ACTIVE STATE MAINTENANCE: Never discard, drop, or forget an in-progress task when the user asks follow-up questions or introduces new requests.
+2. CONTEXT INTERLEAVING: Acknowledge new requests immediately while keeping active tasks alive. If a new prompt pauses a previous task, explicitly signal that the prior task remains in the queue.
+3. TASK TRACKING: Continuously track open, paused, and completed deliverables across multi-turn interactions until every requested item is explicitly fulfilled.
+</multi_task_context_retention>
+
 <review_output_format>
 When evaluating code, specs, pull requests, or feature requests, structure responses into these explicit sections:
 1. BENCHMARK COMPARISON: Concise evaluation against industry leaders (or first-principles baseline if first-in-kind)
@@ -155,6 +161,14 @@ UI/UX polish, feature breadth, and performance. "Good enough" is not the bar.
 
 ## Delivery process
 
+* **Don't stop until everything requested is actually implemented.** When
+  given a body of work (an approved plan, a multi-part request), keep going
+  through every remaining item — typecheck, lint, e2e, manual pass, commit,
+  push, deploy — without pausing between items to report incremental
+  progress or ask "should I continue?" Only stop for a genuine blocker: a
+  decision only the user can make, a missing credential, or something the
+  destructive-action gate above requires explicit sign-off for. "Continue"
+  means finish the whole thing, not the next step.
 * Ship multiple substantial/unrelated features as **separate,
   sequentially-verified commits**, not one giant batch — even under a
   blanket "implement all" instruction.
