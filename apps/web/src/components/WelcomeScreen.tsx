@@ -294,7 +294,7 @@ export function WelcomeScreen() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-[--radius-xl] border border-border bg-bg-elevated/60 p-4">
+        <div className="flex min-w-0 flex-col gap-2 rounded-[--radius-xl] border border-border bg-bg-elevated/60 p-4">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-heading font-semibold text-text">Recent</h2>
             {recents.length > 0 && (
@@ -306,49 +306,48 @@ export function WelcomeScreen() {
           {recents.length === 0 ? (
             <p className="px-1 text-sm text-text-faint">Files you open will show up here.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="text-xs text-text-faint">
-                    <th className="pb-2 font-medium">Name</th>
-                    <th className="pb-2 text-right font-medium">Pages</th>
-                    <th className="pb-2 text-right font-medium">Size</th>
-                    <th className="pb-2 text-right font-medium">Opened</th>
-                    <th className="pb-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {recents.map((entry) => (
-                    <tr
-                      key={entry.id}
-                      onClick={() => void handleOpenRecent(entry)}
-                      className="cursor-pointer border-t border-border hover:bg-surface-hover"
-                    >
-                      <td className="max-w-64 py-2 pr-2">
-                        <span className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 shrink-0 text-text-faint" />
-                          <span className="truncate text-text">{entry.name}</span>
+            <table className="w-full table-fixed text-left text-sm">
+              <thead>
+                <tr className="text-xs text-text-faint">
+                  <th className="w-auto pb-2 pr-2 font-medium">Name</th>
+                  <th className="w-20 pb-2 pr-2 text-right font-medium">Opened</th>
+                  <th className="w-9 pb-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {recents.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    onClick={() => void handleOpenRecent(entry)}
+                    className="cursor-pointer border-t border-border hover:bg-surface-hover"
+                  >
+                    <td className="py-2 pr-2">
+                      <span className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-text-faint" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-text">{entry.name}</span>
+                          <span className="block text-xs text-text-faint">
+                            {entry.pageCount} {entry.pageCount === 1 ? "page" : "pages"} · {formatBytes(entry.sizeBytes)}
+                          </span>
                         </span>
-                      </td>
-                      <td className="py-2 pr-2 text-right tabular-nums text-text-muted">{entry.pageCount}</td>
-                      <td className="py-2 pr-2 text-right tabular-nums text-text-muted">{formatBytes(entry.sizeBytes)}</td>
-                      <td className="py-2 pr-2 text-right tabular-nums text-text-faint">{formatRelativeTime(entry.lastOpenedAt)}</td>
-                      <td className="py-2 pl-2 text-right">
-                        <IconButton
-                          icon={<Trash2 />}
-                          label="Remove from recents"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleRemoveRecent(entry.id);
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2 text-right align-top text-xs text-text-faint">{formatRelativeTime(entry.lastOpenedAt)}</td>
+                    <td className="py-2 text-right align-top">
+                      <IconButton
+                        icon={<Trash2 />}
+                        label="Remove from recents"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleRemoveRecent(entry.id);
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
