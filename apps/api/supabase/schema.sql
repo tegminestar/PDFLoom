@@ -91,6 +91,123 @@ alter table public.signature_request_signers enable row level security;
 create index if not exists signature_request_signers_request_id_idx
   on public.signature_request_signers (request_id);
 
+-- v2: multi-field placement, signing order, decline reasons, and reusable
+-- templates. All additive — an already-issued signer link with only the
+-- legacy page_number/rect_* columns set (no signature_request_fields rows)
+-- keeps working unchanged; the API synthesizes one 'signature' field from
+-- those columns when a signer has none in the new table.
+alter table public.signature_request_signers alter column page_number drop not null;
+alter table public.signature_request_signers alter column rect_x drop not null;
+alter table public.signature_request_signers alter column rect_y drop not null;
+alter table public.signature_request_signers alter column rect_width drop not null;
+alter table public.signature_request_signers alter column rect_height drop not null;
+
+-- A signer's own captured initials image, separate from signature_data_url
+-- — one asset per type per signer, stamped into every field of that type
+-- they own (e.g. initials on every page + one full signature), rather than
+-- a separate image per field.
+alter table public.signature_request_signers add column if not exists initials_data_url text;
+
+-- Signing order for sequential mode (signature_requests.signing_mode
+-- below); 0-based, ignored entirely in parallel mode (today's behavior).
+alter table public.signature_request_signers add column if not exists order_index int not null default 0;
+
+-- Decline flow: status already allowed 'declined' but nothing ever set it
+-- or recorded why.
+alter table public.signature_request_signers add column if not exists decline_reason text;
+alter table public.signature_request_signers add column if not exists declined_at timestamptz;
+
+-- One row per placed field (signature / initials / date) per signer, per
+-- page — replaces the one-rect-per-signer model above. Same no-RLS-policy
+-- shape as the tables above: only apps/api's service-role key ever touches
+-- this table.
+create table if not exists public.signature_request_fields (
+  id uuid primary key default gen_random_uuid(),
+  request_id uuid not null references public.signature_requests(id) on delete cascade,
+  signer_id uuid not null references public.signature_request_signers(id) on delete cascade,
+  field_type text not null default 'signature' check (field_type in ('signature', 'initials', 'date')),
+  page_number int not null,
+  rect_x double precision not null,
+  rect_y double precision not null,
+  rect_width double precision not null,
+  rect_height double precision not null,
+  created_at timestamptz not null default now()
+);
+alter table public.signature_request_fields enable row level security;
+
+create index if not exists signature_request_fields_signer_id_idx
+  on public.signature_request_fields (signer_id);
+create index if not exists signature_request_fields_request_id_idx
+  on public.signature_request_fields (request_id);
+
+-- Reusable e-sign templates: a template stores role LABELS ("Landlord",
+-- "Tenant 1") and field layout, never real emails — sending from a
+-- template asks for fresh emails per role every time. Same
+-- signature-requests storage bucket, under templates/<id>/document.pdf —
+-- no new bucket or infra.
+create table if not exists public.signature_templates (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  original_filename text not null,
+  storage_path text not null,
+  signing_mode text not null default 'parallel' check (signing_mode in ('parallel', 'sequential')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.signature_templates enable row level security;
+create index if not exists signature_templates_owner_id_idx on public.signature_templates (owner_id);
+
+-- A role is a placeholder signer ("Landlord", "Tenant 1"), never a real
+-- email. order_index only matters when the template's signing_mode is
+-- 'sequential'.
+create table if not exists public.signature_template_roles (
+  id uuid primary key default gen_random_uuid(),
+  template_id uuid not null references public.signature_templates(id) on delete cascade,
+  role_label text not null,
+  order_index int not null default 0,
+  created_at timestamptz not null default now()
+);
+alter table public.signature_template_roles enable row level security;
+create index if not exists signature_template_roles_template_id_idx
+  on public.signature_template_roles (template_id);
+
+create table if not exists public.signature_template_fields (
+  id uuid primary key default gen_random_uuid(),
+  template_id uuid not null references public.signature_templates(id) on delete cascade,
+  role_id uuid not null references public.signature_template_roles(id) on delete cascade,
+  field_type text not null default 'signature' check (field_type in ('signature', 'initials', 'date')),
+  page_number int not null,
+  rect_x double precision not null,
+  rect_y double precision not null,
+  rect_width double precision not null,
+  rect_height double precision not null,
+  created_at timestamptz not null default now()
+);
+alter table public.signature_template_fields enable row level security;
+create index if not exists signature_template_fields_role_id_idx
+  on public.signature_template_fields (role_id);
+
+-- signature_requests v2 columns. signing_mode mirrors the template's own
+-- field of the same name; void_reason/voided_at mirror decline_reason/
+-- declined_at above (the 'voided' status already existed with nothing
+-- that ever set it); completed_pdf_hash is a SHA-256 of the final baked
+-- document, surfaced on the completion certificate and the owner status
+-- page as a tamper-evidence aid (same honesty framing as
+-- placeSignedTimestamp's existing integrityHashHex, extended to the
+-- multi-party completion certificate). template_id is nullable and
+-- ON DELETE SET NULL — deleting a template must never affect requests
+-- already sent from it.
+alter table public.signature_requests add column if not exists signing_mode text not null default 'parallel';
+alter table public.signature_requests drop constraint if exists signature_requests_signing_mode_check;
+alter table public.signature_requests add constraint signature_requests_signing_mode_check
+  check (signing_mode in ('parallel', 'sequential'));
+alter table public.signature_requests add column if not exists void_reason text;
+alter table public.signature_requests add column if not exists voided_at timestamptz;
+alter table public.signature_requests add column if not exists completed_pdf_hash text;
+alter table public.signature_requests add column if not exists template_id uuid
+  references public.signature_templates(id) on delete set null;
+
 -- Self-hosted analytics — replaces the paid Plausible Cloud script. Every
 -- row is one beacon from trackEvent() (apps/web/src/app/analytics.ts),
 -- enriched server-side (apps/api/src/routes/analytics.ts) from the
