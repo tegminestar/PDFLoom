@@ -418,7 +418,7 @@ export function App() {
       {
         title: "Sign & protect",
         tools: [
-          { icon: Signature, label: "Sign", description: "Draw, type, or upload a signature.", onSelect: () => { setMainView("read"); setSignOpen(true); } },
+          { icon: Signature, label: "Sign", description: "Draw, type, or upload a signature — or send the document out for others to sign.", onSelect: () => { setMainView("read"); setSignOpen(true); } },
           { icon: EyeOff, label: "Redact", description: "Permanently remove sensitive content.", onSelect: () => { setMainView("read"); setRedactOpen(true); } },
           { icon: Lock, label: "Protect", description: "Password, permissions, metadata cleanup.", onSelect: () => setProtectOpen(true) },
           { icon: GitCompare, label: "Compare", description: "Visual and text diff between two PDFs.", onSelect: () => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true)) },

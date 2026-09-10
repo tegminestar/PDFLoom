@@ -382,10 +382,8 @@ export function AnalyticsDashboardPage() {
                           <td className="py-1.5 pr-2 tabular-nums text-text-faint">{new Date(u.joinedAt).toLocaleDateString()}</td>
                           {summary.canManageUsers && (
                             <td className="py-1.5 pl-2">
-                              {u.isOwnerAccount ? (
-                                <span className="block text-right text-xs text-text-faint">—</span>
-                              ) : (
-                                <div className="flex items-center justify-end gap-1">
+                              <div className="flex items-center justify-end gap-1">
+                                {!u.isOwnerAccount && (
                                   <IconButton
                                     icon={u.role === "admin" ? <ShieldOff /> : <ShieldCheck />}
                                     label={u.role === "admin" ? "Remove admin access" : "Make admin"}
@@ -393,13 +391,18 @@ export function AnalyticsDashboardPage() {
                                     disabled={pendingUserId === u.id}
                                     onClick={() => void handleToggleRole(u)}
                                   />
-                                  <IconButton
-                                    icon={<Sparkles />}
-                                    label={u.isPro ? "Revoke Pro access" : "Grant Pro access"}
-                                    size="sm"
-                                    disabled={pendingUserId === u.id}
-                                    onClick={() => void handleTogglePro(u)}
-                                  />
+                                )}
+                                {/* Pro is a billing flag, not a privilege — unlike role/delete, granting
+                                    it to the owner's own account isn't a self-escalation risk, so it
+                                    stays available on every row including the owner's (see SECURITY.md). */}
+                                <IconButton
+                                  icon={<Sparkles />}
+                                  label={u.isPro ? "Revoke Pro access" : "Grant Pro access"}
+                                  size="sm"
+                                  disabled={pendingUserId === u.id}
+                                  onClick={() => void handleTogglePro(u)}
+                                />
+                                {!u.isOwnerAccount && (
                                   <IconButton
                                     icon={<Trash2 />}
                                     label="Delete account"
@@ -407,8 +410,8 @@ export function AnalyticsDashboardPage() {
                                     disabled={pendingUserId === u.id}
                                     onClick={() => setDeleteTarget(u)}
                                   />
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </td>
                           )}
                         </tr>
