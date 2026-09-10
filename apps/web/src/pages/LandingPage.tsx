@@ -15,6 +15,7 @@ import {
   Mail,
   MessageSquareText,
   Mic,
+  Paperclip,
   ScanText,
   ShieldCheck,
   Signature,
@@ -47,7 +48,12 @@ const FEATURES: FeatureCard[] = [
   {
     icon: Edit3,
     title: "Edit & annotate",
-    description: "Best-effort text and image edits — matched to the surrounding font automatically — highlights, freehand drawing, stamps, and sticky notes.",
+    description: "Best-effort text and image edits — matched to the surrounding font automatically — highlights, shapes, smart freehand drawing that snaps to a clean shape, stamps, and sticky notes.",
+  },
+  {
+    icon: Paperclip,
+    title: "PDF Portfolio",
+    description: "Bundle any file type — not just PDFs — into the document as real attachments, browsable from anywhere that opens it.",
   },
   {
     icon: FileOutput,

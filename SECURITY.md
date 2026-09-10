@@ -64,3 +64,14 @@ cross-session identifier. The `/api/analytics/summary` and
 a server-only `ANALYTICS_OWNER_EMAIL` — never shipped to the browser
 bundle, mirroring how the feedback relay's recipient address is kept
 server-only.
+
+The dashboard also exposes account-management mutations — granting or
+revoking another account's read-only access to `/analytics`
+(`profiles.role`), a manual Pro-entitlement override independent of
+Stripe, and account deletion. All three require the strict
+`ANALYTICS_OWNER_EMAIL` check regardless of the caller's own `role` —
+an account promoted to `role: 'admin'` can view the dashboard but can
+never call any of these endpoints itself, so granting view access can't
+be chained into granting more of it. The delete endpoint additionally
+refuses to delete the caller's own account, so this panel can never be
+used to lock the owner out.

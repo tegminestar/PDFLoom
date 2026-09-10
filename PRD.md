@@ -112,9 +112,15 @@ forms, scanned documents, and everyday PDF editing.
   (fit-width/fit-page/custom), dark/light theme, presentation mode.
 - **Organize** — merge, split, reorder, rotate, delete/insert/extract
   pages, crop, resize/scale, page numbering, N-up imposition.
+- **PDF Portfolio** — bundle any file type, not just PDFs, into the
+  document as real PDF attachments (browsable/downloadable from an
+  Attachments panel) and mark it as a portfolio, so viewers that
+  understand the format show a file-navigator UI for it.
 - **Edit & Annotate** — best-effort direct text/image editing, shapes,
-  freehand draw, stamps, comment boxes, links, headers/footers,
-  watermarks, redaction (real content removal, not an overlay).
+  freehand draw (with "Smart shapes": a confidently rectangle/circle/
+  line-shaped freehand stroke snaps to that clean primitive), stamps,
+  comment boxes, links, headers/footers, watermarks, redaction (real
+  content removal, not an overlay).
 - **Convert** — PDF⇄images, image/Markdown/HTML→PDF, best-effort
   PDF→Office export, compression, OCR for scanned documents.
 - **Forms** — field detection, a visual field designer, fill & save,
@@ -177,7 +183,9 @@ and free even for paying users — Pro unlocks server-dependent
 conveniences, it does not relocate where PDF processing happens.
 
 **Currently implemented**: Supabase auth + Stripe Checkout/Billing Portal
-gate a Pro flag; no Pro-only *feature* is built yet (no sync, no share
+gate a Pro flag, with a monthly/annual plan choice at checkout (same Pro
+entitlement either way — this is a billing-cadence option, not a
+Pro-only feature); no Pro-only *feature* is built yet (no sync, no share
 links) — the billing plumbing exists ahead of the features it will
 eventually gate. **Desktop downloads are not currently gated at all** —
 gating a download behind entitlement is a real, separate build (a signed-
@@ -230,6 +238,11 @@ Storage is the only distribution channel today.
 **Internal tooling, not a product feature**: a self-hosted `/analytics`
 dashboard exists (owner-only, gated to one Supabase account) covering
 usage, signups, and feedback — replacing a paid Plausible integration at
-zero added infrastructure cost. It's mentioned here for the same honesty-
-of-record reason as everything else in this section, not because it's
-something end users interact with.
+zero added infrastructure cost. It also supports real account-management
+actions (promote/demote an account's own read-only access to this
+dashboard, a manual Pro-entitlement override independent of Stripe, and
+account deletion) — all owner-only regardless of any account's own role,
+so granting dashboard access can never be leveraged into granting more
+of it. It's mentioned here for the same honesty-of-record reason as
+everything else in this section, not because it's something end users
+interact with.
