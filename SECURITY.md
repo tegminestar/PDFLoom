@@ -53,8 +53,27 @@ surface for the handful of things disclosed on
 [/trust](https://pdfloom.app/trust) — billing, multi-party signature
 compositing, the feedback relay, and self-hosted usage analytics — and it
 never sees the content of a document being edited outside the signing
-flow (the one place a file briefly exists server-side at all, and only
-between its owner and the specific people they've named as signers).
+flow (the one place a file exists server-side at all, and only between
+its owner and the specific people they've named as signers). A one-off
+signature request's document is deleted along with the rest of the
+request's rows once its owner deletes it (there's no separate retention
+policy); a saved signature *template*'s document persists until the
+owner explicitly deletes that template, since its whole point is being
+reused for a new set of signers later — this is a deliberately longer-
+lived exception to "temporary," disclosed for the same reason the
+one-request case is.
+
+Every signature-request/template endpoint that mutates something is
+scoped one of two ways, never a third: owner-authenticated endpoints
+(creating, listing, voiding a request; creating, listing, deleting a
+template) filter by `owner_id` against the caller's own Supabase session,
+so one owner can never see or touch another's; the public signer-facing
+endpoints (viewing a signer's own fields, submitting a signature,
+declining) are scoped entirely by the unguessable per-signer
+`access_token` in the URL, never by anything the client claims about
+itself — sequential signing order in particular is re-checked
+server-side on every submit, not just trusted from what the signer's own
+page last rendered.
 
 Analytics specifically: event data (`analytics_events`) never stores a
 raw IP address, only what's momentarily derived from it (coarse country/

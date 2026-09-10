@@ -25,11 +25,11 @@ const EXCEPTIONS: ExceptionCard[] = [
     icon: Signature,
     title: "Multi-party signature requests",
     whatItDoes:
-      "When you send a document to someone else for signature, a small server-side step composites each signature image onto the PDF as it comes in, then hands each signer their own view of it.",
+      "When you send a document to someone else for signature, it's stored server-side for the life of that request — each signer gets an unguessable link to their own view of it, and a server-side step composites every signature/initials/date field onto the PDF as each person finishes.",
     whatItTouches:
-      "The document's bytes pass through the server only at the moment a signature is being composited — that's the one feature in PDFLoom where this is unavoidable, since collecting a signature from someone who isn't the document's owner requires a shared place for that document to exist.",
+      "The document exists server-side for as long as the request is open (and, if you save it as a reusable template, until you delete that template) — that's the one feature in PDFLoom where this is unavoidable, since collecting a signature from someone who isn't the document's owner requires a shared place for that document to exist. It's deleted when you delete the request or template.",
     whatItNeverDoes:
-      "Signed documents aren't scanned, analyzed, or read by any AI — server access is scoped to the compositing operation itself.",
+      "Signed documents aren't scanned, analyzed, or read by any AI — server access is scoped to compositing fields and generating each signer's view.",
   },
   {
     icon: MessageCircle,

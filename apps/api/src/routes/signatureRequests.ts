@@ -795,6 +795,53 @@ export async function voidSignatureRequest(req: Request, res: Response): Promise
   res.status(200).json({ status: "voided" });
 }
 
+/**
+ * Owner-only, irreversible: permanently removes a request's stored
+ * document and every row tied to it (signers, fields — cascade via FK),
+ * regardless of its status. This is the actual data-deletion path /trust
+ * promises: a request that's merely voided still exists (voiding only
+ * stops it being usable); this is what makes it actually go away.
+ */
+export async function deleteSignatureRequest(req: Request, res: Response): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    res.status(500).json({ error: "Server is not configured yet" });
+    return;
+  }
+  const auth = await requireAuthenticatedUser(req, supabase);
+  if (!auth.ok) {
+    res.status(auth.status).json({ error: auth.error });
+    return;
+  }
+  const id = getParam(req, "id");
+  if (!UUID_RE.test(id)) {
+    res.status(400).json({ error: "Invalid request id" });
+    return;
+  }
+
+  const { data: request, error: fetchError } = await supabase
+    .from("signature_requests")
+    .select("id, storage_path, status")
+    .eq("id", id)
+    .eq("owner_id", auth.userId)
+    .single();
+  if (fetchError || !request) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const storagePaths = [request.storage_path as string];
+  if (request.status === "completed") storagePaths.push(`${id}/signed.pdf`);
+  await supabase.storage.from(BUCKET).remove(storagePaths);
+
+  const del = await supabase.from("signature_requests").delete().eq("id", id);
+  if (del.error) {
+    res.status(500).json({ error: `Couldn't delete the request: ${del.error.message}` });
+    return;
+  }
+  res.status(200).json({ ok: true });
+}
+
 /** Owner-only: every request this owner has ever sent, newest first — the tracking list no earlier version of this feature had. */
 export async function listSignatureRequests(req: Request, res: Response): Promise<void> {
   const supabase = getSupabaseAdmin();

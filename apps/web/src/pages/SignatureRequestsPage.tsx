@@ -75,6 +75,7 @@ export function SignatureRequestsPage() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [voidTarget, setVoidTarget] = useState<SignatureRequestSummary | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SignatureRequestSummary | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -155,6 +156,16 @@ export function SignatureRequestsPage() {
     setVoidTarget(null);
     if (ok) {
       toast.success("Request voided", voidTarget.originalFilename);
+      await load();
+    }
+  };
+
+  const handleDeleteRequest = async () => {
+    if (!deleteTarget) return;
+    const ok = await runAction(deleteTarget.id, `/api/signature-requests/${deleteTarget.id}`, "DELETE");
+    setDeleteTarget(null);
+    if (ok) {
+      toast.success("Request deleted", deleteTarget.originalFilename);
       await load();
     }
   };
@@ -271,6 +282,7 @@ export function SignatureRequestsPage() {
                         {request.status === "pending" && (
                           <IconButton icon={<X />} label="Void this request" size="sm" disabled={pendingId === request.id} onClick={() => setVoidTarget(request)} />
                         )}
+                        <IconButton icon={<Trash2 />} label="Delete this request" size="sm" disabled={pendingId === request.id} onClick={() => setDeleteTarget(request)} />
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
@@ -344,6 +356,26 @@ export function SignatureRequestsPage() {
         }
       >
         <p className="text-sm text-text-muted">Anyone who already signed keeps their own record of it, but the request itself won't complete.</p>
+      </Dialog>
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete this request?"
+        description={deleteTarget ? `Permanently removes "${deleteTarget.originalFilename}" and its signer links from PDFLoom's server. This can't be undone.` : undefined}
+        width={400}
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" size="sm" disabled={pendingId === deleteTarget?.id} onClick={() => void handleDeleteRequest()}>
+              {pendingId === deleteTarget?.id ? "Deleting…" : "Delete request"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-text-muted">Any signer links still out there will stop working immediately.</p>
       </Dialog>
     </div>
   );

@@ -13,6 +13,7 @@ import { submitFeedback } from "./routes/feedback";
 import {
   createSignatureRequest,
   declineSignature,
+  deleteSignatureRequest,
   getSignatureRequestStatus,
   getSignerView,
   listSignatureRequests,
@@ -150,6 +151,13 @@ app.get("/api/signature-requests/:id", (req, res) => {
 app.post("/api/signature-requests/:id/void", (req, res) => {
   voidSignatureRequest(req, res).catch((error: unknown) => {
     console.error("Unhandled error in voidSignatureRequest", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+app.delete("/api/signature-requests/:id", (req, res) => {
+  deleteSignatureRequest(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in deleteSignatureRequest", error);
     res.status(500).json({ error: "Internal error" });
   });
 });

@@ -127,10 +127,17 @@ forms, scanned documents, and everyday PDF editing.
   flatten, required-field validation, JSON/CSV/FDF import-export, a
   bundled template library, voice-to-fill via the browser's native speech
   API, and mail merge (one filled copy per row of an uploaded spreadsheet).
-- **Sign & Certify** — draw/type/upload signatures, placement with real
-  resize/move/align before committing, optional local integrity hash —
-  explicitly labeled as a visual attestation, not a certified PKI
-  signature (see honesty flags below).
+- **Sign & Certify** — draw/type/upload your own signature, placement with
+  real resize/move/align before committing, optional local integrity hash;
+  plus multi-party "send for signature" (the one feature that briefly
+  stores a document server-side — see "Explicitly out of scope" below):
+  per-signer fields (signature/initials/date) placed on any page, parallel
+  or sequential signing order, decline with a reason, reusable templates
+  (save a document's field layout once, send it to new people repeatedly),
+  bulk-add signers, an owner-facing status page tracking every request
+  ever sent, and a completion certificate listing every signer's name and
+  signed time — explicitly labeled throughout as a visual attestation, not
+  a certified PKI signature (see honesty flags below).
 - **Protect & Secure** — password protection, permission restrictions,
   metadata/hidden-data sanitization, visual+text document comparison.
 - **Review & Collaborate** — session-based Live Review: comment pins
@@ -175,31 +182,39 @@ Free tier is not a trial — it's the permanent floor: local editing, local
 AI, no account, no server round-trip, for every feature listed above,
 forever. Pro is scoped narrowly to things that *structurally* require a
 server (this is the actual line, not an arbitrary one): cross-device sync,
-real shareable links, send-for-signature tracking, published web forms
-collecting submissions, and true multi-person co-editing of a document's
-content (Live Review's comment-pin sync is a free, narrower thing — see
-the scope note under "Explicitly out of scope"). Core editing stays local
-and free even for paying users — Pro unlocks server-dependent
-conveniences, it does not relocate where PDF processing happens.
+real shareable links, published web forms collecting submissions, and
+true multi-person co-editing of a document's content (Live Review's
+comment-pin sync is a free, narrower thing — see the scope note under
+"Explicitly out of scope"). Core editing stays local and free even for
+paying users — Pro unlocks server-dependent conveniences, it does not
+relocate where PDF processing happens.
 
 **Currently implemented**: Supabase auth + Stripe Checkout/Billing Portal
 gate a Pro flag, with a monthly/annual plan choice at checkout (same Pro
 entitlement either way — this is a billing-cadence option, not a
 Pro-only feature); no Pro-only *feature* is built yet (no sync, no share
 links) — the billing plumbing exists ahead of the features it will
-eventually gate. **Desktop downloads are not currently gated at all** —
-gating a download behind entitlement is a real, separate build (a signed-
-URL check against the existing billing API in front of Blob Storage,
-not built yet), not something implied by today's infrastructure choices.
+eventually gate. Multi-party signing (including its owner-facing status/
+tracking page — see "Sign & Certify" above) is fully built and free
+regardless of Pro status; it needed a server for structural reasons
+(a document has to live somewhere both the owner and each named signer
+can reach it), not as a monetization line — see the disclosed-exception
+framing under "Explicitly out of scope". **Desktop downloads are not
+currently gated at all** — gating a download behind entitlement is a
+real, separate build (a signed-URL check against the existing billing
+API in front of Blob Storage, not built yet), not something implied by
+today's infrastructure choices.
 
 ### Explicitly out of scope (for the free/local product)
 
 Anything that structurally needs a server to mean anything for someone
 *other* than the file's owner: real-time **co-editing of document
 content**, shared team workspaces, published forms that collect other
-people's submissions, send-for-signature status tracking. These aren't
-missing by oversight — they're the actual, considered definition of what
-Pro is for.
+people's submissions. These aren't missing by oversight — they're the
+actual, considered definition of what Pro is for. Multi-party signing
+looks similar (it's also server-mediated and involves other people) but
+isn't on this list — see the disclosed-exception paragraph just below
+for why it crosses a line these others don't.
 
 **Live Review is a deliberate, narrow exception to this, not a
 contradiction of it.** It's free because it's scoped to a shared list of
@@ -211,6 +226,22 @@ the file itself." A Yjs CRDT merging comment metadata satisfies that; two
 people's edits merging into one document would not, which is why *that*
 (true co-editing) stays a Pro-eventually idea, not something Live Review
 quietly backdoors for free.
+
+**Multi-party signing is the other deliberate exception, and a bigger
+one — it does cross the "no server-mediated editing of the file itself"
+line, on purpose, because there's no way around it.** A signature has to
+land in a document that a stranger with no PDFLoom account, no local
+copy, and no way to run WASM against a file they don't have can open and
+add to — that structurally requires the document to exist somewhere both
+the owner and every named signer can reach it, for as long as the request
+is open. This is disclosed everywhere it needs to be (`/trust`, this
+PRD, `SECURITY.md`) as the one place a document leaves the owner's own
+device. It's free rather than Pro-gated because the *reason* it needs a
+server is structural, the same test this section already applies to
+everything else — not because signing is somehow less valuable than
+sync or share links, but because gating a capability behind Pro when the
+server cost is "store one PDF for the life of one request" wouldn't
+match how the rest of this line is drawn.
 
 ### Distribution
 
