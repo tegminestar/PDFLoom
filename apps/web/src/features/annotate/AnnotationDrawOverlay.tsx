@@ -1,4 +1,4 @@
-import { getPdfWorkerClient, type PdfDocument, type StampPreset } from "@pdfloom/core";
+import { getPdfWorkerClient, recognizeShape, type PdfDocument, type StampPreset } from "@pdfloom/core";
 import { toast } from "@pdfloom/ui";
 import { Check, GripHorizontal, X } from "lucide-react";
 import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -100,6 +100,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   const tool = useLoomStore((s) => s.annotateTool);
   const color = useLoomStore((s) => s.annotateColor);
   const stampPreset = useLoomStore((s) => s.annotateStampPreset);
+  const smartShapes = useLoomStore((s) => s.annotateSmartShapes);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
 
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -154,14 +155,35 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
       try {
         const pdfPoints = await Promise.all(points.map((p) => toPdf(p)));
         const client = await getPdfWorkerClient();
-        const bytes = await client.addInk(await doc.getRawBytes(), pageNumber - 1, [pdfPoints], { color, lineWidth: 2.5 });
+        const rawBytes = await doc.getRawBytes();
+
+        // "Smart shapes": a confidently-recognized rectangle/circle/line
+        // gets committed as that clean primitive instead of the raw
+        // freehand path — reusing the exact same addSquare/addCircle/
+        // addLine calls the click-drag shape tools already use, so the
+        // result is indistinguishable from having drawn it precisely by
+        // hand. Not gated behind a confirm dialog: a wrong auto-correction
+        // is just as reversible as any other annotation via the toolbar's
+        // existing Undo, and the toast makes the swap visible rather than
+        // silent.
+        const recognized = smartShapes ? recognizeShape(pdfPoints) : { type: "none" as const };
+        let bytes: Uint8Array;
+        if (recognized.type === "rectangle") {
+          bytes = await client.addSquare(rawBytes, pageNumber - 1, recognized.rect, { strokeColor: color, lineWidth: 2 });
+        } else if (recognized.type === "circle") {
+          bytes = await client.addCircle(rawBytes, pageNumber - 1, recognized.rect, { strokeColor: color, lineWidth: 2 });
+        } else if (recognized.type === "line") {
+          bytes = await client.addLine(rawBytes, pageNumber - 1, recognized.start, recognized.end, { strokeColor: color, lineWidth: 2.5 });
+        } else {
+          bytes = await client.addInk(rawBytes, pageNumber - 1, [pdfPoints], { color, lineWidth: 2.5 });
+        }
         await applyPdfMutation(bytes);
-        toast.success("Added drawing");
+        toast.success(recognized.type === "none" ? "Added drawing" : `Snapped to a ${recognized.type}`);
       } catch (error) {
         toast.error("Couldn't add drawing", error instanceof Error ? error.message : undefined);
       }
     },
-    [applyPdfMutation, color, doc, pageNumber, toPdf],
+    [applyPdfMutation, color, doc, pageNumber, smartShapes, toPdf],
   );
 
   const commitStamp = useCallback(

@@ -120,6 +120,8 @@ interface LoomState {
   annotateTool: AnnotateTool;
   annotateColor: RgbColor;
   annotateStampPreset: StampPreset;
+  /** When on, a freehand "ink" stroke that's confidently a rectangle/circle/line snaps to that clean shape instead of staying as drawn. */
+  annotateSmartShapes: boolean;
 
   formFillOpen: boolean;
   formFields: FormFieldInfo[];
@@ -174,6 +176,7 @@ interface LoomState {
   setAnnotateTool: (tool: AnnotateTool) => void;
   setAnnotateColor: (color: RgbColor) => void;
   setAnnotateStampPreset: (preset: StampPreset) => void;
+  setAnnotateSmartShapes: (enabled: boolean) => void;
 
   /** Enters/exits form-fill mode; opening fetches the document's fields and seeds `formFieldValues` from their current values. */
   setFormFillOpen: (open: boolean) => Promise<void>;
@@ -372,6 +375,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   annotateTool: "highlight",
   annotateColor: ANNOTATE_COLOR_PRESETS[0]!,
   annotateStampPreset: "approved",
+  annotateSmartShapes: true,
 
   formFillOpen: false,
   formFields: [],
@@ -510,6 +514,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
+  setAnnotateSmartShapes: (annotateSmartShapes) => set({ annotateSmartShapes }),
 
   setFormFillOpen: async (open) => {
     if (!open) {

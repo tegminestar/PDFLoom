@@ -1,5 +1,5 @@
 import type { StampPreset } from "@pdfloom/core";
-import { IconButton, Separator, TopBar, TopBarSection, cn } from "@pdfloom/ui";
+import { IconButton, Separator, Switch, TopBar, TopBarSection, cn } from "@pdfloom/ui";
 import {
   Circle,
   Highlighter,
@@ -48,6 +48,8 @@ export function AnnotateToolbar() {
   const setColor = useLoomStore((s) => s.setAnnotateColor);
   const stampPreset = useLoomStore((s) => s.annotateStampPreset);
   const setStampPreset = useLoomStore((s) => s.setAnnotateStampPreset);
+  const smartShapes = useLoomStore((s) => s.annotateSmartShapes);
+  const setSmartShapes = useLoomStore((s) => s.setAnnotateSmartShapes);
   const setAnnotateOpen = useLoomStore((s) => s.setAnnotateOpen);
   const undo = useLoomStore((s) => s.undo);
   const redo = useLoomStore((s) => s.redo);
@@ -124,6 +126,13 @@ export function AnnotateToolbar() {
       </TopBarSection>
 
       <TopBarSection align="end">
+        {tool === "ink" && (
+          <>
+            <Switch checked={smartShapes} onCheckedChange={setSmartShapes} label="Snap freehand drawings that look like a rectangle, circle, or line into a clean shape" />
+            <span className="text-xs text-text-muted">Smart shapes</span>
+            <Separator orientation="vertical" className="mx-1.5 h-6" />
+          </>
+        )}
         <IconButton icon={<X />} label="Exit annotate mode" onClick={() => setAnnotateOpen(false)} showTooltip={false} />
       </TopBarSection>
     </TopBar>

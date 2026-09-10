@@ -71,6 +71,56 @@ test("annotate a page (highlight + shape), committed marks change the rendered p
   expect(canvasReopenedDataUrl).toBe(canvasAfterDataUrl);
 });
 
+test("smart shapes: a hand-traced rectangle-like freehand stroke snaps to a clean rectangle, and a genuine scribble stays as ink", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await expect(page.getByText("Annotate").first()).toBeVisible();
+  await page.getByLabel("Draw freehand", { exact: true }).click();
+
+  const smartShapesSwitch = page.getByRole("switch");
+  await expect(smartShapesSwitch).toBeVisible();
+  await expect(smartShapesSwitch).toHaveAttribute("data-state", "checked"); // on by default
+
+  const canvasBox = await page.locator("canvas").first().boundingBox();
+  if (!canvasBox) throw new Error("canvas not found");
+  const x0 = canvasBox.x + 250;
+  const y0 = canvasBox.y + 300;
+  const w = 160;
+  const h = 100;
+
+  // Trace a rough rectangle by hand, several points per side, back near
+  // the start — only needs to be "shape-like", not pixel-perfect, since
+  // that's the whole point of the recognizer.
+  await page.mouse.move(x0, y0);
+  await page.mouse.down();
+  await page.mouse.move(x0 + w / 2, y0, { steps: 4 });
+  await page.mouse.move(x0 + w, y0, { steps: 4 });
+  await page.mouse.move(x0 + w, y0 + h / 2, { steps: 4 });
+  await page.mouse.move(x0 + w, y0 + h, { steps: 4 });
+  await page.mouse.move(x0 + w / 2, y0 + h, { steps: 4 });
+  await page.mouse.move(x0, y0 + h, { steps: 4 });
+  await page.mouse.move(x0, y0 + h / 2, { steps: 4 });
+  await page.mouse.move(x0, y0, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByText("Snapped to a rectangle").first()).toBeVisible({ timeout: 8000 });
+
+  // With the toggle off, an irregular scribble (never shape-like even with
+  // recognition on) stays as plain ink — confirms the fallback path still
+  // works and the toggle itself has an effect.
+  await smartShapesSwitch.click();
+  await expect(smartShapesSwitch).toHaveAttribute("data-state", "unchecked");
+  await page.mouse.move(x0, y0 + 200);
+  await page.mouse.down();
+  await page.mouse.move(x0 + 20, y0 + 230, { steps: 2 });
+  await page.mouse.move(x0 + 5, y0 + 210, { steps: 2 });
+  await page.mouse.move(x0 + 40, y0 + 250, { steps: 2 });
+  await page.mouse.move(x0 + 10, y0 + 260, { steps: 2 });
+  await page.mouse.up();
+  await expect(page.getByText("Added drawing").first()).toBeVisible({ timeout: 8000 });
+});
+
 test("comment (text) box: stays adjustable while editing, then move + resize + commit bakes it in at the adjusted spot", async ({ page }) => {
   await page.goto("/app");
   await openPdf(page, "sample.pdf");
