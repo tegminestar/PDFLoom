@@ -1,4 +1,4 @@
-import { Button, Mark, cn } from "@pdfloom/ui";
+import { Button, Card, Mark, cn } from "@pdfloom/ui";
 import {
   AppWindow,
   Apple,
@@ -235,17 +235,8 @@ export function LandingPage() {
               description="Organize, edit, convert, fill forms, sign, and protect documents — all in one place, all client-side."
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {FEATURES.map(({ icon: Icon, title, description }) => (
-                <div
-                  key={title}
-                  className="flex flex-col gap-3 rounded-[--radius-lg] border border-border bg-bg-elevated p-5"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[--radius-md] bg-primary-muted text-primary">
-                    <Icon className="h-4.5 w-4.5" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-text">{title}</h3>
-                  <p className="text-sm leading-relaxed text-text-muted">{description}</p>
-                </div>
+              {FEATURES.map((feature) => (
+                <Card key={feature.title} icon={feature.icon} title={feature.title} description={feature.description} size="md" />
               ))}
             </div>
           </div>
@@ -262,17 +253,8 @@ export function LandingPage() {
               description="No API key, no cloud round-trip, no subscription. Small AI models download once, then work offline — your document never leaves your browser."
             />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {AI_FEATURES.map(({ icon: Icon, title, description }) => (
-                <div
-                  key={title}
-                  className="flex flex-col gap-3 rounded-[--radius-lg] border border-border bg-bg p-5"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[--radius-md] bg-ai-muted text-ai">
-                    <Icon className="h-4.5 w-4.5" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-text">{title}</h3>
-                  <p className="text-sm leading-relaxed text-text-muted">{description}</p>
-                </div>
+              {AI_FEATURES.map((feature) => (
+                <Card key={feature.title} icon={feature.icon} title={feature.title} description={feature.description} tone="ai" size="md" className="bg-bg" />
               ))}
             </div>
           </div>
