@@ -147,3 +147,78 @@ export async function computeIntegrityHash(source: Uint8Array): Promise<string> 
   const digest = await crypto.subtle.digest("SHA-256", source as BufferSource);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+export interface CompletionCertificateSignerInfo {
+  name: string;
+  email: string;
+  signedAtIso: string;
+  signedIp: string | null;
+  orderIndex: number;
+}
+
+export interface CompletionCertificateInfo {
+  documentName: string;
+  completedAtIso: string;
+  signingMode: "parallel" | "sequential";
+  signers: CompletionCertificateSignerInfo[];
+  integrityHashHex: string;
+}
+
+function formatCertDate(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+
+/**
+ * Appends a final "Certificate of Completion" page summarizing who signed
+ * a multi-party request and when — the audit-trail counterpart to
+ * placeSignedTimestamp's single-signer stamp, for the case where several
+ * people signed one document. Same honesty framing applies: this
+ * documents visual signing activity PDFLoom recorded, not a certified,
+ * PKI-based digital signature — the disclosure line is baked into the
+ * page itself, not left to calling UI copy.
+ */
+export async function appendCompletionCertificate(source: Uint8Array, info: CompletionCertificateInfo): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const regular = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const lastPage = doc.getPage(doc.getPageCount() - 1);
+  const { width, height } = lastPage.getSize();
+  const page = doc.addPage([width, height]);
+
+  const margin = 56;
+  let cursorY = height - margin;
+  const draw = (text: string, font: typeof regular, size: number, color: RgbColor, gapAfter: number) => {
+    page.drawText(text, { x: margin, y: cursorY, size, font, color: rgb(color.r, color.g, color.b) });
+    cursorY -= size + gapAfter;
+  };
+  const inkColor = { r: 0.1, g: 0.1, b: 0.12 };
+  const faintColor = { r: 0.45, g: 0.45, b: 0.48 };
+
+  draw("Certificate of Completion", bold, 20, inkColor, 10);
+  draw(info.documentName, regular, 12, faintColor, 18);
+  draw(`Completed: ${formatCertDate(info.completedAtIso)}`, regular, 10, inkColor, 4);
+  draw(`Signing order: ${info.signingMode === "sequential" ? "Sequential" : "Parallel (any order)"}`, regular, 10, inkColor, 18);
+
+  const sortedSigners = [...info.signers].sort((a, b) => a.orderIndex - b.orderIndex);
+  for (const [i, signer] of sortedSigners.entries()) {
+    const prefix = info.signingMode === "sequential" ? `${i + 1}. ` : "";
+    draw(`${prefix}${signer.name} <${signer.email}>`, bold, 11, inkColor, 4);
+    draw(`Signed ${formatCertDate(signer.signedAtIso)}${signer.signedIp ? ` from ${signer.signedIp}` : ""}`, regular, 9, faintColor, 14);
+  }
+
+  cursorY -= 8;
+  page.drawLine({ start: { x: margin, y: cursorY }, end: { x: width - margin, y: cursorY }, thickness: 0.5, color: BORDER });
+  cursorY -= 20;
+
+  draw(`Document integrity hash (SHA-256): ${info.integrityHashHex}`, regular, 8, faintColor, 16);
+  draw(
+    "This certificate documents visual signing activity recorded by PDFLoom. It is not a certified, PKI-based digital signature.",
+    regular,
+    8,
+    faintColor,
+    0,
+  );
+
+  return finish(doc);
+}
