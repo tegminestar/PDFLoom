@@ -1,5 +1,5 @@
 import { Button as ToolbarButton, IconButton, Separator, TopBar, TopBarSection } from "@pdfloom/ui";
-import { CalendarDays, PenLine, Redo2, Send, Stamp, Type, Undo2, X } from "lucide-react";
+import { CalendarDays, ListChecks, PenLine, Redo2, Send, Stamp, Type, Undo2, X } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { PageNumberField } from "../viewer/PageNumberField";
@@ -101,6 +101,11 @@ export function SignToolbar() {
           <Send className="h-3.5 w-3.5" />
           Send for signature
         </ToolbarButton>
+        <IconButton
+          icon={<ListChecks />}
+          label="View sent signature requests"
+          onClick={() => window.open("/signatures", "_blank", "noopener")}
+        />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
         <IconButton icon={<X />} label="Exit sign mode" onClick={() => setSignOpen(false)} showTooltip={false} />
       </TopBarSection>

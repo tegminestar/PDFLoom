@@ -14,6 +14,13 @@ import "./index.css";
 // path never touches.
 const AnalyticsDashboardPage = lazy(() => import("./pages/AnalyticsDashboardPage").then((m) => ({ default: m.AnalyticsDashboardPage })));
 
+// Same "unlinked from any nav, lazy" treatment as AnalyticsDashboardPage
+// above, for the same bundle-hygiene reason (an owner-only page nobody
+// reaches from a nav link shouldn't add to every /app visit's bundle),
+// even though this one has no heavy chart dependency to justify it on its
+// own.
+const SignatureRequestsPage = lazy(() => import("./pages/SignatureRequestsPage").then((m) => ({ default: m.SignatureRequestsPage })));
+
 // A tab left open across a deploy still holds the *old* index.html, which
 // references JS chunks by their old content hash — hashes that no longer
 // exist once the new deploy overwrites dist/assets. The next lazy
@@ -54,6 +61,14 @@ createRoot(rootElement).render(
                 element={
                   <Suspense fallback={null}>
                     <AnalyticsDashboardPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/signatures"
+                element={
+                  <Suspense fallback={null}>
+                    <SignatureRequestsPage />
                   </Suspense>
                 }
               />

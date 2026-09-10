@@ -48,6 +48,7 @@
   --loom-danger-hover: #f57579;
   --loom-danger-muted: #f2555a26;
   --loom-success: #3ecf8e;
+  --loom-success-muted: #3ecf8e26;
   --loom-warning: #f5c343;
 
   --loom-focus-ring: #6a5adf;
@@ -84,6 +85,7 @@
   --loom-danger-hover: #c22e33;
   --loom-danger-muted: #d63a3f1a;
   --loom-success: #1f9d67;
+  --loom-success-muted: #1f9d671a;
   --loom-warning: #b8860b;
 
   --loom-focus-ring: #6c5ce7;
@@ -143,6 +145,7 @@
   --color-danger-hover: var(--loom-danger-hover);
   --color-danger-muted: var(--loom-danger-muted);
   --color-success: var(--loom-success);
+  --color-success-muted: var(--loom-success-muted);
   --color-warning: var(--loom-warning);
 
   --color-focus-ring: var(--loom-focus-ring);
