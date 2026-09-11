@@ -1,4 +1,4 @@
-import { Button, Dialog, IconButton, Mark, cn, toast } from "@pdfloom/ui";
+import { Badge, type BadgeTone, Button, Dialog, IconButton, Mark, cn, toast } from "@pdfloom/ui";
 import { Check, Copy, Download, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -52,11 +52,11 @@ interface TemplateSummary {
   createdAt: string;
 }
 
-const STATUS_BADGE: Record<SignatureRequestSummary["effectiveStatus"], string> = {
-  pending: "bg-surface-hover text-text-muted",
-  completed: "bg-success-muted text-success",
-  voided: "bg-surface-hover text-text-faint",
-  declined: "bg-danger-muted text-danger",
+const STATUS_TONE: Record<SignatureRequestSummary["effectiveStatus"], BadgeTone> = {
+  pending: "neutral",
+  completed: "success",
+  voided: "neutral",
+  declined: "danger",
 };
 const STATUS_LABEL: Record<SignatureRequestSummary["effectiveStatus"], string> = {
   pending: "Pending",
@@ -288,9 +288,7 @@ export function SignatureRequestsPage() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-text">{request.originalFilename}</span>
-                        <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_BADGE[request.effectiveStatus])}>
-                          {STATUS_LABEL[request.effectiveStatus]}
-                        </span>
+                        <Badge tone={STATUS_TONE[request.effectiveStatus]}>{STATUS_LABEL[request.effectiveStatus]}</Badge>
                         <span className="text-xs text-text-faint">{request.signingMode === "sequential" ? "In order" : "Any order"}</span>
                       </div>
                       <div className="flex items-center gap-1">

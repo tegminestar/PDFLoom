@@ -23,7 +23,7 @@ export interface FormFieldOverlayProps {
 // value. Must stay opaque. This is styling *content drawn on the page*, not
 // app chrome.
 const inputClass = cn(
-  "absolute rounded-[2px] border border-primary/50 bg-[#eef0ff] px-1 text-[#16181d] outline-none",
+  "absolute rounded-(--radius-sm) border border-primary/50 bg-[#eef0ff] px-1 text-[#16181d] outline-none",
   "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)",
 );
 

@@ -29,7 +29,7 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         >
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
             <div>
-              <RadixDialog.Title className="text-sm font-semibold text-text">{title}</RadixDialog.Title>
+              <RadixDialog.Title className="text-heading font-semibold text-text">{title}</RadixDialog.Title>
               {description ? (
                 <RadixDialog.Description className="mt-1 text-xs text-text-muted">{description}</RadixDialog.Description>
               ) : (
