@@ -10,6 +10,7 @@ import {
   type Rect,
   type RgbColor,
   type SearchMatch,
+  type SignatureFontId,
   type StampPreset,
 } from "@pdfloom/core";
 import { create } from "zustand";
@@ -32,6 +33,9 @@ export type SignPlacementKind = "signature" | "initials" | "date" | "timestamp";
 export interface SignatureAsset {
   kind: "typed" | "image";
   text?: string;
+  /** "typed" only — ink color and cursive style chosen in SignatureCreatorDialog's Type tab. */
+  color?: RgbColor;
+  fontId?: SignatureFontId;
   imageBytes?: Uint8Array;
   imageType?: "png" | "jpg";
   /** width/height, for image assets — used to size a sensible default placement rect. */
@@ -342,7 +346,7 @@ async function buildSignaturePlacementBytes(
   }
   if (!asset) return null;
   return asset.kind === "typed"
-    ? client.placeTypedSignature(bytes, pageIndex, rect, asset.text ?? "")
+    ? client.placeTypedSignature(bytes, pageIndex, rect, asset.text ?? "", { color: asset.color, fontId: asset.fontId })
     : client.placeSignatureImage(bytes, pageIndex, rect, asset.imageBytes!, asset.imageType!);
 }
 

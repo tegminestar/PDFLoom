@@ -37,7 +37,7 @@ export type { InlineRun, DocBlock, CreateDocumentOptions } from "./pdf/create-do
 export type { OcrWordPlacement } from "./pdf/ocr-overlay";
 export type { PdfPermissions, EncryptOptions, DecryptResult } from "./pdf/crypto/standard-security-handler";
 export type { RedactPageInput } from "./pdf/redact";
-export type { TypedSignatureOptions, SignedTimestampOptions } from "./pdf/signature";
+export type { TypedSignatureOptions, SignedTimestampOptions, SignatureFontId } from "./pdf/signature";
 export type { SanitizeOptions, SanitizeReport } from "./pdf/sanitize";
 export type { PageImageInfo, ImageAltTextUpdate } from "./pdf/accessibility";
 export { diffPageText, summarizeTextComparison, diffPixelsRgba } from "./pdf/compare";

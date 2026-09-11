@@ -8,21 +8,49 @@ async function finish(doc: PDFDocument): Promise<Uint8Array> {
   return doc.save();
 }
 
+/** Matches the style grid ids used in the Type-mode UI (SignatureCreatorDialog, SignatureCaptureModal). */
+export type SignatureFontId = "caveat" | "dancing-script" | "sacramento" | "pacifico";
+
+const DEFAULT_FONT_ID: SignatureFontId = "caveat";
+
 // Both the font file (Vite resolves this to a fetchable URL at build time)
 // and @pdf-lib/fontkit itself are loaded lazily, on first actual use — a
 // typed signature is the only feature in this module that needs custom
 // font embedding, so nothing else should pay for fetching a font file or
-// pulling fontkit into the bundle.
-let cachedFontBytes: Promise<ArrayBuffer> | null = null;
-async function getSignatureFontBytes(): Promise<ArrayBuffer> {
-  cachedFontBytes ??= import("@fontsource/caveat/files/caveat-latin-700-normal.woff?url").then(({ default: url }) =>
-    fetch(url).then((r) => r.arrayBuffer()),
-  );
-  return cachedFontBytes;
+// pulling fontkit into the bundle. Cached per font id (not one shared
+// promise) since a signer can switch styles across signature/initials or
+// across sessions.
+const cachedFontBytes = new Map<SignatureFontId, Promise<ArrayBuffer>>();
+
+function fetchFontUrl(url: string): Promise<ArrayBuffer> {
+  return fetch(url).then((r) => r.arrayBuffer());
+}
+
+async function getSignatureFontBytes(fontId: SignatureFontId): Promise<ArrayBuffer> {
+  let cached = cachedFontBytes.get(fontId);
+  if (!cached) {
+    // Each import path must be statically written out (not built from a
+    // template string) for Vite's `?url` asset resolution to find it at
+    // build time. Weights match what apps/web's index.css actually loads
+    // for each font's on-screen preview — same weight in the embedded PDF
+    // as what the signer saw while typing, per this module's existing
+    // preview/output-parity convention (see the Caveat comment below).
+    cached =
+      fontId === "dancing-script"
+        ? import("@fontsource/dancing-script/files/dancing-script-latin-400-normal.woff?url").then((m) => fetchFontUrl(m.default))
+        : fontId === "sacramento"
+          ? import("@fontsource/sacramento/files/sacramento-latin-400-normal.woff?url").then((m) => fetchFontUrl(m.default))
+          : fontId === "pacifico"
+            ? import("@fontsource/pacifico/files/pacifico-latin-400-normal.woff?url").then((m) => fetchFontUrl(m.default))
+            : import("@fontsource/caveat/files/caveat-latin-700-normal.woff?url").then((m) => fetchFontUrl(m.default));
+    cachedFontBytes.set(fontId, cached);
+  }
+  return cached;
 }
 
 export interface TypedSignatureOptions {
   color?: RgbColor;
+  fontId?: SignatureFontId;
 }
 
 /**
@@ -55,7 +83,7 @@ export async function placeTypedSignature(
   const doc = await loadForMutation(source);
   const { default: fontkit } = await import("@pdf-lib/fontkit");
   doc.registerFontkit(fontkit);
-  const fontBytes = await getSignatureFontBytes();
+  const fontBytes = await getSignatureFontBytes(options.fontId ?? DEFAULT_FONT_ID);
   const font = await doc.embedFont(fontBytes, { subset: true });
   const page = doc.getPage(pageIndex);
   const color = options.color ?? { r: 0.05, g: 0.05, b: 0.2 };

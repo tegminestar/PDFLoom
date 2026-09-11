@@ -1,3 +1,4 @@
+import type { SignatureFontId } from "@pdfloom/core";
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLoomStore, type SignatureAsset } from "../../app/store";
@@ -15,18 +16,32 @@ const INK_COLORS = [
   { id: "red", label: "Red", hex: "#c92a2a" },
 ] as const;
 
+// ids match SignatureFontId in packages/core/src/pdf/signature.ts exactly —
+// this is what actually gets embedded, not just a CSS preview choice.
+const TYPE_STYLES: { id: SignatureFontId; label: string; fontFamily: string }[] = [
+  { id: "caveat", label: "Caveat", fontFamily: "'Caveat', cursive" },
+  { id: "dancing-script", label: "Dancing Script", fontFamily: "'Dancing Script', cursive" },
+  { id: "sacramento", label: "Sacramento", fontFamily: "'Sacramento', cursive" },
+  { id: "pacifico", label: "Pacifico", fontFamily: "'Pacifico', cursive" },
+];
+
+function hexToRgb01(hex: string): { r: number; g: number; b: number } {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
+}
+
 // A rasterized snapshot for the "use my saved signature" quick-reuse
 // thumbnail only — the real typed-signature placement stays real vector
-// text via SignatureAsset's "typed" kind, never this. Caveat/black matches
-// how that vector text actually renders once placed.
-function renderTypedPreview(text: string): string {
+// text via SignatureAsset's "typed" kind, never this. Same font/color the
+// signer actually chose, so the thumbnail matches what gets placed.
+function renderTypedPreview(text: string, fontFamily: string, colorHex: string): string {
   const canvas = document.createElement("canvas");
   canvas.width = CANVAS_WIDTH * 2;
   canvas.height = CANVAS_HEIGHT * 2;
   const ctx = canvas.getContext("2d")!;
   ctx.scale(2, 2);
-  ctx.font = "48px 'Caveat', cursive";
-  ctx.fillStyle = "#141414";
+  ctx.font = `48px ${fontFamily}`;
+  ctx.fillStyle = colorHex;
   ctx.textBaseline = "middle";
   ctx.fillText(text, 12, CANVAS_HEIGHT / 2);
   return canvas.toDataURL("image/png");
@@ -62,6 +77,7 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
   const [typedText, setTypedText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{ bytes: Uint8Array; type: "png" | "jpg"; aspectRatio: number } | null>(null);
   const [color, setColor] = useState<(typeof INK_COLORS)[number]>(INK_COLORS[0]);
+  const [typeStyle, setTypeStyle] = useState<(typeof TYPE_STYLES)[number]>(TYPE_STYLES[0]);
   const [saveForReuse, setSaveForReuse] = useState(true);
   const [savedAsset, setSavedAssetState] = useState<string | null>(null);
 
@@ -180,8 +196,8 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
         toast.warning("Type a name first");
         return;
       }
-      asset = { kind: "typed", text: typedText.trim() };
-      if (saveForReuse) reuseDataUrl = renderTypedPreview(typedText.trim());
+      asset = { kind: "typed", text: typedText.trim(), color: hexToRgb01(color.hex), fontId: typeStyle.id };
+      if (saveForReuse) reuseDataUrl = renderTypedPreview(typedText.trim(), typeStyle.fontFamily, color.hex);
     } else {
       if (!uploadedFile) {
         toast.warning("Choose an image first");
@@ -249,22 +265,25 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
           ))}
         </div>
 
+        {tab !== "upload" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-text-faint">Ink color</span>
+            {INK_COLORS.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                aria-label={c.label}
+                aria-pressed={color.id === c.id}
+                onClick={() => setColor(c)}
+                className={`h-6 w-6 rounded-full border-2 transition-transform ${color.id === c.id ? "scale-110 border-text" : "border-transparent hover:scale-105"}`}
+                style={{ backgroundColor: c.hex }}
+              />
+            ))}
+          </div>
+        )}
+
         {tab === "draw" && (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-faint">Ink color</span>
-              {INK_COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  aria-label={c.label}
-                  aria-pressed={color.id === c.id}
-                  onClick={() => setColor(c)}
-                  className={`h-6 w-6 rounded-full border-2 transition-transform ${color.id === c.id ? "scale-110 border-text" : "border-transparent hover:scale-105"}`}
-                  style={{ backgroundColor: c.hex }}
-                />
-              ))}
-            </div>
             <canvas
               ref={canvasRef}
               style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
@@ -292,9 +311,29 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
             />
             <div
               className="flex items-center justify-center rounded-(--radius-sm) border border-border-strong bg-white px-4"
-              style={{ height: CANVAS_HEIGHT, fontFamily: "'Caveat', cursive" }}
+              style={{ height: CANVAS_HEIGHT, fontFamily: typeStyle.fontFamily }}
             >
-              <span className="text-5xl text-[#141414]">{typedText || "Preview"}</span>
+              <span className="text-5xl" style={{ color: color.hex }}>
+                {typedText || "Preview"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {TYPE_STYLES.map((style) => (
+                <button
+                  key={style.id}
+                  type="button"
+                  onClick={() => setTypeStyle(style)}
+                  aria-label={`${style.label} style`}
+                  aria-pressed={typeStyle.id === style.id}
+                  className={`flex h-14 items-center justify-center rounded-(--radius-sm) border-2 bg-white px-2 transition-colors ${
+                    typeStyle.id === style.id ? "border-primary" : "border-border-strong hover:border-text-faint"
+                  }`}
+                >
+                  <span className="truncate text-2xl" style={{ fontFamily: style.fontFamily, color: color.hex }}>
+                    {typedText.trim() || style.label}
+                  </span>
+                </button>
+              ))}
             </div>
             <p className="text-xs text-text-faint">Placed as real, crisp text in the document — not a flattened image.</p>
           </div>
