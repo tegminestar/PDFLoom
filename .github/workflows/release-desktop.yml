@@ -48,7 +48,7 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # libayatana-appindicator3-dev is Tauri v2's actual requirement on
       # modern Ubuntu — NOT libappindicator3-dev (that's the Tauri
