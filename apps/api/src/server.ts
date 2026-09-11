@@ -30,18 +30,15 @@ import { stripeWebhook } from "./routes/stripeWebhook";
 
 const app = express();
 
-// The webhook route needs Stripe's exact original bytes to verify the
-// signature — mounted with the raw-body parser scoped to just this one
-// route, before the general JSON parser below would otherwise consume it.
-app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
-  stripeWebhook(req, res).catch((error: unknown) => {
-    console.error("Unhandled error in stripeWebhook", error);
-    res.status(500).json({ error: "Internal error" });
-  });
-});
-
-app.use(express.json());
-
+// Mounted before anything else, body-parsing included: CORS headers must be
+// present on every response, error responses too. This used to run *after*
+// express.json() below, which meant any error thrown during body parsing
+// (a request over the default 100kb JSON limit, most commonly — exactly
+// what a real, non-trivial signature document's base64 body hits almost
+// immediately) skipped this middleware entirely and fell through to
+// Express's default error handler with no CORS headers at all. The browser
+// then reports that as an opaque "Failed to fetch" network error — not the
+// real 413 — which is indistinguishable from an actual outage client-side.
 const corsOrigin = process.env.APP_URL ?? "http://localhost:5173";
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
@@ -53,6 +50,23 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// The webhook route needs Stripe's exact original bytes to verify the
+// signature — mounted with the raw-body parser scoped to just this one
+// route, before the general JSON parser below would otherwise consume it.
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  stripeWebhook(req, res).catch((error: unknown) => {
+    console.error("Unhandled error in stripeWebhook", error);
+    res.status(500).json({ error: "Internal error" });
+  });
+});
+
+// Express's own default (100kb) is far too small for this API's actual
+// payloads: signature-request/template creation sends the whole PDF as
+// base64 (~33% larger than raw) in the JSON body. 50mb comfortably covers
+// real-world documents — scanned contracts, multi-page leases — with
+// headroom above the ~25MB most e-sign products cap at.
+app.use(express.json({ limit: "50mb" }));
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true });
@@ -209,6 +223,22 @@ app.post("/api/sign/:token/decline", (req, res) => {
     console.error("Unhandled error in declineSignature", error);
     res.status(500).json({ error: "Internal error" });
   });
+});
+
+// Catches body-parsing errors (a request over express.json()'s limit,
+// malformed JSON) before they reach Express's default HTML error page —
+// the client always does `await res.json()`, which would itself throw on
+// an HTML body, masking the real error behind a second, unrelated one.
+// `_next` is unused but required: Express only recognizes a 4-arg function
+// as error-handling middleware, and this handler always terminates the
+// response itself rather than delegating further.
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err && typeof err === "object" && "type" in err && (err as { type?: string }).type === "entity.too.large") {
+    res.status(413).json({ error: "That document is too large to send for signature (50MB limit)." });
+    return;
+  }
+  console.error("Unhandled error", err);
+  res.status(500).json({ error: "Internal error" });
 });
 
 // Azure App Service (Linux) injects the port to listen on via PORT.
