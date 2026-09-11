@@ -57,6 +57,7 @@ import {
   LogOut,
   Megaphone,
   MessageSquareWarning,
+  MessagesSquare,
   Notebook,
   Package,
   PawPrint,
@@ -87,7 +88,6 @@ import {
   TriangleAlert,
   Truck,
   Undo2,
-  UploadCloud,
   UserMinus,
   UserPlus,
   UserRoundCheck,
@@ -286,6 +286,40 @@ const TEMPLATES: TemplateInfo[] = [
   { file: "travel-consent-for-minors.pdf", name: "Minor Travel Consent Form", description: "Parental consent for a minor to travel", icon: PlaneTakeoff, category: "Personal & Lifestyle" },
 ];
 
+// A small CSS-3D "stack of pages" in place of a static drop-zone icon — a
+// literal nod to the "Weave every page" wordmark rather than decoration for
+// its own sake. Idles with a slow float (loom-float, packages/ui
+// tokens.css); dragging a file over the drop zone genuinely fans the pages
+// out (`active`), so the one animated flourish on this screen is tied to
+// real interaction state instead of running for its own sake. Pure
+// CSS transforms — no canvas/WebGL, so no new rendering dependency or
+// GPU-availability risk for what's otherwise a static landing screen.
+function PageStack({ active }: { active: boolean }) {
+  const pages = [
+    { rotate: -10, x: -16, tint: "from-primary/35 to-primary/10" },
+    { rotate: -3, x: -5, tint: "from-ai/30 to-ai/5" },
+    { rotate: 4, x: 6, tint: "from-primary/40 to-primary/15" },
+    { rotate: 11, x: 17, tint: "from-ai/35 to-ai/10" },
+  ];
+  return (
+    <div className="loom-float relative h-16 w-32" style={{ perspective: "600px" }} aria-hidden>
+      {pages.map((p, i) => (
+        <div
+          key={i}
+          className={cn(
+            "absolute left-1/2 top-1/2 h-14 w-11 rounded-(--radius-sm) border border-white/15 bg-gradient-to-br shadow-(--shadow-sm) transition-transform duration-500 ease-out",
+            p.tint,
+          )}
+          style={{
+            transform: `translate(-50%, -50%) translateX(${active ? p.x * 2 : p.x}px) rotate(${active ? p.rotate * 0.5 : p.rotate}deg) translateZ(${i * 6}px)`,
+            zIndex: i,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB"];
@@ -318,7 +352,7 @@ function formatRelativeTime(timestampMs: number): string {
   return formatter.format(Math.round(duration), "year");
 }
 
-export function WelcomeScreen() {
+export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () => void } = {}) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [recents, setRecents] = useState<RecentFileEntry[]>([]);
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
@@ -455,14 +489,20 @@ export function WelcomeScreen() {
         aria-hidden
         className="pointer-events-none fixed inset-x-0 top-0 z-[140] h-28 bg-gradient-to-b from-bg via-bg/90 to-transparent md:hidden"
       />
+      {/* Two independently-drifting gradient blobs (rather than one static
+          combined background) — a slow, ambient "alive" quality behind the
+          content that never demands attention or moves fast enough to
+          distract from reading. loom-drift/-reverse (packages/ui tokens.css)
+          both no-op under prefers-reduced-motion. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-        style={{
-          background:
-            "radial-gradient(60rem 34rem at 18% 8%, color-mix(in srgb, var(--loom-primary) 16%, transparent), transparent 60%), " +
-            "radial-gradient(48rem 30rem at 88% 92%, color-mix(in srgb, var(--loom-ai) 12%, transparent), transparent 60%)",
-        }}
+        className="loom-drift pointer-events-none absolute inset-0 overflow-hidden"
+        style={{ background: "radial-gradient(60rem 34rem at 18% 8%, color-mix(in srgb, var(--loom-primary) 16%, transparent), transparent 60%)" }}
+      />
+      <div
+        aria-hidden
+        className="loom-drift-reverse pointer-events-none absolute inset-0 overflow-hidden"
+        style={{ background: "radial-gradient(48rem 30rem at 88% 92%, color-mix(in srgb, var(--loom-ai) 12%, transparent), transparent 60%)" }}
       />
 
       <div className="relative m-auto grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
@@ -483,16 +523,16 @@ export function WelcomeScreen() {
             onDragLeave={() => setIsDraggingOver(false)}
             onDrop={(e) => void handleDrop(e)}
             className={cn(
-              "flex flex-col items-center justify-center gap-5 rounded-(--radius-xl) border-2 border-dashed p-12 text-center shadow-(--shadow-panel) transition-colors",
+              "flex flex-col items-center justify-center gap-5 rounded-(--radius-xl) border-2 border-dashed p-6 text-center shadow-(--shadow-panel) transition-colors sm:p-12",
               isDraggingOver ? "border-primary bg-primary-muted" : "border-border bg-bg-elevated",
             )}
           >
-            <UploadCloud className="h-9 w-9 text-text-faint" />
+            <PageStack active={isDraggingOver} />
             <p className="max-w-sm text-sm text-text-muted">
               Drop a PDF here, or open one from your device. Everything runs locally in your browser — nothing is
               ever uploaded.
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Button variant="primary" size="lg" onClick={() => void openViaPicker()} disabled={isLoading}>
                 <FolderOpen className="h-4 w-4" />
                 {isLoading ? "Opening…" : "Open a PDF"}
@@ -519,6 +559,16 @@ export function WelcomeScreen() {
             <a href="/#desktop" className="text-xs text-text-faint underline decoration-dotted hover:text-text">
               Prefer a desktop app?
             </a>
+            {onOpenMultiDocChat && (
+              <button
+                type="button"
+                onClick={onOpenMultiDocChat}
+                className="flex items-center gap-1.5 rounded-full border border-ai/30 bg-ai-muted px-2.5 py-1 text-xs font-medium text-ai transition-colors hover:bg-ai/15"
+              >
+                <MessagesSquare className="h-3.5 w-3.5" />
+                Chat across documents
+              </button>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -584,7 +634,7 @@ export function WelcomeScreen() {
                       aria-expanded={isExpanded}
                       className="flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-surface-hover"
                     >
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-(--radius-sm) bg-primary-muted text-primary">
+                      <div className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-(--radius-sm) bg-gradient-to-br from-primary/30 via-primary/10 to-transparent text-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),inset_0_-6px_10px_-6px_rgba(0,0,0,0.15)]">
                         <CategoryIcon className="h-3.5 w-3.5" />
                       </div>
                       <span className="flex-1 text-sm font-medium text-text">{category}</span>

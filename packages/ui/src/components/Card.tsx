@@ -50,9 +50,10 @@ export function Card({ icon: Icon, title, description, tone = "default", size = 
     <>
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center",
+          "relative flex shrink-0 items-center justify-center overflow-hidden",
           sizeClasses.iconBox,
-          tone === "ai" ? "bg-ai-muted text-ai" : "bg-primary-muted text-primary",
+          tone === "ai" ? "bg-gradient-to-br from-ai/30 via-ai/10 to-transparent text-ai" : "bg-gradient-to-br from-primary/30 via-primary/10 to-transparent text-primary",
+          "shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18),inset_0_-6px_10px_-6px_rgba(0,0,0,0.15)]",
         )}
       >
         <Icon className={sizeClasses.icon} />
