@@ -27,6 +27,7 @@ import {
   Minimize,
   Moon,
   PenTool,
+  Printer,
   RotateCw,
   ScanText,
   Search,
@@ -48,6 +49,7 @@ import { AllToolsDialog, type ToolGroup } from "./features/tools/AllToolsDialog"
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
 import { MultiDocChatDialog } from "./features/ai/MultiDocChatDialog";
+import { printDocument } from "./features/print/printDocument";
 import { CommandBarDialog } from "./features/ai/CommandBarDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { AccountButton } from "./features/account/AccountButton";
@@ -195,6 +197,14 @@ export function App() {
         void openViaPicker();
         return;
       }
+      if (event.key.toLowerCase() === "p") {
+        // Always prevented, even with no document open — the browser default
+        // here is printing whatever app chrome happens to be visible, which
+        // is never what a user pressing Ctrl/Cmd+P in a PDF app wants.
+        event.preventDefault();
+        if (meta) void printDocument();
+        return;
+      }
       if (!meta) return;
       if (event.key.toLowerCase() === "z" && event.shiftKey) {
         event.preventDefault();
@@ -241,7 +251,10 @@ export function App() {
     () => [
       {
         heading: "File",
-        items: [{ id: "open", label: "Open a PDF…", icon: <FolderOpen />, shortcut: "Ctrl O", onSelect: () => void openViaPicker() }],
+        items: [
+          { id: "open", label: "Open a PDF…", icon: <FolderOpen />, shortcut: "Ctrl O", onSelect: () => void openViaPicker() },
+          ...(meta ? [{ id: "print", label: "Print…", icon: <Printer />, shortcut: "Ctrl P", onSelect: () => void printDocument() }] : []),
+        ],
       },
       ...(meta
         ? ([
@@ -427,6 +440,7 @@ export function App() {
           { icon: Signature, label: "Sign", description: "Draw, type, or upload a signature — or send the document out for others to sign.", onSelect: () => { setMainView("read"); setSignOpen(true); } },
           { icon: EyeOff, label: "Redact", description: "Permanently remove sensitive content.", onSelect: () => { setMainView("read"); setRedactOpen(true); } },
           { icon: Lock, label: "Protect", description: "Password, permissions, metadata cleanup.", onSelect: () => setProtectOpen(true) },
+          { icon: Printer, label: "Print", description: "Print via your browser's native PDF print dialog.", onSelect: () => void printDocument() },
           { icon: GitCompare, label: "Compare", description: "Visual and text diff between two PDFs.", onSelect: () => (compareTarget ? setMainView("compare") : setCompareDialogOpen(true)) },
         ],
       },
@@ -558,6 +572,7 @@ export function App() {
             }}
           />
           <RailItem icon={<Lock />} label="Protect" active={protectOpen} onClick={() => setProtectOpen(true)} />
+          <RailItem icon={<Printer />} label="Print" onClick={() => void printDocument()} />
           <RailItem
             icon={<GitCompare />}
             label="Compare"
