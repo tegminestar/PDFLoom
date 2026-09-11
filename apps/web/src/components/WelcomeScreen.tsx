@@ -192,7 +192,7 @@ export function WelcomeScreen() {
   const otherTemplates = TEMPLATES.filter((t) => !t.featured);
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-y-auto bg-bg p-8">
+    <div className="relative flex h-full w-full overflow-y-auto bg-bg p-8">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -203,7 +203,7 @@ export function WelcomeScreen() {
         }}
       />
 
-      <div className="relative grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
+      <div className="relative m-auto grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-6">
           <Link to="/" className="flex w-fit items-center gap-4" aria-label="PDFLoom home">
             <Mark size={48} className="rounded-[--radius-md] shadow-[--shadow-panel]" />
