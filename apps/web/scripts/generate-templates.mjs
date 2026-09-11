@@ -3514,6 +3514,185 @@ async function travelConsentForMinors() {
   });
 }
 
+// --- 122. Assignment Cover Sheet -----------------------------------------------------------------
+async function assignmentCoverSheet() {
+  return build((d) => {
+    d.title("Assignment Cover Sheet");
+    d.fieldRow([
+      { name: "student_name", label: "Student Name", width: 220 },
+      { name: "student_id", label: "Student ID", width: 140 },
+      { name: "date_submitted", label: "Date Submitted", width: 120 },
+    ]);
+    d.fieldRow([
+      { name: "course_name", label: "Course Name / Number", width: 260 },
+      { name: "instructor", label: "Instructor", width: 220 },
+    ]);
+    d.fieldRow([{ name: "assignment_title", label: "Assignment Title", width: CONTENT_W }]);
+    d.fieldRow([{ name: "due_date", label: "Due Date", width: 220 }]);
+    d.checkboxRow("academic_integrity", "I certify this work is my own and follows the academic integrity policy");
+    d.checkboxRow("late_submission", "This is a late submission (see course policy)");
+    d.spacer(6);
+    d.fieldRow([{ name: "student_signature", label: "Student — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 123. Grade Report --------------------------------------------------------------------------------
+async function gradeReport() {
+  return build((d) => {
+    d.title("Grade Report");
+    d.fieldRow([
+      { name: "student_name", label: "Student Name", width: 220 },
+      { name: "student_id", label: "Student ID", width: 140 },
+      { name: "term", label: "Term", width: 120 },
+    ]);
+    d.heading("Courses");
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `course_${i}_name`, label: "Course", width: 220 },
+        { name: `course_${i}_credits`, label: "Credits", width: 90 },
+        { name: `course_${i}_grade`, label: "Grade", width: 90 },
+      ]);
+    }
+    d.fieldRow([
+      { name: "gpa", label: "Term GPA", width: 160 },
+      { name: "cumulative_gpa", label: "Cumulative GPA", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 124. Training Certificate --------------------------------------------------------------------------
+async function trainingCertificate() {
+  return build((d) => {
+    d.title("Certificate of Completion");
+    d.paragraph("This certifies that the individual named below has successfully completed the training program described here.");
+    d.fieldRow([{ name: "recipient_name", label: "Recipient Full Name", width: CONTENT_W }]);
+    d.fieldRow([{ name: "program_title", label: "Training Program / Course Title", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "completion_date", label: "Completion Date", width: 220 },
+      { name: "hours_completed", label: "Hours Completed", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "issuing_organization", label: "Issuing Organization", width: 260 },
+      { name: "instructor_name", label: "Instructor / Facilitator", width: 220 },
+    ]);
+    d.spacer(10);
+    d.signatureBlock("Instructor", "Program Director");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 125. Class Attendance Sheet -------------------------------------------------------------------------
+async function classAttendanceSheet() {
+  return build((d) => {
+    d.title("Class Attendance Sheet");
+    d.fieldRow([
+      { name: "course_name", label: "Course Name", width: 260 },
+      { name: "session_date", label: "Date", width: 220 },
+    ]);
+    d.fieldRow([{ name: "instructor", label: "Instructor", width: CONTENT_W }]);
+    d.heading("Students");
+    for (let i = 1; i <= 10; i++) {
+      d.fieldRow([
+        { name: `student_${i}_name`, label: `Student ${i}`, width: 260 },
+        { name: `student_${i}_present`, label: "Present?", width: 100 },
+        { name: `student_${i}_notes`, label: "Notes", width: 100 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 126. Student Feedback Form ------------------------------------------------------------------------
+async function studentFeedbackForm() {
+  return build((d) => {
+    d.title("Student Feedback Form");
+    d.fieldRow([
+      { name: "course_name", label: "Course Name", width: 260 },
+      { name: "instructor", label: "Instructor", width: 220 },
+    ]);
+    d.radioRow("overall_rating", "Overall Rating", ["Poor", "Fair", "Good", "Very Good", "Excellent"]);
+    d.radioRow("pace_rating", "Pace of Instruction", ["Too Slow", "Just Right", "Too Fast"]);
+    d.fieldRow([{ name: "what_worked", label: "What Worked Well", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "what_to_improve", label: "What Could Be Improved", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("would_recommend", "I would recommend this course to others");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 127. Training Evaluation ------------------------------------------------------------------------------
+async function trainingEvaluation() {
+  return build((d) => {
+    d.title("Training Evaluation Form");
+    d.fieldRow([
+      { name: "training_title", label: "Training Title", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([{ name: "trainer_name", label: "Trainer / Facilitator", width: CONTENT_W }]);
+    d.radioRow("content_rating", "Content Quality", ["1", "2", "3", "4", "5"]);
+    d.radioRow("trainer_rating", "Trainer Effectiveness", ["1", "2", "3", "4", "5"]);
+    d.radioRow("materials_rating", "Materials & Resources", ["1", "2", "3", "4", "5"]);
+    d.fieldRow([{ name: "key_takeaways", label: "Key Takeaways", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "suggestions", label: "Suggestions for Improvement", width: CONTENT_W, multiline: true }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 128. Scholarship Application ------------------------------------------------------------------------
+async function scholarshipApplication() {
+  return build((d) => {
+    d.title("Scholarship Application");
+    d.fieldRow([
+      { name: "applicant_name", label: "Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "school_name", label: "School / Institution", width: 260 },
+      { name: "expected_graduation", label: "Expected Graduation", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "gpa", label: "GPA", width: 140 },
+      { name: "major_field", label: "Major / Field of Study", width: 300 },
+    ]);
+    d.fieldRow([{ name: "scholarship_name", label: "Scholarship Applying For", width: CONTENT_W }]);
+    d.fieldRow([{ name: "essay_statement", label: "Personal Statement (why you deserve this scholarship)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "financial_need", label: "Financial Need Summary (if applicable)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 129. Internship Agreement ------------------------------------------------------------------------------
+async function internshipAgreement() {
+  return build((d) => {
+    d.title("Internship Agreement");
+    d.paragraph("This Agreement sets the terms of an internship between the Host Organization and the Intern identified below.");
+    d.fieldRow([
+      { name: "intern_name", label: "Intern Full Name", width: 260 },
+      { name: "school_name", label: "School / Institution", width: 220 },
+    ]);
+    d.fieldRow([{ name: "host_organization", label: "Host Organization", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "start_date", label: "Start Date", width: 160 },
+      { name: "end_date", label: "End Date", width: 160 },
+      { name: "hours_per_week", label: "Hours/Week", width: 130 },
+    ]);
+    d.fieldRow([{ name: "supervisor_name", label: "Supervisor", width: CONTENT_W }]);
+    d.fieldRow([{ name: "responsibilities", label: "Intern Responsibilities", width: CONTENT_W, multiline: true }]);
+    d.radioRow("compensation_type", "Compensation", ["Unpaid", "Paid", "Academic credit"]);
+    d.checkboxRow("confidentiality_required", "Intern agrees to maintain confidentiality of the organization's information");
+    d.spacer(6);
+    d.signatureBlock("Host Organization", "Intern");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const templates = [
@@ -3638,6 +3817,14 @@ async function main() {
     { file: "household-inventory.pdf", make: householdInventory },
     { file: "emergency-plan.pdf", make: emergencyPlan },
     { file: "travel-consent-for-minors.pdf", make: travelConsentForMinors },
+    { file: "assignment-cover-sheet.pdf", make: assignmentCoverSheet },
+    { file: "grade-report.pdf", make: gradeReport },
+    { file: "training-certificate.pdf", make: trainingCertificate },
+    { file: "class-attendance-sheet.pdf", make: classAttendanceSheet },
+    { file: "student-feedback-form.pdf", make: studentFeedbackForm },
+    { file: "training-evaluation.pdf", make: trainingEvaluation },
+    { file: "scholarship-application.pdf", make: scholarshipApplication },
+    { file: "internship-agreement.pdf", make: internshipAgreement },
   ];
   for (const t of templates) {
     const bytes = await t.make();
