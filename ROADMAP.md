@@ -25,26 +25,26 @@ scoped, or closed — this is the source of truth, not chat history.
 - Bookmark editing v1: "Add bookmark" for the current page. Verified
   Smart Redact (local PII/NER detection) already matches or exceeds Foxit's
   equivalent — not a gap, no action needed there.
+- Bookmark rename & delete for entries *PDFLoom itself added this
+  session* — tracked by top-level position client-side (reset on document
+  reopen via a React key, not persisted). Pre-existing/foreign bookmarks
+  in a file remain untouched by rename/delete, for the reason below.
+- Education & Training templates: the real buildable subset (Assignment
+  Cover Sheet, Grade Report, Certificate of Completion, Class Attendance
+  Sheet, Student Feedback Form, Training Evaluation, Scholarship
+  Application, Internship Agreement) — template library now at 129.
+  Free-text items in the original ~15-item category (lecture notes,
+  research papers, course syllabi) stay deliberately skipped.
 
 ## Open — in progress or queued
 
-- **Outline/bookmark rename & delete** — v1 only supports adding a new
-  bookmark. Rename/delete of *pre-existing* bookmarks is blocked on a real
-  constraint: pdf.js (read side) and pdf-lib (write side) are independent
-  parsers with no shared node identity, so there's no safe way to map a
-  displayed bookmark back to the exact dictionary that produced it on an
-  unusually-structured file. Rename/delete of bookmarks *PDFLoom itself
-  added this session* is safe to build (tag new entries with a marker on
-  write, only ever target marked entries) and is a reasonable next step;
-  reorder and editing of foreign/pre-existing bookmarks stays out of scope
-  until there's a real shared-identity mechanism.
-- **Education & Training templates** — the one template-mega-list category
-  not yet built. Most of the ~15 originally-requested items are free-text
-  documents (lecture notes, research papers, course syllabi) that don't fit
-  the fillable-form pattern and should stay skipped, but a real buildable
-  subset was scoped and never implemented: Assignment Cover Sheet, Grade
-  Report, Training Certificate, Attendance Sheet, Student Feedback Form,
-  Training Evaluation, Scholarship Application, Internship Agreement.
+- **Outline/bookmark rename & delete of *pre-existing* bookmarks** — still
+  blocked on a real constraint: pdf.js (read side) and pdf-lib (write side)
+  are independent parsers with no shared node identity, so there's no safe
+  way to map a displayed bookmark back to the exact dictionary that
+  produced it on an unusually-structured file. No planned fix without a
+  real shared-identity mechanism (e.g. a from-scratch outline parser that
+  both reads and writes through the same code path).
 - **Full PDF/UA structure-tree accessibility tagging** — not a new gap,
   already an explicit documented scope decision in
   `apps/web/src/features/ai/AccessibilityDialog.tsx` (alt-text only, by
