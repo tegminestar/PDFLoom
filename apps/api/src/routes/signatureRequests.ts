@@ -20,7 +20,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
-  const from = process.env.RESEND_FROM_EMAIL ?? "PDFLoom <onboarding@resend.dev>";
+  // onboarding@resend.dev (Resend's own sandbox sender) can only deliver to
+  // the account owner's own verified email, regardless of the account
+  // having a separately-verified real domain — that verification only
+  // unlocks sending *from* an address on that domain, which is what this
+  // default now uses. pdfloom.app was verified in Resend on 2026-09-02;
+  // RESEND_FROM_EMAIL still overrides this if ever needed.
+  const from = process.env.RESEND_FROM_EMAIL ?? "PDFLoom <signatures@pdfloom.app>";
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
