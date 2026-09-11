@@ -7,7 +7,7 @@ export interface StatTileProps {
 
 export function StatTile({ label, value }: StatTileProps) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-[--radius-md] border border-border bg-surface p-4">
+    <div className="flex flex-col gap-1.5 rounded-(--radius-md) border border-border bg-surface p-4">
       <span className="text-caption text-text-muted">{label}</span>
       <span className="text-display font-semibold text-text">{compactFormatter.format(value)}</span>
     </div>

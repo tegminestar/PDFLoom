@@ -15,22 +15,27 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 }
 
 const variantClasses: Record<IconButtonVariant, string> = {
-  default: "text-text-muted hover:text-text hover:bg-surface-hover",
+  // No resting/hover shadow on default/ghost: these render with zero
+  // background most of the time (dense toolbar icon rows), and a shadow
+  // under a transparent box reads as a stray phantom mark, not depth — the
+  // "elevated" treatment only makes sense once a variant actually has a
+  // background to lift (active/ai below, and default's own hover fill).
+  default: "text-text-muted hover:text-text hover:bg-surface-hover hover:shadow-(--shadow-xs)",
   // Tinted background, not a solid fill — matches RailItem's own active
   // treatment (bg-primary-muted text-primary) instead of the heavier
   // full-color fill this used to have. A solid-fill "selected" state reads
   // as a primary CTA (Upgrade to Pro, dialog confirms) more than a toggled
   // tool state, and it was the one visual inconsistency between Rail's and
   // every toolbar's idea of "this is the current selection."
-  active: "bg-primary-muted text-primary",
-  ai: "text-ai hover:text-ai-hover hover:bg-ai-muted",
+  active: "bg-primary-muted text-primary shadow-(--shadow-xs)",
+  ai: "text-ai hover:text-ai-hover hover:bg-ai-muted hover:shadow-(--shadow-xs)",
   ghost: "text-text-muted hover:text-text hover:bg-white/5",
 };
 
 const sizeClasses: Record<IconButtonSize, string> = {
-  sm: "h-7 w-7 rounded-[--radius-sm] [&_svg]:h-3.5 [&_svg]:w-3.5",
-  md: "h-9 w-9 rounded-[--radius-md] [&_svg]:h-[18px] [&_svg]:w-[18px]",
-  lg: "h-11 w-11 rounded-[--radius-md] [&_svg]:h-5 [&_svg]:w-5",
+  sm: "h-7 w-7 rounded-(--radius-sm) [&_svg]:h-3.5 [&_svg]:w-3.5",
+  md: "h-9 w-9 rounded-(--radius-md) [&_svg]:h-[18px] [&_svg]:w-[18px]",
+  lg: "h-11 w-11 rounded-(--radius-md) [&_svg]:h-5 [&_svg]:w-5",
 };
 
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
@@ -40,8 +45,8 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         aria-label={label}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center transition-colors duration-100 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-[--color-focus-ring] focus-visible:ring-offset-1 focus-visible:ring-offset-[--color-bg]",
+          "inline-flex shrink-0 items-center justify-center transition-[background-color,color,box-shadow] duration-100 outline-none",
+          "focus-visible:ring-2 focus-visible:ring-(--color-focus-ring) focus-visible:ring-offset-1 focus-visible:ring-offset-(--color-bg)",
           "disabled:pointer-events-none disabled:opacity-30",
           variantClasses[variant],
           sizeClasses[size],

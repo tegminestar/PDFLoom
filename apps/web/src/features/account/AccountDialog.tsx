@@ -84,7 +84,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && void handleSignIn()}
                 placeholder="you@example.com"
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             <Button variant="primary" size="sm" disabled={!email.trim() || actionPending} onClick={() => void handleSignIn()}>
@@ -94,7 +94,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         )
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between rounded-[--radius-md] border border-border bg-surface px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-(--radius-md) border border-border bg-surface px-3 py-2.5">
             <span className="truncate text-sm text-text">{user.email}</span>
             <span
               className={
@@ -123,14 +123,14 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             </Button>
           ) : (
             <div className="flex flex-col gap-2.5">
-              <div className="grid grid-cols-2 gap-1.5 rounded-[--radius-md] border border-border bg-surface p-1">
+              <div className="grid grid-cols-2 gap-1.5 rounded-(--radius-md) border border-border bg-surface p-1">
                 <button
                   type="button"
                   onClick={() => setPlan("monthly")}
                   className={
                     plan === "monthly"
-                      ? "rounded-[--radius-sm] bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
-                      : "rounded-[--radius-sm] px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
+                      ? "rounded-(--radius-sm) bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
+                      : "rounded-(--radius-sm) px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
                   }
                 >
                   Monthly
@@ -141,8 +141,8 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                   onClick={() => setPlan("annual")}
                   className={
                     plan === "annual"
-                      ? "rounded-[--radius-sm] bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
-                      : "rounded-[--radius-sm] px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
+                      ? "rounded-(--radius-sm) bg-bg-elevated px-2 py-1.5 text-sm font-semibold text-text shadow-sm"
+                      : "rounded-(--radius-sm) px-2 py-1.5 text-sm font-medium text-text-muted hover:text-text"
                   }
                 >
                   Annual

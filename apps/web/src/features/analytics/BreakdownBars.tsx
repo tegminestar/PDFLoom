@@ -10,7 +10,7 @@ export function BreakdownBars({ title, rows, accent }: BreakdownBarsProps) {
   const total = rows.reduce((sum, r) => sum + r.count, 0);
 
   return (
-    <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+    <div className="flex flex-col gap-3 rounded-(--radius-md) border border-border bg-surface p-4">
       <span className="text-sm text-text-muted">{title}</span>
       {rows.length === 0 ? (
         <p className="text-sm text-text-faint">No data yet</p>

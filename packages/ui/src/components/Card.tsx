@@ -15,15 +15,15 @@ export interface CardProps {
 
 const SIZE_CLASSES = {
   sm: {
-    card: "gap-2 rounded-[--radius-md] p-3",
-    iconBox: "h-8 w-8 rounded-[--radius-sm]",
+    card: "gap-2 rounded-(--radius-md) p-3",
+    iconBox: "h-8 w-8 rounded-(--radius-sm)",
     icon: "h-4 w-4",
     title: "text-sm font-medium",
     description: "text-xs leading-snug",
   },
   md: {
-    card: "gap-3 rounded-[--radius-lg] p-5",
-    iconBox: "h-9 w-9 rounded-[--radius-md]",
+    card: "gap-3 rounded-(--radius-lg) p-5",
+    iconBox: "h-9 w-9 rounded-(--radius-md)",
     icon: "h-[18px] w-[18px]",
     title: "text-sm font-semibold",
     description: "text-sm leading-relaxed",
@@ -58,14 +58,21 @@ export function Card({ icon: Icon, title, description, tone = "default", size = 
   );
 
   const sharedClasses = cn(
-    "flex flex-col items-start border border-border bg-bg-elevated text-left transition-colors",
+    "flex flex-col items-start border border-border bg-bg-elevated text-left shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform]",
     sizeClasses.card,
     className,
   );
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cn(sharedClasses, "hover:border-border-strong hover:bg-surface-hover")}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          sharedClasses,
+          "hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface-hover hover:shadow-(--shadow-sm) active:translate-y-0 active:shadow-(--shadow-xs)",
+        )}
+      >
         {content}
       </button>
     );

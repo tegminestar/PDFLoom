@@ -82,7 +82,7 @@ export function CropDialog({
           min={0}
           value={Math.round(margins[key])}
           onChange={(e) => setMargin(key, Number.parseFloat(e.target.value) || 0)}
-          className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+          className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
         />
         <span className="text-xs text-text-faint">pt</span>
       </span>

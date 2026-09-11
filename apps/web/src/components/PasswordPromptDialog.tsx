@@ -51,7 +51,7 @@ export function PasswordPromptDialog() {
             if (e.key === "Enter") handleSubmit();
           }}
           placeholder="Enter password"
-          className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+          className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
         />
         {passwordError && <p className="text-xs text-danger">{passwordError}</p>}
         <p className="text-xs text-text-faint">Checked entirely on your device — nothing is ever uploaded.</p>

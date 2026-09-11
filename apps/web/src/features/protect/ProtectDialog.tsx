@@ -175,25 +175,25 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setTab("add")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${tab === "add" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${tab === "add" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Add password
           </button>
           <button
             type="button"
             onClick={() => setTab("remove")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${tab === "remove" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${tab === "remove" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Remove protection
           </button>
           <button
             type="button"
             onClick={() => setTab("sanitize")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${tab === "sanitize" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${tab === "sanitize" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Clean metadata
           </button>
@@ -207,7 +207,7 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 type="password"
                 value={userPassword}
                 onChange={(e) => setUserPassword(e.target.value)}
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm text-text">
@@ -216,7 +216,7 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 type="password"
                 value={ownerPassword}
                 onChange={(e) => setOwnerPassword(e.target.value)}
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             <div className="flex flex-col gap-1.5">
@@ -243,7 +243,7 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void handleRemoveProtection();
                 }}
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             {removeError && <p className="text-xs text-danger">{removeError}</p>}
@@ -272,7 +272,7 @@ export function ProtectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               ))}
             </div>
             {sanitizeReport && (
-              <div className="rounded-[--radius-sm] border border-border bg-bg-elevated/60 p-3 text-xs text-text-muted">
+              <div className="rounded-(--radius-sm) border border-border bg-bg-elevated/60 p-3 text-xs text-text-muted">
                 <p className="mb-1 font-medium text-text">Result</p>
                 <ul className="flex flex-col gap-0.5">
                   <li>{sanitizeReport.clearedInfoMetadata ? "✓ Document info cleared" : "– No document info to clear"}</li>

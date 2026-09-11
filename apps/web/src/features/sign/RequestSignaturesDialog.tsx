@@ -361,12 +361,12 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
       {links ? (
         <div className="flex flex-col gap-2">
           {links.map((link) => (
-            <div key={link.email} className="flex items-center justify-between gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5">
+            <div key={link.email} className="flex items-center justify-between gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2.5">
               <span className="truncate text-sm text-text">{link.email}</span>
               <button
                 type="button"
                 onClick={() => void handleCopy(link)}
-                className="flex shrink-0 items-center gap-1 rounded-[--radius-sm] px-2 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
+                className="flex shrink-0 items-center gap-1 rounded-(--radius-sm) px-2 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
               >
                 {copiedEmail === link.email ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copiedEmail === link.email ? "Copied" : "Copy link"}
@@ -379,9 +379,9 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
           <button
             type="button"
             onClick={startFromScratch}
-            className="flex items-center gap-3 rounded-[--radius-md] border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-primary/50 hover:bg-surface-hover"
+            className="flex items-center gap-3 rounded-(--radius-md) border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-primary/50 hover:bg-surface-hover"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[--radius-sm] bg-primary-muted text-primary">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-sm) bg-primary-muted text-primary">
               <FileSignature className="h-[18px] w-[18px]" />
             </div>
             <div>
@@ -399,9 +399,9 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                   type="button"
                   disabled={isLoadingTemplate}
                   onClick={() => void handleSelectTemplate(t.id)}
-                  className="flex items-center gap-3 rounded-[--radius-md] border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-primary/50 hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50"
+                  className="flex items-center gap-3 rounded-(--radius-md) border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-primary/50 hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[--radius-sm] bg-ai-muted text-ai">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-sm) bg-ai-muted text-ai">
                     <Sparkles className="h-[18px] w-[18px]" />
                   </div>
                   <div>
@@ -438,7 +438,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                 value={signer.email}
                 onChange={(e) => updateSigner(i, { email: e.target.value })}
                 placeholder="signer@example.com"
-                className="h-9 flex-1 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 flex-1 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
               <input
                 type="text"
@@ -446,7 +446,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                 onChange={(e) => updateSigner(i, { name: e.target.value })}
                 placeholder={mode === "template" ? "Role" : "Name (optional)"}
                 readOnly={mode === "template"}
-                className="h-9 w-36 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring] read-only:text-text-faint"
+                className="h-9 w-36 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring) read-only:text-text-faint"
               />
               {mode === "scratch" && signers.length > 1 && (
                 <button type="button" onClick={() => removeSigner(i)} className="text-text-faint hover:text-text">
@@ -464,14 +464,14 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                 <BulkAddSignersInput onAdd={handleBulkAdd} />
               </div>
 
-              <div className="mt-1 flex items-center gap-2 rounded-[--radius-sm] bg-surface p-1">
+              <div className="mt-1 flex items-center gap-2 rounded-(--radius-sm) bg-surface p-1">
                 {(["parallel", "sequential"] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setSigningMode(m)}
                     className={cn(
-                      "flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium capitalize transition-colors",
+                      "flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium capitalize transition-colors",
                       signingMode === m ? "bg-primary text-primary-text" : "text-text-muted hover:text-text",
                     )}
                   >
@@ -499,7 +499,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                     type="button"
                     onClick={() => setActiveSignerIndex(i)}
                     className={cn(
-                      "flex items-center gap-2 truncate rounded-[--radius-sm] px-2 py-1.5 text-left text-xs",
+                      "flex items-center gap-2 truncate rounded-(--radius-sm) px-2 py-1.5 text-left text-xs",
                       activeSignerIndex === i ? "bg-primary-muted text-primary" : "text-text-muted hover:bg-surface-hover hover:text-text",
                     )}
                   >
@@ -519,7 +519,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                     type="button"
                     onClick={() => setActiveFieldType(activeFieldType === type ? null : type)}
                     className={cn(
-                      "rounded-[--radius-sm] px-2 py-1.5 text-left text-xs",
+                      "rounded-(--radius-sm) px-2 py-1.5 text-left text-xs",
                       activeFieldType === type ? "bg-primary-muted text-primary" : "text-text-muted hover:bg-surface-hover hover:text-text",
                     )}
                   >
@@ -541,7 +541,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
               </span>
               <IconButton icon={<ChevronRight />} label="Next page" size="sm" disabled={pageNumber >= (meta?.pageCount ?? 1)} onClick={() => setPageNumber((p) => p + 1)} />
             </div>
-            <div className="relative mx-auto max-h-[65vh] overflow-auto rounded-[--radius-sm] border border-border bg-bg">
+            <div className="relative mx-auto max-h-[65vh] overflow-auto rounded-(--radius-sm) border border-border bg-bg">
               <div className="relative inline-block">
                 <canvas ref={canvasRef} className="block" />
                 <FieldPlacementOverlay
@@ -571,12 +571,12 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
               value={senderName}
               onChange={(e) => setSenderName(e.target.value)}
               placeholder="e.g. Jane Doe"
-              className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
           </div>
           <div className="flex flex-col gap-2">
             {signers.map((s, i) => (
-              <div key={i} className="flex items-center justify-between gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5 text-sm">
+              <div key={i} className="flex items-center justify-between gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2.5 text-sm">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: SIGNER_COLORS[i % SIGNER_COLORS.length] }} aria-hidden />
                   <span className="truncate text-text">{s.name.trim() || s.email}</span>
@@ -592,7 +592,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
             rather.
           </p>
           {mode === "scratch" && (
-            <div className="flex flex-col gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5">
+            <div className="flex flex-col gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2.5">
               <label className="flex items-center gap-2 text-sm text-text">
                 <input type="checkbox" checked={saveAsTemplate} onChange={(e) => setSaveAsTemplate(e.target.checked)} />
                 Save this layout as a reusable template
@@ -603,7 +603,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder="Template name, e.g. Standard residential lease"
-                  className="h-9 rounded-[--radius-sm] border border-border-strong bg-bg px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                  className="h-9 rounded-(--radius-sm) border border-border-strong bg-bg px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
                 />
               )}
             </div>

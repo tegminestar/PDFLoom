@@ -88,7 +88,7 @@ export function AnnotateToolbar() {
             <select
               value={stampPreset}
               onChange={(e) => setStampPreset(e.target.value as StampPreset)}
-              className="h-8 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-sm text-text outline-none"
+              className="h-8 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none"
             >
               {STAMP_PRESETS.map((p) => (
                 <option key={p.id} value={p.id}>

@@ -48,14 +48,14 @@ export function BulkAddSignersInput({ onAdd }: { onAdd: (entries: BulkSignerEntr
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5">
+    <div className="flex flex-col gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2.5">
       <textarea
         autoFocus
         value={raw}
         onChange={(e) => setRaw(e.target.value)}
         placeholder={"One per line:\njane@example.com, Jane Doe\njohn@example.com"}
         rows={4}
-        className="resize-none rounded-[--radius-sm] border border-border-strong bg-bg px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+        className="resize-none rounded-(--radius-sm) border border-border-strong bg-bg px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
       />
       <div className="flex items-center gap-2">
         <Button variant="primary" size="sm" onClick={handleAdd}>

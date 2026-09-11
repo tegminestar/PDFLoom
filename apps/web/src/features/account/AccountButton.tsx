@@ -47,7 +47,7 @@ export function AccountButton() {
             icon={theme === "dark" ? <Sun /> : <Moon />}
             label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
             onClick={toggleTheme}
-            className="border border-border-strong bg-surface shadow-[--shadow-floating]"
+            className="border border-border-strong bg-surface shadow-(--shadow-floating)"
           />
         )}
         {isAuthConfigured &&
@@ -67,8 +67,8 @@ export function AccountButton() {
               onClick={() => setOpen(true)}
               className={
                 isPro
-                  ? "border border-ai/40 bg-ai-muted shadow-[--shadow-floating]"
-                  : "border border-border-strong bg-surface shadow-[--shadow-floating]"
+                  ? "border border-ai/40 bg-ai-muted shadow-(--shadow-floating)"
+                  : "border border-border-strong bg-surface shadow-(--shadow-floating)"
               }
             />
           ) : (
@@ -84,7 +84,7 @@ export function AccountButton() {
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex items-center gap-2 rounded-[--radius-md] bg-primary px-3.5 py-2 text-sm font-semibold text-primary-text shadow-[--shadow-floating] transition-colors hover:bg-primary-hover active:bg-primary-active"
+              className="flex items-center gap-2 rounded-(--radius-md) bg-primary px-3.5 py-2 text-sm font-semibold text-primary-text shadow-(--shadow-floating) transition-colors hover:bg-primary-hover active:bg-primary-active"
             >
               <LogIn className="h-4 w-4" />
               Sign in

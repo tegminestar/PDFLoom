@@ -54,8 +54,8 @@ export function CommandPalette({ groups, placeholder = "Type a command or search
       onOpenChange={setOpen}
       label="Command palette"
       shouldFilter
-      className="loom-pop fixed left-1/2 top-[18vh] z-[200] w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-[--radius-lg] border border-border-strong bg-bg-elevated shadow-[--shadow-floating]"
-      overlayClassName="loom-overlay fixed inset-0 z-[199] bg-[--color-overlay]"
+      className="loom-pop fixed left-1/2 top-[18vh] z-[200] w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-(--radius-lg) border border-border-strong bg-bg-elevated shadow-(--shadow-floating)"
+      overlayClassName="loom-overlay fixed inset-0 z-[199] bg-(--color-overlay)"
     >
       <div className="flex items-center gap-2.5 border-b border-border px-3.5">
         <Search className="h-4 w-4 shrink-0 text-text-faint" />
@@ -83,7 +83,7 @@ export function CommandPalette({ groups, placeholder = "Type a command or search
                 value={[item.label, ...(item.keywords ?? [])].join(" ")}
                 onSelect={() => runAndClose(item.onSelect)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2.5 rounded-[--radius-sm] px-2.5 py-2 text-text",
+                  "flex cursor-pointer items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-2 text-text",
                   "data-[selected=true]:bg-surface-hover",
                   item.tone === "ai" && "data-[selected=true]:bg-ai-muted",
                 )}

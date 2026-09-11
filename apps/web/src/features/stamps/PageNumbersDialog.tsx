@@ -69,18 +69,18 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setMode("numbers")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${mode === "numbers" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${mode === "numbers" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Page numbers
           </button>
           <button
             type="button"
             onClick={() => setMode("bates")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${mode === "bates" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${mode === "bates" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Bates numbering
           </button>
@@ -91,7 +91,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
           <select
             value={position}
             onChange={(e) => setPosition(e.target.value as PageNumberPosition)}
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none"
           >
             {POSITIONS.map((p) => (
               <option key={p.id} value={p.id}>
@@ -108,7 +108,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
               <input
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none"
               />
               <span className="text-xs text-text-faint">Use {"{page}"} and {"{total}"}.</span>
             </label>
@@ -119,7 +119,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
                 min={1}
                 value={startAt}
                 onChange={(e) => setStartAt(Number.parseInt(e.target.value, 10) || 1)}
-                className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none"
+                className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none"
               />
             </label>
           </>
@@ -131,7 +131,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
                 value={batesPrefix}
                 onChange={(e) => setBatesPrefix(e.target.value)}
                 placeholder="e.g. ABC-"
-                className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint"
               />
             </label>
             <label className="flex items-center justify-between gap-2 text-sm text-text">
@@ -141,7 +141,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
                 min={0}
                 value={batesStart}
                 onChange={(e) => setBatesStart(Number.parseInt(e.target.value, 10) || 0)}
-                className="h-8 w-24 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none"
+                className="h-8 w-24 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none"
               />
             </label>
             <label className="flex items-center justify-between gap-2 text-sm text-text">
@@ -152,7 +152,7 @@ export function PageNumbersDialog({ open, onOpenChange }: { open: boolean; onOpe
                 max={12}
                 value={batesDigits}
                 onChange={(e) => setBatesDigits(Number.parseInt(e.target.value, 10) || 6)}
-                className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none"
+                className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none"
               />
             </label>
             <p className="text-xs text-text-faint">

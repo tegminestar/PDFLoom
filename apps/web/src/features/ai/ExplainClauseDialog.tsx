@@ -76,7 +76,7 @@ export function ExplainClauseDialog({ open, onOpenChange, clauseText }: { open: 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <span className="text-sm text-text">Selected passage</span>
-          <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-[--radius-md] border border-border bg-surface p-3 text-xs italic leading-relaxed text-text-muted">{clauseText}</p>
+          <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-(--radius-md) border border-border bg-surface p-3 text-xs italic leading-relaxed text-text-muted">{clauseText}</p>
         </div>
 
         {status && <p className="text-xs text-ai">{status}</p>}
@@ -84,7 +84,7 @@ export function ExplainClauseDialog({ open, onOpenChange, clauseText }: { open: 
         {result && (
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-text">In plain language</span>
-            <p className="whitespace-pre-wrap rounded-[--radius-md] border border-ai/40 bg-ai-muted p-3 text-sm leading-relaxed text-text">{result}</p>
+            <p className="whitespace-pre-wrap rounded-(--radius-md) border border-ai/40 bg-ai-muted p-3 text-sm leading-relaxed text-text">{result}</p>
           </div>
         )}
 

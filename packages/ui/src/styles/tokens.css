@@ -46,10 +46,16 @@
 
   --loom-danger: #f2555a;
   --loom-danger-hover: #f57579;
+  --loom-danger-active: #d63f44;
   --loom-danger-muted: #f2555a26;
   --loom-success: #3ecf8e;
+  --loom-success-hover: #5ad9a2;
+  --loom-success-active: #2fb87a;
   --loom-success-muted: #3ecf8e26;
   --loom-warning: #f5c343;
+  --loom-warning-hover: #f7cf6b;
+  --loom-warning-active: #dba82a;
+  --loom-warning-muted: #f5c34326;
 
   --loom-focus-ring: #6a5adf;
   --loom-overlay: rgb(6 7 10 / 0.6);
@@ -83,10 +89,16 @@
 
   --loom-danger: #d63a3f;
   --loom-danger-hover: #c22e33;
+  --loom-danger-active: #a92529;
   --loom-danger-muted: #d63a3f1a;
   --loom-success: #1f9d67;
+  --loom-success-hover: #198656;
+  --loom-success-active: #146e46;
   --loom-success-muted: #1f9d671a;
   --loom-warning: #b8860b;
+  --loom-warning-hover: #a17509;
+  --loom-warning-active: #8a6408;
+  --loom-warning-muted: #b8860b1a;
 
   --loom-focus-ring: #6c5ce7;
   --loom-overlay: rgb(20 20 30 / 0.4);
@@ -143,10 +155,16 @@
 
   --color-danger: var(--loom-danger);
   --color-danger-hover: var(--loom-danger-hover);
+  --color-danger-active: var(--loom-danger-active);
   --color-danger-muted: var(--loom-danger-muted);
   --color-success: var(--loom-success);
+  --color-success-hover: var(--loom-success-hover);
+  --color-success-active: var(--loom-success-active);
   --color-success-muted: var(--loom-success-muted);
   --color-warning: var(--loom-warning);
+  --color-warning-hover: var(--loom-warning-hover);
+  --color-warning-active: var(--loom-warning-active);
+  --color-warning-muted: var(--loom-warning-muted);
 
   --color-focus-ring: var(--loom-focus-ring);
   --color-overlay: var(--loom-overlay);
@@ -156,8 +174,25 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
 
+  /* Elevation scale — xs/sm/md/lg step up in spread+blur+opacity, panel/
+     floating are kept as the top two (unchanged values, existing consumers
+     like Dialog stay pixel-identical) rather than renamed, so this is
+     purely additive. */
+  --shadow-xs: 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 2px 8px -2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 6px 20px -6px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 32px -8px rgb(0 0 0 / 0.45);
   --shadow-panel: 0 8px 30px -8px rgb(0 0 0 / 0.35);
   --shadow-floating: 0 12px 40px -10px rgb(0 0 0 / 0.5);
+
+  /* Motion scale — mirrors the durations Dialog's own loom-pop/loom-overlay
+     keyframes already use (120ms/150ms), named so new components reach for
+     a token instead of another hardcoded duration. */
+  --duration-fast: 100ms;
+  --duration-base: 150ms;
+  --duration-slow: 240ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html,
@@ -227,10 +262,27 @@ html[data-theme="light"] {
     opacity: 1;
   }
 }
+@keyframes loom-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.loom-skeleton {
+  animation: loom-skeleton-pulse 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .loom-pop,
   .loom-overlay {
     animation-duration: 0.01ms !important;
+  }
+  .loom-skeleton {
+    animation: none;
+    opacity: 0.75;
   }
 }
 

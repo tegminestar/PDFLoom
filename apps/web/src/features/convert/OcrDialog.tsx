@@ -141,7 +141,7 @@ export function OcrDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
             value={lang}
             onChange={(e) => setLang(e.target.value as OcrLanguage)}
             disabled={isRunning}
-            className="h-8 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-sm text-text outline-none"
+            className="h-8 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none"
           >
             {LANGUAGES.map((l) => (
               <option key={l.id} value={l.id}>
@@ -156,14 +156,14 @@ export function OcrDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
 
         <div className="flex flex-col gap-2">
           <span className="text-sm text-text">Pages</span>
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {(["all", "current", "custom"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setRangeMode(m)}
                 disabled={isRunning}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${rangeMode === m ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${rangeMode === m ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
               >
                 {m === "all" ? "All" : m === "current" ? "Current" : "Custom"}
               </button>
@@ -175,7 +175,7 @@ export function OcrDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
               onChange={(e) => setCustomRange(e.target.value)}
               placeholder={`e.g. 1-3, 5 (1–${pageCount})`}
               disabled={isRunning}
-              className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
           )}
         </div>

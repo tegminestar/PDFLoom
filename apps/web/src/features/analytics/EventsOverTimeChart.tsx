@@ -14,7 +14,7 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { value
   const point = payload[0];
   if (!point) return null;
   return (
-    <div className="rounded-[--radius-sm] border border-border-strong bg-surface px-3 py-2 shadow-[--shadow-floating]">
+    <div className="rounded-(--radius-sm) border border-border-strong bg-surface px-3 py-2 shadow-(--shadow-floating)">
       <div className="text-sm font-semibold text-text">{point.value.toLocaleString()}</div>
       <div className="text-xs text-text-faint">{formatTick(point.payload.date)}</div>
     </div>

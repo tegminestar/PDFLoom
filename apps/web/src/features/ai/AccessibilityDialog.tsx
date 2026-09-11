@@ -193,8 +193,8 @@ export function AccessibilityDialog({ open, onOpenChange }: { open: boolean; onO
         {images !== null && images.length > 0 && (
           <div className="flex max-h-96 flex-col gap-3 overflow-y-auto">
             {images.map((img, i) => (
-              <div key={`${img.pageIndex}-${img.resourceName}`} className="flex gap-3 rounded-[--radius-md] border border-border bg-surface p-2.5">
-                {img.thumbnailUrl && <img src={img.thumbnailUrl} alt="" className="h-16 w-16 shrink-0 rounded-[--radius-sm] object-cover" />}
+              <div key={`${img.pageIndex}-${img.resourceName}`} className="flex gap-3 rounded-(--radius-md) border border-border bg-surface p-2.5">
+                {img.thumbnailUrl && <img src={img.thumbnailUrl} alt="" className="h-16 w-16 shrink-0 rounded-(--radius-sm) object-cover" />}
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <span className="text-xs text-text-faint">Page {img.pageIndex + 1}</span>
                   <input
@@ -202,7 +202,7 @@ export function AccessibilityDialog({ open, onOpenChange }: { open: boolean; onO
                     onChange={(e) => updateCaption(i, e.target.value)}
                     disabled={img.skipped}
                     placeholder="Alt text…"
-                    className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-sm text-text outline-none disabled:opacity-50"
+                    className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-sm text-text outline-none disabled:opacity-50"
                   />
                   <label className="flex items-center gap-1.5 text-xs text-text-muted">
                     <input type="checkbox" checked={img.skipped} onChange={() => toggleSkip(i)} />

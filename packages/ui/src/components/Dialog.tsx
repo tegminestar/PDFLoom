@@ -19,12 +19,12 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
-        <RadixDialog.Overlay className="loom-overlay fixed inset-0 z-[199] bg-[--color-overlay]" />
+        <RadixDialog.Overlay className="loom-overlay fixed inset-0 z-[199] bg-(--color-overlay)" />
         <RadixDialog.Content
           style={{ width }}
           className={cn(
             "loom-pop fixed left-1/2 top-1/2 z-[200] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2",
-            "rounded-[--radius-lg] border border-border-strong bg-bg-elevated shadow-[--shadow-floating] outline-none",
+            "rounded-(--radius-lg) border border-border-strong bg-bg-elevated shadow-(--shadow-floating) outline-none",
           )}
         >
           <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">

@@ -106,7 +106,7 @@ export function TranslateDialog({ open, onOpenChange }: { open: boolean; onOpenC
             value={language.code}
             onChange={(e) => setLanguage(TRANSLATION_LANGUAGES.find((l) => l.code === e.target.value) ?? TRANSLATION_LANGUAGES[0]!)}
             disabled={isRunning}
-            className="h-8 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-sm text-text outline-none"
+            className="h-8 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none"
           >
             {TRANSLATION_LANGUAGES.map((l) => (
               <option key={l.code} value={l.code}>
@@ -118,14 +118,14 @@ export function TranslateDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
         <div className="flex flex-col gap-2">
           <span className="text-sm text-text">Scope</span>
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {(["current", "all"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setRange(m)}
                 disabled={isRunning}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${range === m ? "bg-ai text-ai-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${range === m ? "bg-ai text-ai-text" : "text-text-muted hover:text-text"}`}
               >
                 {m === "current" ? "Current page" : "Whole document"}
               </button>
@@ -144,13 +144,13 @@ export function TranslateDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="flex items-center gap-1 rounded-[--radius-sm] px-1.5 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
+                className="flex items-center gap-1 rounded-(--radius-sm) px-1.5 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? "Copied" : "Copy"}
               </button>
             </div>
-            <p className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-[--radius-md] border border-border bg-surface p-3 text-sm leading-relaxed text-text">{result.translatedText}</p>
+            <p className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-(--radius-md) border border-border bg-surface p-3 text-sm leading-relaxed text-text">{result.translatedText}</p>
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ function OutlineEntry({ node, depth, onNavigate }: { node: OutlineNode; depth: n
   return (
     <div>
       <div
-        className="flex items-center gap-1 rounded-[--radius-sm] py-1 pr-2 hover:bg-surface-hover"
+        className="flex items-center gap-1 rounded-(--radius-sm) py-1 pr-2 hover:bg-surface-hover"
         style={{ paddingLeft: 8 + depth * 14 }}
       >
         {hasChildren ? (

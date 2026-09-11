@@ -99,20 +99,20 @@ export function CompressDialog({ open, onOpenChange }: { open: boolean; onOpenCh
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           {QUALITY_PRESETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => setPreset(p.id)}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${preset === p.id ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${preset === p.id ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               {p.label}
             </button>
           ))}
         </div>
 
-        <p className="rounded-[--radius-sm] border border-border bg-bg-elevated/60 p-3 text-xs leading-relaxed text-text-faint">
+        <p className="rounded-(--radius-sm) border border-border bg-bg-elevated/60 p-3 text-xs leading-relaxed text-text-faint">
           This rebuilds every page as a flattened image. Text will no longer be selectable, searchable, or
           copyable afterward — best suited for scanned documents or pages that are already mostly images.
         </p>

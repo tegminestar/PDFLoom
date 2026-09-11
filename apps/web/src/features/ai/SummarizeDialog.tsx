@@ -125,14 +125,14 @@ export function SummarizeDialog({ open, onOpenChange }: { open: boolean; onOpenC
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <span className="text-sm text-text">Scope</span>
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {(["all", "current"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setRange(m)}
                 disabled={isRunning}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${range === m ? "bg-ai text-ai-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${range === m ? "bg-ai text-ai-text" : "text-text-muted hover:text-text"}`}
               >
                 {m === "all" ? "Whole document" : "Current page"}
               </button>
@@ -154,13 +154,13 @@ export function SummarizeDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="flex items-center gap-1 rounded-[--radius-sm] px-1.5 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
+                className="flex items-center gap-1 rounded-(--radius-sm) px-1.5 py-1 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
               >
                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? "Copied" : "Copy"}
               </button>
             </div>
-            <p className="whitespace-pre-wrap rounded-[--radius-md] border border-border bg-surface p-3 text-sm leading-relaxed text-text">{result.summary}</p>
+            <p className="whitespace-pre-wrap rounded-(--radius-md) border border-border bg-surface p-3 text-sm leading-relaxed text-text">{result.summary}</p>
             {result.wasChunked && (
               <p className="text-xs text-text-faint">
                 This document was long, so it was summarized in {result.chunkCount} parts and then combined into the summary above.

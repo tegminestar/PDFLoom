@@ -82,7 +82,7 @@ export function ExportOfficeDialog({ open, onOpenChange }: { open: boolean; onOp
             key={f.id}
             type="button"
             onClick={() => setFormat(f.id)}
-            className={`flex items-center justify-between rounded-[--radius-sm] border px-3 py-2.5 text-left text-sm transition-colors ${
+            className={`flex items-center justify-between rounded-(--radius-sm) border px-3 py-2.5 text-left text-sm transition-colors ${
               format === f.id ? "border-primary bg-primary-muted text-text" : "border-border-strong bg-surface text-text-muted hover:text-text"
             }`}
           >

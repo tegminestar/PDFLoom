@@ -190,7 +190,7 @@ export function Viewer() {
       role="region"
       aria-label="Document pages"
       onKeyDown={handleKeyDown}
-      className="h-full w-full overflow-y-auto overflow-x-hidden bg-bg outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[--color-focus-ring]"
+      className="h-full w-full overflow-y-auto overflow-x-hidden bg-bg outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--color-focus-ring)"
     >
       <div
         className={`mx-auto flex items-center py-8 ${scrollMode === "two-page" ? "flex-row justify-center" : "flex-col"}`}

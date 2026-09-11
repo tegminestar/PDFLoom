@@ -131,18 +131,18 @@ export function ExportImagesDialog({ open, onOpenChange }: { open: boolean; onOp
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setFormat("png")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${format === "png" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${format === "png" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             PNG
           </button>
           <button
             type="button"
             onClick={() => setFormat("jpeg")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${format === "jpeg" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${format === "jpeg" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             JPEG
           </button>
@@ -158,7 +158,7 @@ export function ExportImagesDialog({ open, onOpenChange }: { open: boolean; onOp
               step={1}
               value={dpi}
               onChange={(e) => setDpi(Number.parseInt(e.target.value, 10) || 150)}
-              className="h-8 w-16 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none"
+              className="h-8 w-16 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none"
             />
             <span className="text-xs text-text-faint">DPI</span>
           </div>
@@ -182,13 +182,13 @@ export function ExportImagesDialog({ open, onOpenChange }: { open: boolean; onOp
 
         <div className="flex flex-col gap-2">
           <span className="text-sm text-text">Pages</span>
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {(["all", "current", "custom"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => setRangeMode(m)}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${rangeMode === m ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${rangeMode === m ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
               >
                 {m === "all" ? "All" : m === "current" ? "Current" : "Custom"}
               </button>
@@ -199,7 +199,7 @@ export function ExportImagesDialog({ open, onOpenChange }: { open: boolean; onOp
               value={customRange}
               onChange={(e) => setCustomRange(e.target.value)}
               placeholder={`e.g. 1-3, 5 (1–${pageCount})`}
-              className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
           )}
           {rangeMode === "custom" && customRange && !resolvedPages && (

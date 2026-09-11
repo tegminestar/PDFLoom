@@ -29,7 +29,7 @@ export function SearchPanel() {
   return (
     <Panel title="Search" onClose={() => setActivePanel(null)} width={280}>
       <div className="flex flex-col gap-2 p-1">
-        <div className="flex items-center gap-1.5 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 py-1.5">
+        <div className="flex items-center gap-1.5 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 py-1.5">
           {isSearching ? (
             <Loader2 className="h-4 w-4 shrink-0 animate-spin text-text-faint" />
           ) : (
@@ -71,7 +71,7 @@ export function SearchPanel() {
             type="button"
             onClick={() => goToSearchIndex(i)}
             className={cn(
-              "rounded-[--radius-sm] px-2.5 py-2 text-left text-xs leading-snug",
+              "rounded-(--radius-sm) px-2.5 py-2 text-left text-xs leading-snug",
               i === activeSearchIndex ? "bg-ai-muted text-text" : "text-text-muted hover:bg-surface-hover",
             )}
           >

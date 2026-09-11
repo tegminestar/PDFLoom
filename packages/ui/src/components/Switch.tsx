@@ -22,7 +22,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(
         className={cn(
           "relative h-5 w-9 shrink-0 rounded-full outline-none transition-colors duration-150",
           "bg-border-strong data-[state=checked]:bg-primary",
-          "focus-visible:ring-2 focus-visible:ring-[--color-focus-ring] focus-visible:ring-offset-2 focus-visible:ring-offset-[--color-bg]",
+          "focus-visible:ring-2 focus-visible:ring-(--color-focus-ring) focus-visible:ring-offset-2 focus-visible:ring-offset-(--color-bg)",
           "disabled:pointer-events-none disabled:opacity-40",
           className,
         )}

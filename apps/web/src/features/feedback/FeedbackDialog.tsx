@@ -98,13 +98,13 @@ export function FeedbackDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {(Object.keys(CATEGORY_LABEL) as Category[]).map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCategory(c)}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-xs font-medium transition-colors ${category === c ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-xs font-medium transition-colors ${category === c ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
               >
                 {CATEGORY_LABEL[c]}
               </button>
@@ -118,7 +118,7 @@ export function FeedbackDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="What's on your mind?"
-              className="resize-none rounded-[--radius-sm] border border-border-strong bg-surface p-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="resize-none rounded-(--radius-sm) border border-border-strong bg-surface p-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-text">
@@ -128,7 +128,7 @@ export function FeedbackDialog({ open, onOpenChange }: { open: boolean; onOpenCh
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
           </label>
         </div>

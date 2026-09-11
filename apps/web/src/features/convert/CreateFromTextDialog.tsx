@@ -95,18 +95,18 @@ export function CreateFromTextDialog({ open, onOpenChange }: { open: boolean; on
     >
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             <button
               type="button"
               onClick={() => setMode("markdown")}
-              className={`rounded-[--radius-sm] px-3 py-1.5 text-sm font-medium transition-colors ${mode === "markdown" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`rounded-(--radius-sm) px-3 py-1.5 text-sm font-medium transition-colors ${mode === "markdown" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               Markdown
             </button>
             <button
               type="button"
               onClick={() => setMode("html")}
-              className={`rounded-[--radius-sm] px-3 py-1.5 text-sm font-medium transition-colors ${mode === "html" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`rounded-(--radius-sm) px-3 py-1.5 text-sm font-medium transition-colors ${mode === "html" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               HTML
             </button>
@@ -132,7 +132,7 @@ export function CreateFromTextDialog({ open, onOpenChange }: { open: boolean; on
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Document title (optional)"
-          className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+          className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
         />
 
         <textarea
@@ -140,7 +140,7 @@ export function CreateFromTextDialog({ open, onOpenChange }: { open: boolean; on
           onChange={(e) => setText(e.target.value)}
           placeholder={mode === "markdown" ? PLACEHOLDER_MD : "<h1>My document</h1>\n<p>Paste or write HTML here.</p>"}
           rows={12}
-          className="resize-y rounded-[--radius-sm] border border-border-strong bg-surface p-3 font-mono text-xs leading-relaxed text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+          className="resize-y rounded-(--radius-sm) border border-border-strong bg-surface p-3 font-mono text-xs leading-relaxed text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
         />
       </div>
     </Dialog>

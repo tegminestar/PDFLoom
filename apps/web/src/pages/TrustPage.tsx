@@ -56,7 +56,7 @@ export function TrustPage() {
       <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link to="/" className="flex items-center gap-2.5">
-            <Mark size={28} className="rounded-[--radius-sm]" />
+            <Mark size={28} className="rounded-(--radius-sm)" />
             <span className="font-serif text-lg font-medium tracking-tight">PDFLoom</span>
           </Link>
           <Button asChild variant="primary" size="sm">
@@ -86,8 +86,8 @@ export function TrustPage() {
               { icon: Lock, title: "Storage", body: "Recent-files history and any saved-to-your-computer copies live only in your browser's own storage or your file system — PDFLoom keeps no server-side copy of anything you open or create." },
               { icon: Mail, title: "Optional sign-in", body: "Creating an account (for Pro features) uses a magic-link email — that email address is the only thing it collects, and it's entirely optional. The free product needs no account at all." },
             ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="flex flex-col gap-3 rounded-[--radius-lg] border border-border bg-bg-elevated p-5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[--radius-md] bg-primary-muted text-primary">
+              <div key={title} className="flex flex-col gap-3 rounded-(--radius-lg) border border-border bg-bg-elevated p-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-(--radius-md) bg-primary-muted text-primary">
                   <Icon className="h-4.5 w-4.5" />
                 </div>
                 <h3 className="text-sm font-semibold text-text">{title}</h3>
@@ -107,9 +107,9 @@ export function TrustPage() {
           </div>
           <div className="flex flex-col gap-6">
             {EXCEPTIONS.map(({ icon: Icon, title, whatItDoes, whatItTouches, whatItNeverDoes }) => (
-              <div key={title} className="flex flex-col gap-5 rounded-[--radius-lg] border border-border bg-bg-elevated p-6">
+              <div key={title} className="flex flex-col gap-5 rounded-(--radius-lg) border border-border bg-bg-elevated p-6">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[--radius-md] bg-ai-muted text-ai">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-(--radius-md) bg-ai-muted text-ai">
                     <Icon className="h-4.5 w-4.5" />
                   </div>
                   <h3 className="text-base font-semibold text-text">{title}</h3>
@@ -124,7 +124,7 @@ export function TrustPage() {
           </div>
         </section>
 
-        <section className="flex flex-col items-center gap-6 rounded-[--radius-lg] border border-border bg-bg-elevated p-8 text-center">
+        <section className="flex flex-col items-center gap-6 rounded-(--radius-lg) border border-border bg-bg-elevated p-8 text-center">
           <Code className="h-8 w-8 text-text-muted" />
           <h2 className="font-serif text-2xl font-medium tracking-tight text-text">Don't take our word for it</h2>
           <p className="max-w-xl text-sm leading-relaxed text-text-muted">
@@ -150,7 +150,7 @@ export function TrustPage() {
       <footer className="border-t border-border px-6 py-10">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2 text-sm text-text-faint">
-            <Mark size={18} className="rounded-[--radius-sm]" />
+            <Mark size={18} className="rounded-(--radius-sm)" />
             PDFLoom · Weave every page
           </div>
           <Link to="/" className="text-xs text-text-faint hover:text-text">

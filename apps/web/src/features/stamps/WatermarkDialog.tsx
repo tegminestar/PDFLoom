@@ -61,22 +61,22 @@ export function WatermarkDialog({ open, onOpenChange }: { open: boolean; onOpenC
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
           />
         </label>
 
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setLayout("tile")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${layout === "tile" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${layout === "tile" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Tiled
           </button>
           <button
             type="button"
             onClick={() => setLayout("center")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${layout === "center" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${layout === "center" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Centered
           </button>
@@ -90,7 +90,7 @@ export function WatermarkDialog({ open, onOpenChange }: { open: boolean; onOpenC
             max={200}
             value={fontSize}
             onChange={(e) => setFontSize(Number.parseInt(e.target.value, 10) || 48)}
-            className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none"
+            className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none"
           />
         </label>
         <label className="flex items-center justify-between gap-2 text-sm text-text">

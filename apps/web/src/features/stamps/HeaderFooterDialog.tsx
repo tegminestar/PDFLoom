@@ -57,7 +57,7 @@ export function HeaderFooterDialog({ open, onOpenChange }: { open: boolean; onOp
             value={headerText}
             onChange={(e) => setHeaderText(e.target.value)}
             placeholder="e.g. Company Name — Confidential"
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm text-text">
@@ -66,7 +66,7 @@ export function HeaderFooterDialog({ open, onOpenChange }: { open: boolean; onOp
             value={footerText}
             onChange={(e) => setFooterText(e.target.value)}
             placeholder="e.g. Page {page} of {total}"
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 outline-none placeholder:text-text-faint focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
           />
         </label>
       </div>

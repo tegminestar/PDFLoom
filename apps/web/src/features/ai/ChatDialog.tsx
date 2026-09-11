@@ -205,7 +205,7 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
             }}
             disabled={availability !== "available" || isBusy}
             placeholder={availability === "available" ? "Ask a question about this document…" : "Chat isn't available on this device…"}
-            className="h-9 min-w-0 flex-1 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring] disabled:opacity-50"
+            className="h-9 min-w-0 flex-1 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring) disabled:opacity-50"
           />
           <Button variant="ai" size="sm" disabled={availability !== "available" || isBusy || !input.trim()} onClick={() => void handleSend()}>
             <Send className="h-4 w-4" />
@@ -215,7 +215,7 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
     >
       <div className="flex flex-col gap-3">
         {availability === "unavailable" && (
-          <p className="rounded-[--radius-md] border border-border bg-surface p-3 text-sm text-text-muted">
+          <p className="rounded-(--radius-md) border border-border bg-surface p-3 text-sm text-text-muted">
             This browser/device doesn't support WebGPU, which local AI chat requires. Every other PDFLoom AI feature (summarize, translate, smart
             redact, and more) still works here.
           </p>
@@ -232,8 +232,8 @@ export function ChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               key={i}
               className={
                 m.role === "user"
-                  ? "ml-8 rounded-[--radius-md] bg-primary/15 px-3 py-2 text-sm text-text"
-                  : "mr-8 rounded-[--radius-md] border border-ai/40 bg-ai-muted px-3 py-2 text-sm text-text"
+                  ? "ml-8 rounded-(--radius-md) bg-primary/15 px-3 py-2 text-sm text-text"
+                  : "mr-8 rounded-(--radius-md) border border-ai/40 bg-ai-muted px-3 py-2 text-sm text-text"
               }
             >
               {m.content}

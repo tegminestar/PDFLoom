@@ -72,8 +72,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             if (!open) dismiss(record.id);
           }}
           className={cn(
-            "loom-pop grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-[--radius-md] border border-border-strong",
-            "bg-bg-elevated p-3.5 pr-2.5 shadow-[--shadow-floating]",
+            "loom-pop grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-(--radius-md) border border-border-strong",
+            "bg-bg-elevated p-3.5 pr-2.5 shadow-(--shadow-floating)",
             "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]",
             "data-[swipe=end]:animate-[loom-fade-out_100ms_ease-in_forwards]",
           )}

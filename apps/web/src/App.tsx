@@ -490,7 +490,7 @@ export function App() {
     <div className="flex h-dvh w-dvw overflow-hidden bg-bg text-text">
       {meta && (
         <Rail>
-          <Mark size={30} className="mb-2 rounded-[--radius-sm]" />
+          <Mark size={30} className="mb-2 rounded-(--radius-sm)" />
           <RailItem
             icon={<BookOpen />}
             label="Read"

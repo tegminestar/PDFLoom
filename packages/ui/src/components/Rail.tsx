@@ -47,8 +47,8 @@ export const RailItem = forwardRef<HTMLButtonElement, RailItemProps>(
           aria-pressed={active}
           onClick={onClick}
           className={cn(
-            "relative flex h-11 w-11 items-center justify-center rounded-[--radius-md] outline-none transition-colors duration-100",
-            "focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]",
+            "relative flex h-11 w-11 items-center justify-center rounded-(--radius-md) outline-none transition-colors duration-100",
+            "focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)",
             "[&_svg]:h-5 [&_svg]:w-5",
             active
               ? tone === "ai"

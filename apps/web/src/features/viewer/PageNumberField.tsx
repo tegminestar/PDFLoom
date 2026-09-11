@@ -29,7 +29,7 @@ export function PageNumberField() {
         onChange={(e) => setPageInput(e.target.value)}
         onBlur={commit}
         onKeyDown={onKeyDown}
-        className="h-8 w-12 shrink-0 rounded-[--radius-sm] border border-border-strong bg-surface text-center tabular-nums text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+        className="h-8 w-12 shrink-0 rounded-(--radius-sm) border border-border-strong bg-surface text-center tabular-nums text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
       />
       <span className="text-text-faint">/ {meta.pageCount}</span>
     </div>

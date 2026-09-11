@@ -69,11 +69,11 @@ export function ResizeDialog({
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setScope("all")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${scope === "all" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${scope === "all" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             All {pageCount} pages
           </button>
@@ -81,7 +81,7 @@ export function ResizeDialog({
             type="button"
             disabled={selectedPageNumbers.length === 0}
             onClick={() => setScope("selected")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${scope === "selected" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${scope === "selected" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Selected ({selectedPageNumbers.length})
           </button>
@@ -95,7 +95,7 @@ export function ResizeDialog({
                 key={key}
                 type="button"
                 onClick={() => setPresetKey(key)}
-                className={`rounded-[--radius-sm] border px-3 py-2 text-left text-sm transition-colors ${
+                className={`rounded-(--radius-sm) border px-3 py-2 text-left text-sm transition-colors ${
                   presetKey === key ? "border-primary bg-primary-muted text-text" : "border-border-strong text-text-muted hover:bg-surface-hover"
                 }`}
               >
@@ -105,7 +105,7 @@ export function ResizeDialog({
             <button
               type="button"
               onClick={() => setPresetKey("custom")}
-              className={`rounded-[--radius-sm] border px-3 py-2 text-left text-sm transition-colors ${
+              className={`rounded-(--radius-sm) border px-3 py-2 text-left text-sm transition-colors ${
                 presetKey === "custom" ? "border-primary bg-primary-muted text-text" : "border-border-strong text-text-muted hover:bg-surface-hover"
               }`}
             >
@@ -123,7 +123,7 @@ export function ResizeDialog({
                 min={72}
                 value={Math.round(customWidth)}
                 onChange={(e) => setCustomWidth(Math.max(72, Number.parseFloat(e.target.value) || 72))}
-                className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             <label className="flex items-center gap-1.5 text-sm text-text">
@@ -133,7 +133,7 @@ export function ResizeDialog({
                 min={72}
                 value={Math.round(customHeight)}
                 onChange={(e) => setCustomHeight(Math.max(72, Number.parseFloat(e.target.value) || 72))}
-                className="h-8 w-20 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-8 w-20 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-right outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
             <span className="text-xs text-text-faint">pt (72pt = 1 in)</span>

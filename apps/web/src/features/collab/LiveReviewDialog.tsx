@@ -72,7 +72,7 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
             value={participantName}
             onChange={(e) => setParticipantName(e.target.value)}
             placeholder="Shown next to your comments"
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
           />
         </label>
 
@@ -91,7 +91,7 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
                 placeholder="Enter a session code"
-                className="h-9 flex-1 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+                className="h-9 flex-1 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
               <Button variant="secondary" size="sm" disabled={!joinCode.trim()} onClick={() => joinSession(joinCode)}>
                 Join
@@ -103,7 +103,7 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-2 rounded-[--radius-md] border border-border bg-surface p-3">
+            <div className="flex items-center justify-between gap-2 rounded-(--radius-md) border border-border bg-surface p-3">
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-text-faint">Session code</span>
                 <span className="font-mono text-sm font-semibold tracking-widest text-text">{sessionCode}</span>
@@ -147,7 +147,7 @@ export function LiveReviewDialog({ open, onOpenChange }: { open: boolean; onOpen
                         setCurrentPage(c.pageIndex + 1);
                         onOpenChange(false);
                       }}
-                      className="flex flex-col gap-1 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5 text-left hover:bg-surface-hover"
+                      className="flex flex-col gap-1 rounded-(--radius-sm) border border-border-strong bg-surface p-2.5 text-left hover:bg-surface-hover"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold" style={{ color: c.authorColor }}>

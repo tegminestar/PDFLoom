@@ -216,7 +216,7 @@ export function WelcomeScreen() {
       <div className="relative m-auto grid w-full max-w-4xl gap-12 md:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-6">
           <Link to="/" className="flex w-fit items-center gap-4" aria-label="PDFLoom home">
-            <Mark size={48} className="rounded-[--radius-md] shadow-[--shadow-panel]" />
+            <Mark size={48} className="rounded-(--radius-md) shadow-(--shadow-panel)" />
             <div>
               <div className="font-serif text-display font-semibold leading-none tracking-tight text-text">PDFLoom</div>
               <div className="mt-1.5 text-sm text-text-faint">Weave every page</div>
@@ -231,7 +231,7 @@ export function WelcomeScreen() {
             onDragLeave={() => setIsDraggingOver(false)}
             onDrop={(e) => void handleDrop(e)}
             className={cn(
-              "flex flex-col items-center justify-center gap-5 rounded-[--radius-xl] border-2 border-dashed p-12 text-center shadow-[--shadow-panel] transition-colors",
+              "flex flex-col items-center justify-center gap-5 rounded-(--radius-xl) border-2 border-dashed p-12 text-center shadow-(--shadow-panel) transition-colors",
               isDraggingOver ? "border-primary bg-primary-muted" : "border-border bg-bg-elevated",
             )}
           >
@@ -304,7 +304,7 @@ export function WelcomeScreen() {
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-2 rounded-[--radius-xl] border border-border bg-bg-elevated/60 p-4">
+        <div className="flex min-w-0 flex-col gap-2 rounded-(--radius-xl) border border-border bg-bg-elevated/60 p-4">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-heading font-semibold text-text">Recent</h2>
             {recents.length > 0 && (

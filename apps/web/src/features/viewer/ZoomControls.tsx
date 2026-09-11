@@ -16,7 +16,7 @@ export function ZoomControls() {
   const fitLabel = fitMode === "width" ? "Fit to width" : fitMode === "page" ? "Fit to page" : "Set custom zoom";
 
   return (
-    <div className="flex items-center gap-0.5 rounded-[--radius-md] border border-border bg-surface px-0.5">
+    <div className="flex items-center gap-0.5 rounded-(--radius-md) border border-border bg-surface px-0.5">
       <IconButton icon={<Minus />} label="Zoom out" size="sm" onClick={zoomOut} shortcut="Ctrl -" />
       <Tooltip content={fitLabel} shortcut="Ctrl 0">
         <button

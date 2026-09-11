@@ -223,7 +223,7 @@ export function SignerPage() {
             href={view.completedDocumentUrl}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-2 rounded-[--radius-md] bg-primary px-4 py-2 text-sm font-medium text-primary-text hover:opacity-90"
+            className="flex items-center gap-2 rounded-(--radius-md) bg-primary px-4 py-2 text-sm font-medium text-primary-text hover:opacity-90"
           >
             <Download className="h-4 w-4" /> Download the signed document
           </a>
@@ -285,8 +285,8 @@ export function SignerPage() {
       )}
 
       {declineOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-[--color-overlay] p-4">
-          <div className="flex w-full max-w-sm flex-col gap-3 rounded-[--radius-lg] border border-border-strong bg-bg-elevated p-5 shadow-[--shadow-floating]">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-(--color-overlay) p-4">
+          <div className="flex w-full max-w-sm flex-col gap-3 rounded-(--radius-lg) border border-border-strong bg-bg-elevated p-5 shadow-(--shadow-floating)">
             <h2 className="text-sm font-semibold text-text">Decline to sign?</h2>
             <p className="text-xs text-text-muted">Let the sender know why — this can't be undone.</p>
             <textarea
@@ -295,7 +295,7 @@ export function SignerPage() {
               onChange={(e) => setDeclineReason(e.target.value)}
               placeholder="Reason for declining"
               rows={3}
-              className="resize-none rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="resize-none rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             <div className="flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setDeclineOpen(false)}>
@@ -338,8 +338,8 @@ function SignerPageCanvas({ doc, pageNumber, fields, signatureDataUrl, initialsD
   }, [doc, pageNumber]);
 
   return (
-    <div className="relative shadow-[--shadow-panel]">
-      <canvas ref={canvasRef} className="block rounded-[--radius-sm]" />
+    <div className="relative shadow-(--shadow-panel)">
+      <canvas ref={canvasRef} className="block rounded-(--radius-sm)" />
       {fields.map((field) => {
         const rect = screenRects[field.id];
         if (!rect) return null;

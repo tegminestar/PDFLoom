@@ -466,7 +466,7 @@ export function SignaturePlaceOverlay({ doc, pageNumber, scale, rotation }: Sign
 
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-[--shadow-floating]"
+              className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-(--shadow-floating)"
               style={{ top: screenRect.y > 40 ? -38 : screenRect.height + 6 }}
             >
               {isPlacing ? (

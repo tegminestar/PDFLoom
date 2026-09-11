@@ -36,8 +36,8 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
             side={side}
             sideOffset={8}
             className={cn(
-              "loom-pop z-50 flex items-center gap-2 rounded-[--radius-sm] border border-border-strong bg-bg-elevated px-2.5 py-1.5",
-              "text-xs font-medium text-text shadow-[--shadow-floating]",
+              "loom-pop z-50 flex items-center gap-2 rounded-(--radius-sm) border border-border-strong bg-bg-elevated px-2.5 py-1.5",
+              "text-xs font-medium text-text shadow-(--shadow-floating)",
             )}
           >
             {content}

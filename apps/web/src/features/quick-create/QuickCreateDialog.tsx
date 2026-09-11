@@ -182,7 +182,7 @@ export function QuickCreateDialog({ open, onOpenChange }: { open: boolean; onOpe
                 key={t.id}
                 type="button"
                 onClick={() => setTemplateId(t.id)}
-                className={`rounded-[--radius-sm] px-2.5 py-1.5 text-left text-sm ${templateId === t.id ? "bg-primary text-primary-text" : "bg-surface text-text-muted hover:text-text"}`}
+                className={`rounded-(--radius-sm) px-2.5 py-1.5 text-left text-sm ${templateId === t.id ? "bg-primary text-primary-text" : "bg-surface text-text-muted hover:text-text"}`}
               >
                 {t.label}
               </button>
@@ -218,7 +218,7 @@ export function QuickCreateDialog({ open, onOpenChange }: { open: boolean; onOpe
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-8 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-sm text-text outline-none"
+              className="h-8 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-text">
@@ -227,16 +227,16 @@ export function QuickCreateDialog({ open, onOpenChange }: { open: boolean; onOpe
               value={bulletsText}
               onChange={(e) => setBulletsText(e.target.value)}
               rows={5}
-              className="resize-none rounded-[--radius-sm] border border-border-strong bg-surface px-2 py-1.5 text-sm text-text outline-none"
+              className="resize-none rounded-(--radius-sm) border border-border-strong bg-surface px-2 py-1.5 text-sm text-text outline-none"
             />
           </label>
         </div>
 
-        <div className="flex flex-1 items-center justify-center rounded-[--radius-md] bg-surface p-3">
+        <div className="flex flex-1 items-center justify-center rounded-(--radius-md) bg-surface p-3">
           <canvas
             ref={canvasRef}
             style={{ width: PREVIEW_MAX_WIDTH, height: previewHeight }}
-            className="rounded-[--radius-sm] shadow-[0_1px_8px_var(--loom-canvas-shadow)]"
+            className="rounded-(--radius-sm) shadow-[0_1px_8px_var(--loom-canvas-shadow)]"
           />
         </div>
       </div>

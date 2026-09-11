@@ -62,7 +62,7 @@ export function FormsToolbar() {
     <TopBar>
       <TopBarSection>
         <span className="mr-2 text-sm font-semibold text-text">Forms</span>
-        <div className="flex items-center rounded-[--radius-sm] border border-border-strong p-0.5">
+        <div className="flex items-center rounded-(--radius-sm) border border-border-strong p-0.5">
           <button
             type="button"
             onClick={() => setFormMode("fill")}

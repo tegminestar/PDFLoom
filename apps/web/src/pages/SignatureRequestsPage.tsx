@@ -228,8 +228,8 @@ export function SignatureRequestsPage() {
           </div>
         </header>
 
-        {error && <div className="rounded-[--radius-md] border border-border bg-surface p-4 text-sm text-text-muted">{error}</div>}
-        {!error && loading && <div className="rounded-[--radius-md] border border-border bg-surface p-4 text-sm text-text-muted">Loading…</div>}
+        {error && <div className="rounded-(--radius-md) border border-border bg-surface p-4 text-sm text-text-muted">{error}</div>}
+        {!error && loading && <div className="rounded-(--radius-md) border border-border bg-surface p-4 text-sm text-text-muted">Loading…</div>}
 
         {!error && !loading && (
           <div className="flex flex-col gap-3">
@@ -245,7 +245,7 @@ export function SignatureRequestsPage() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "rounded-[--radius-sm] px-3 py-1.5 text-sm font-medium transition-colors",
+                    "rounded-(--radius-sm) px-3 py-1.5 text-sm font-medium transition-colors",
                     activeTab === tab.id ? "bg-primary-muted text-primary" : "text-text-muted hover:bg-surface-hover hover:text-text",
                   )}
                 >
@@ -259,7 +259,7 @@ export function SignatureRequestsPage() {
               <div className="flex flex-col gap-3">
                 {(requests ?? []).length === 0 && <p className="text-sm text-text-faint">You haven't sent anything for signature yet.</p>}
                 {(requests ?? []).map((request) => (
-                  <div key={request.id} className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+                  <div key={request.id} className="flex flex-col gap-3 rounded-(--radius-md) border border-border bg-surface p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-text">{request.originalFilename}</span>
@@ -274,7 +274,7 @@ export function SignatureRequestsPage() {
                             href={request.downloadUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex h-7 items-center gap-1 rounded-[--radius-sm] px-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
+                            className="flex h-7 items-center gap-1 rounded-(--radius-sm) px-2 text-xs text-text-muted hover:bg-surface-hover hover:text-text"
                           >
                             <Download className="h-3.5 w-3.5" /> Download
                           </a>
@@ -322,7 +322,7 @@ export function SignatureRequestsPage() {
               <div className="flex flex-col gap-2">
                 {(templates ?? []).length === 0 && <p className="text-sm text-text-faint">No saved templates yet — check "Save as a reusable template" when sending a document.</p>}
                 {(templates ?? []).map((template) => (
-                  <div key={template.id} className="flex items-center justify-between gap-2 rounded-[--radius-md] border border-border bg-surface p-3">
+                  <div key={template.id} className="flex items-center justify-between gap-2 rounded-(--radius-md) border border-border bg-surface p-3">
                     <div>
                       <div className="text-sm font-medium text-text">{template.name}</div>
                       <div className="text-xs text-text-faint">

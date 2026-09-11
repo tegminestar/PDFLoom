@@ -100,7 +100,7 @@ export function OrganizePageTile({
       }}
       onClick={(e) => onToggleSelect(pageNumber, e)}
       className={cn(
-        "group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-[--radius-md] border-2 p-3 transition-colors",
+        "group relative flex cursor-pointer flex-col items-center gap-1.5 rounded-(--radius-md) border-2 p-3 transition-colors",
         selected ? "border-primary bg-primary-muted" : "border-transparent hover:bg-surface-hover",
         isDragging && "opacity-40",
       )}

@@ -203,7 +203,7 @@ export function FieldPlacementOverlay({ doc, pageNumber, scale, fields, activeSi
                   type="button"
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={() => onRemove(field.id)}
-                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-bg text-text-muted shadow-[--shadow-floating] hover:text-danger"
+                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-bg text-text-muted shadow-(--shadow-floating) hover:text-danger"
                   aria-label="Remove this field"
                 >
                   <Trash2 className="h-3 w-3" />

@@ -241,10 +241,10 @@ export function AnalyticsDashboardPage() {
           </div>
         </header>
 
-        {error && <div className="rounded-[--radius-md] border border-border bg-surface p-4 text-sm text-text-muted">{error}</div>}
+        {error && <div className="rounded-(--radius-md) border border-border bg-surface p-4 text-sm text-text-muted">{error}</div>}
 
         {!error && loadingSummary && (
-          <div className="rounded-[--radius-md] border border-border bg-surface p-4 text-sm text-text-muted">Loading…</div>
+          <div className="rounded-(--radius-md) border border-border bg-surface p-4 text-sm text-text-muted">Loading…</div>
         )}
 
         {!error && summary && (
@@ -258,7 +258,7 @@ export function AnalyticsDashboardPage() {
                   <StatTile label="Free" value={summary.users.free} />
                   <StatTile label="New users, 7 days" value={summary.users.last7Days} />
                 </div>
-                <div className="rounded-[--radius-md] border border-border bg-surface p-4">
+                <div className="rounded-(--radius-md) border border-border bg-surface p-4">
                   <span className="text-sm text-text-muted">New signups per day, last 30 days</span>
                   <EventsOverTimeChart data={summary.users.dailySignups} />
                 </div>
@@ -273,7 +273,7 @@ export function AnalyticsDashboardPage() {
                 <StatTile label="Events, last 90 days" value={summary.totalEvents} />
               </div>
 
-              <div className="rounded-[--radius-md] border border-border bg-surface p-4">
+              <div className="rounded-(--radius-md) border border-border bg-surface p-4">
                 <span className="text-sm text-text-muted">Events per day, last 30 days</span>
                 <EventsOverTimeChart data={summary.dailyEvents} />
               </div>
@@ -291,7 +291,7 @@ export function AnalyticsDashboardPage() {
               <BreakdownBars title="Top pages" rows={summary.topPaths} accent="var(--color-ai)" />
             </div>
 
-            <div className="flex flex-col gap-3 rounded-[--radius-md] border border-border bg-surface p-4">
+            <div className="flex flex-col gap-3 rounded-(--radius-md) border border-border bg-surface p-4">
               <div className="flex items-center gap-1 border-b border-border pb-2">
                 {(
                   [
@@ -305,7 +305,7 @@ export function AnalyticsDashboardPage() {
                     type="button"
                     onClick={() => setActiveRecordTab(tab.id)}
                     className={cn(
-                      "rounded-[--radius-sm] px-3 py-1.5 text-sm font-medium transition-colors",
+                      "rounded-(--radius-sm) px-3 py-1.5 text-sm font-medium transition-colors",
                       activeRecordTab === tab.id ? "bg-primary-muted text-primary" : "text-text-muted hover:bg-surface-hover hover:text-text",
                     )}
                   >
@@ -429,7 +429,7 @@ export function AnalyticsDashboardPage() {
                   ) : (
                     <div className="flex flex-col gap-2">
                       {summary.feedback.recent.map((f, i) => (
-                        <div key={`${f.createdAt}-${i}`} className="flex flex-col gap-1 rounded-[--radius-sm] border border-border-strong bg-bg p-3">
+                        <div key={`${f.createdAt}-${i}`} className="flex flex-col gap-1 rounded-(--radius-sm) border border-border-strong bg-bg p-3">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">{f.category ?? "General feedback"}</span>
                             <span className="text-xs text-text-faint">{formatRelativeTime(f.createdAt)}</span>

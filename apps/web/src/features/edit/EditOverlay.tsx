@@ -636,7 +636,7 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
             role="dialog"
             aria-label="Replace text"
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute z-20 flex w-72 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
+            className="absolute z-20 flex w-72 flex-col gap-2 rounded-(--radius-md) border border-border-strong bg-surface p-3 text-sm shadow-(--shadow-floating)"
             style={{ left: textEdit.rect.x, top: textEdit.rect.y + textEdit.rect.height + 6 }}
           >
             <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">Replace text</span>
@@ -646,7 +646,7 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
                 different span than the one visually clicked — previously the
                 only sign of that was the textarea pre-filling with unexpected
                 text, easy to miss and type over before noticing. */}
-            <p className="truncate rounded-[--radius-sm] bg-bg px-2 py-1 text-xs text-text-faint" title={textEdit.originalText}>
+            <p className="truncate rounded-(--radius-sm) bg-bg px-2 py-1 text-xs text-text-faint" title={textEdit.originalText}>
               Editing: <span className="text-text-muted">&ldquo;{textEdit.originalText}&rdquo;</span>
             </p>
             <textarea
@@ -654,7 +654,7 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
               rows={3}
               value={textValue}
               onChange={(e) => setTextValue(e.target.value)}
-              className="resize-none rounded-[--radius-sm] border border-border-strong bg-bg p-2 text-text outline-none focus-visible:border-primary"
+              className="resize-none rounded-(--radius-sm) border border-border-strong bg-bg p-2 text-text outline-none focus-visible:border-primary"
             />
             <p className="text-[11px] leading-snug text-text-faint">
               Covers the original text with a new text box — drag the dashed box's edges to resize it if the
@@ -731,7 +731,7 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
                   e.preventDefault();
                   e.stopPropagation();
                 }}
-                className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-[--shadow-floating]"
+                className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-(--shadow-floating)"
                 style={{ top: imageEdit.rect.y > 40 ? -38 : imageEdit.rect.height + 6 }}
               >
                 <button

@@ -78,7 +78,7 @@ function PageThumbnail({
       ref={containerRef}
       type="button"
       onClick={onSelect}
-      className="flex w-full flex-col items-center gap-1.5 rounded-[--radius-sm] p-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+      className="flex w-full flex-col items-center gap-1.5 rounded-(--radius-sm) p-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
     >
       <div
         className={cn(

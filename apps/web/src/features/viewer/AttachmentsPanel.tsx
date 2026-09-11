@@ -118,7 +118,7 @@ export function AttachmentsPanel() {
         ) : (
           <ul className="flex flex-col gap-0.5">
             {attachments.map((a, i) => (
-              <li key={`${a.name}-${i}`} className="flex items-center gap-2 rounded-[--radius-sm] px-1 py-1.5 hover:bg-surface-hover">
+              <li key={`${a.name}-${i}`} className="flex items-center gap-2 rounded-(--radius-sm) px-1 py-1.5 hover:bg-surface-hover">
                 <Paperclip className="h-4 w-4 shrink-0 text-text-faint" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm text-text" title={a.name}>

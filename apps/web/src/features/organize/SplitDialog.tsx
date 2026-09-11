@@ -99,18 +99,18 @@ export function SplitDialog({ open, onOpenChange }: { open: boolean; onOpenChang
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setMode("everyN")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${mode === "everyN" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${mode === "everyN" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Every N pages
           </button>
           <button
             type="button"
             onClick={() => setMode("custom")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${mode === "custom" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${mode === "custom" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Custom ranges
           </button>
@@ -125,7 +125,7 @@ export function SplitDialog({ open, onOpenChange }: { open: boolean; onOpenChang
               max={pageCount}
               value={everyN}
               onChange={(e) => setEveryN(Number.parseInt(e.target.value, 10) || 1)}
-              className="h-8 w-16 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-8 w-16 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-center outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             page{everyN === 1 ? "" : "s"} → {computeEveryNRanges(pageCount, Math.max(1, everyN)).length} files
           </label>
@@ -142,7 +142,7 @@ export function SplitDialog({ open, onOpenChange }: { open: boolean; onOpenChang
                   onChange={(e) =>
                     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, start: e.target.value } : r)))
                   }
-                  className="h-8 w-16 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-center outline-none"
+                  className="h-8 w-16 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-center outline-none"
                 />
                 <span className="text-text-faint">to</span>
                 <input
@@ -153,7 +153,7 @@ export function SplitDialog({ open, onOpenChange }: { open: boolean; onOpenChang
                   onChange={(e) =>
                     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, end: e.target.value } : r)))
                   }
-                  className="h-8 w-16 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-center outline-none"
+                  className="h-8 w-16 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-center outline-none"
                 />
                 <IconButton
                   icon={<Trash2 />}

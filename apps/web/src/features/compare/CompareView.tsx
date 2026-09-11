@@ -161,17 +161,17 @@ export function CompareView({
         <button
           type="button"
           onClick={onChooseDifferentFile}
-          className="flex items-center gap-1.5 rounded-[--radius-sm] px-2 py-1 text-xs font-medium text-text-muted hover:bg-surface-hover hover:text-text"
+          className="flex items-center gap-1.5 rounded-(--radius-sm) px-2 py-1 text-xs font-medium text-text-muted hover:bg-surface-hover hover:text-text"
         >
           <FileUp className="h-3.5 w-3.5" />
           Change file
         </button>
-        <div className="flex gap-1 rounded-[--radius-sm] bg-bg p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-bg p-1">
           <button
             type="button"
             onClick={() => setViewMode("text")}
             className={cn(
-              "rounded-[--radius-sm] px-2.5 py-1 text-xs font-medium transition-colors",
+              "rounded-(--radius-sm) px-2.5 py-1 text-xs font-medium transition-colors",
               viewMode === "text" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text",
             )}
           >
@@ -181,7 +181,7 @@ export function CompareView({
             type="button"
             onClick={() => setViewMode("visual")}
             className={cn(
-              "rounded-[--radius-sm] px-2.5 py-1 text-xs font-medium transition-colors",
+              "rounded-(--radius-sm) px-2.5 py-1 text-xs font-medium transition-colors",
               viewMode === "visual" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text",
             )}
           >
@@ -215,7 +215,7 @@ export function CompareView({
                 title={`Page ${p.pageIndex + 1}${p.textChanged ? " — differs" : " — unchanged"}`}
                 onClick={() => setPageIndex(p.pageIndex)}
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-[--radius-sm] text-[10px] font-medium tabular-nums outline outline-2 -outline-offset-2",
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-(--radius-sm) text-[10px] font-medium tabular-nums outline outline-2 -outline-offset-2",
                   p.pageIndex === pageIndex ? "outline-primary" : "outline-transparent",
                   p.textChanged ? "bg-danger-muted text-danger" : "bg-surface-hover text-text-faint",
                 )}
@@ -259,7 +259,7 @@ export function CompareView({
                     This page has a lot of text — showing that it changed, not exactly where (word-by-word comparison was skipped for this one page).
                   </p>
                 )}
-                <div className="whitespace-pre-wrap rounded-[--radius-md] border border-border bg-surface p-4 text-sm leading-relaxed text-text">
+                <div className="whitespace-pre-wrap rounded-(--radius-md) border border-border bg-surface p-4 text-sm leading-relaxed text-text">
                   {pageDiff.ops.map((op, i) => (
                     <span
                       key={i}
@@ -289,15 +289,15 @@ export function CompareView({
                   : `${(visualStats.changedRatio * 100).toFixed(1)}% of this page's pixels differ (highlighted in red).`}
               </p>
             )}
-            <canvas ref={overlayCanvasRef} className={cn("max-w-full rounded-[--radius-md] border border-border shadow-[0_1px_8px_var(--loom-canvas-shadow)]", visualError && "hidden")} />
+            <canvas ref={overlayCanvasRef} className={cn("max-w-full rounded-(--radius-md) border border-border shadow-[0_1px_8px_var(--loom-canvas-shadow)]", visualError && "hidden")} />
             <div className="flex flex-wrap items-start justify-center gap-4">
               <div className="flex flex-col items-center gap-1">
                 <span className="text-xs text-text-faint">{meta.name}</span>
-                <canvas ref={canvasARef} className="max-w-[280px] rounded-[--radius-sm] border border-border" />
+                <canvas ref={canvasARef} className="max-w-[280px] rounded-(--radius-sm) border border-border" />
               </div>
               <div className="flex flex-col items-center gap-1">
                 <span className="text-xs text-text-faint">{compareName}</span>
-                <canvas ref={canvasBRef} className="max-w-[280px] rounded-[--radius-sm] border border-border" />
+                <canvas ref={canvasBRef} className="max-w-[280px] rounded-(--radius-sm) border border-border" />
               </div>
             </div>
           </div>

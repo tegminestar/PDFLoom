@@ -81,11 +81,11 @@ export function NUpDialog({
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           <button
             type="button"
             onClick={() => setScope("all")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${scope === "all" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${scope === "all" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             All {pageCount} pages
           </button>
@@ -93,7 +93,7 @@ export function NUpDialog({
             type="button"
             disabled={selectedPageNumbers.length === 0}
             onClick={() => setScope("selected")}
-            className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${scope === "selected" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+            className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${scope === "selected" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
           >
             Selected ({selectedPageNumbers.length})
           </button>
@@ -107,7 +107,7 @@ export function NUpDialog({
                 key={l.label}
                 type="button"
                 onClick={() => setLayoutIndex(i)}
-                className={`rounded-[--radius-sm] border px-2 py-2 text-center text-sm transition-colors ${
+                className={`rounded-(--radius-sm) border px-2 py-2 text-center text-sm transition-colors ${
                   layoutIndex === i ? "border-primary bg-primary-muted text-text" : "border-border-strong text-text-muted hover:bg-surface-hover"
                 }`}
               >
@@ -119,18 +119,18 @@ export function NUpDialog({
 
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">Sheet orientation</span>
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             <button
               type="button"
               onClick={() => setOrientation("landscape")}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${orientation === "landscape" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${orientation === "landscape" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               Landscape
             </button>
             <button
               type="button"
               onClick={() => setOrientation("portrait")}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium transition-colors ${orientation === "portrait" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium transition-colors ${orientation === "portrait" ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               Portrait
             </button>

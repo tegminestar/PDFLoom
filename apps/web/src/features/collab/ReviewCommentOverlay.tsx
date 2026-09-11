@@ -113,7 +113,7 @@ export function ReviewCommentOverlay({ doc, pageNumber, scale, rotation }: Revie
             {isOpen && (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="absolute left-6 top-0 z-30 flex w-56 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
+                className="absolute left-6 top-0 z-30 flex w-56 flex-col gap-2 rounded-(--radius-md) border border-border-strong bg-surface p-3 text-sm shadow-(--shadow-floating)"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold" style={{ color: comment.authorColor }}>
@@ -135,7 +135,7 @@ export function ReviewCommentOverlay({ doc, pageNumber, scale, rotation }: Revie
       {draftScreenPoint && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="pointer-events-auto absolute z-30 flex w-56 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
+          className="pointer-events-auto absolute z-30 flex w-56 flex-col gap-2 rounded-(--radius-md) border border-border-strong bg-surface p-3 text-sm shadow-(--shadow-floating)"
           style={{ left: draftScreenPoint.x, top: draftScreenPoint.y }}
         >
           <textarea
@@ -144,7 +144,7 @@ export function ReviewCommentOverlay({ doc, pageNumber, scale, rotation }: Revie
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             placeholder="Add a comment…"
-            className="resize-none rounded-[--radius-sm] border border-border-strong bg-bg p-2 text-text outline-none focus-visible:border-primary"
+            className="resize-none rounded-(--radius-sm) border border-border-strong bg-bg p-2 text-text outline-none focus-visible:border-primary"
           />
           <div className="flex justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={() => setDraftScreenPoint(null)}>

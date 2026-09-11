@@ -581,7 +581,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
               onPointerMove={handleTextBoxDragMove}
               onPointerUp={handleTextBoxDragEnd}
               onPointerCancel={handleTextBoxDragEnd}
-              className="absolute -top-7 left-0 flex h-6 cursor-move items-center gap-1 rounded-[--radius-sm] px-2 text-[11px] font-medium text-white"
+              className="absolute -top-7 left-0 flex h-6 cursor-move items-center gap-1 rounded-(--radius-sm) px-2 text-[11px] font-medium text-white"
               style={{ background: colorHex(color) }}
             >
               <GripHorizontal className="h-3 w-3" />
@@ -632,7 +632,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 if (e.key === "Escape") setTextBox(null);
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void commitText(textBox);
               }}
-              className="h-full w-full resize-none rounded-[--radius-sm] border-2 p-2 text-sm shadow-[--shadow-floating] outline-none"
+              className="h-full w-full resize-none rounded-(--radius-sm) border-2 p-2 text-sm shadow-(--shadow-floating) outline-none"
               style={{
                 borderColor: colorHex(color),
                 background: "rgb(255 250 224)",
@@ -696,7 +696,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-[--shadow-floating]"
+              className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border-strong bg-surface px-1.5 py-1 shadow-(--shadow-floating)"
               style={{ top: pendingStamp.y > 40 ? -38 : pendingStamp.height + 6 }}
             >
               <button

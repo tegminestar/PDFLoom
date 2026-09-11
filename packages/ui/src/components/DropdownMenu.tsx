@@ -25,7 +25,7 @@ export function DropdownMenu({ trigger, items, align = "start" }: DropdownMenuPr
           align={align}
           sideOffset={8}
           className={cn(
-            "loom-pop z-50 min-w-[220px] overflow-hidden rounded-[--radius-md] border border-border-strong bg-bg-elevated p-1 shadow-[--shadow-floating]",
+            "loom-pop z-50 min-w-[220px] overflow-hidden rounded-(--radius-md) border border-border-strong bg-bg-elevated p-1 shadow-(--shadow-floating)",
           )}
         >
           {items.map((item) => (
@@ -34,7 +34,7 @@ export function DropdownMenu({ trigger, items, align = "start" }: DropdownMenuPr
               disabled={item.disabled ?? false}
               onSelect={item.onSelect}
               className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-[--radius-sm] px-2.5 py-2 text-sm text-text outline-none",
+                "flex cursor-pointer items-center gap-2.5 rounded-(--radius-sm) px-2.5 py-2 text-sm text-text outline-none",
                 "data-[highlighted]:bg-surface-hover",
                 "data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
               )}

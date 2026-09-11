@@ -56,7 +56,7 @@ export function CompareDialog({
           type="button"
           disabled={isLoading}
           onClick={() => fileInputRef.current?.click()}
-          className="flex flex-col items-center gap-2 rounded-[--radius-md] border border-dashed border-border-strong bg-surface px-4 py-8 text-center transition-colors hover:border-primary hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50"
+          className="flex flex-col items-center gap-2 rounded-(--radius-md) border border-dashed border-border-strong bg-surface px-4 py-8 text-center transition-colors hover:border-primary hover:bg-surface-hover disabled:pointer-events-none disabled:opacity-50"
         >
           <FileUp className="h-6 w-6 text-text-muted" />
           <span className="text-sm font-medium text-text">{isLoading ? "Opening…" : "Choose a PDF to compare"}</span>

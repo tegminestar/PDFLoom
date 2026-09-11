@@ -305,7 +305,7 @@ export function FieldDesignerOverlay({ doc, pageNumber, scale, rotation }: Field
             aria-label="New form field"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            className="absolute z-20 flex w-64 flex-col gap-2 rounded-[--radius-md] border border-border-strong bg-surface p-3 text-sm shadow-[--shadow-floating]"
+            className="absolute z-20 flex w-64 flex-col gap-2 rounded-(--radius-md) border border-border-strong bg-surface p-3 text-sm shadow-(--shadow-floating)"
             style={{ left: pending.rect.x, top: pending.rect.y + pending.rect.height + 8 }}
           >
             <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">
@@ -320,7 +320,7 @@ export function FieldDesignerOverlay({ doc, pageNumber, scale, rotation }: Field
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={pending.tool === "radio" ? "e.g. size" : "e.g. fullName"}
-                className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
+                className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
               />
             </label>
 
@@ -332,7 +332,7 @@ export function FieldDesignerOverlay({ doc, pageNumber, scale, rotation }: Field
                     type="text"
                     value={extra}
                     onChange={(e) => setExtra(e.target.value)}
-                    className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
+                    className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
                   />
                 </label>
                 <label className="flex items-center gap-2 text-text-faint">
@@ -357,7 +357,7 @@ export function FieldDesignerOverlay({ doc, pageNumber, scale, rotation }: Field
                   value={extra}
                   onChange={(e) => setExtra(e.target.value)}
                   placeholder="USA, Canada, UK"
-                  className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
+                  className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
                 />
               </label>
             )}
@@ -370,7 +370,7 @@ export function FieldDesignerOverlay({ doc, pageNumber, scale, rotation }: Field
                   value={extra}
                   onChange={(e) => setExtra(e.target.value)}
                   placeholder="e.g. Small"
-                  className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
+                  className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-text outline-none focus-visible:border-primary"
                 />
               </label>
             )}

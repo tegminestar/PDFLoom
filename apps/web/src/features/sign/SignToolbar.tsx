@@ -80,7 +80,7 @@ export function SignToolbar() {
               value={signerName}
               onChange={(e) => setSignerName(e.target.value)}
               placeholder="Signer name"
-              className="h-8 w-36 rounded-[--radius-sm] border border-border-strong bg-surface px-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-8 w-36 rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             <label className="ml-2 flex items-center gap-1.5 text-xs text-text-faint">
               <input type="checkbox" checked={includeIntegrityHash} onChange={(e) => setIncludeIntegrityHash(e.target.checked)} />

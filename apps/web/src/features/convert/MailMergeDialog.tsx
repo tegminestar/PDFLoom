@@ -182,7 +182,7 @@ export function MailMergeDialog({ open, onOpenChange }: { open: boolean; onOpenC
         <div className="flex flex-col gap-1.5">
           <span className="text-sm text-text">1. Template (a fillable PDF)</span>
           {templateFile ? (
-            <div className="flex items-center gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2">
+            <div className="flex items-center gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2">
               <FileText className="h-4 w-4 shrink-0 text-text-faint" />
               <span className="flex-1 truncate text-sm text-text">{templateFile.name}</span>
               <span className="shrink-0 text-xs text-text-faint">{templateFields ? `${new Set(templateFields.map((f) => f.name)).size} fields` : "reading…"}</span>
@@ -218,7 +218,7 @@ export function MailMergeDialog({ open, onOpenChange }: { open: boolean; onOpenC
         <div className="flex flex-col gap-1.5">
           <span className="text-sm text-text">2. Spreadsheet (.csv — one row per output PDF)</span>
           {csv ? (
-            <div className="flex items-center gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2">
+            <div className="flex items-center gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2">
               <Table className="h-4 w-4 shrink-0 text-text-faint" />
               <span className="flex-1 truncate text-sm text-text">
                 {csv.rows.length} row{csv.rows.length === 1 ? "" : "s"}, {csv.headers.length} column{csv.headers.length === 1 ? "" : "s"}
@@ -245,7 +245,7 @@ export function MailMergeDialog({ open, onOpenChange }: { open: boolean; onOpenC
         </div>
 
         {csv && templateFields && (
-          <div className="flex flex-col gap-2 rounded-[--radius-md] border border-border bg-surface p-3">
+          <div className="flex flex-col gap-2 rounded-(--radius-md) border border-border bg-surface p-3">
             <p className="text-xs text-text-muted">
               Matched {matchedColumns.length} of {csv.headers.length} column{csv.headers.length === 1 ? "" : "s"} to template fields by name.
             </p>
@@ -262,7 +262,7 @@ export function MailMergeDialog({ open, onOpenChange }: { open: boolean; onOpenC
               <select
                 value={nameColumn ?? ""}
                 onChange={(e) => setNameColumn(e.target.value || null)}
-                className="h-8 rounded-[--radius-sm] border border-border-strong bg-bg px-2 text-sm text-text outline-none"
+                className="h-8 rounded-(--radius-sm) border border-border-strong bg-bg px-2 text-sm text-text outline-none"
               >
                 {csv.headers.map((h) => (
                   <option key={h} value={h}>

@@ -168,13 +168,13 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
       }
     >
       <div className="flex flex-col gap-3">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           {(["draw", "type", "upload"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium capitalize transition-colors ${tab === t ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium capitalize transition-colors ${tab === t ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               {t}
             </button>
@@ -186,7 +186,7 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
             <canvas
               ref={canvasRef}
               style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
-              className="cursor-crosshair touch-none rounded-[--radius-sm] border border-border-strong bg-white"
+              className="cursor-crosshair touch-none rounded-(--radius-sm) border border-border-strong bg-white"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -206,10 +206,10 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
               value={typedText}
               onChange={(e) => setTypedText(e.target.value)}
               placeholder="Type your name"
-              className="h-10 rounded-[--radius-sm] border border-border-strong bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-10 rounded-(--radius-sm) border border-border-strong bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             <div
-              className="flex items-center justify-center rounded-[--radius-sm] border border-border-strong bg-white px-4"
+              className="flex items-center justify-center rounded-(--radius-sm) border border-border-strong bg-white px-4"
               style={{ height: CANVAS_HEIGHT, fontFamily: "'Caveat', cursive" }}
             >
               <span className="text-5xl text-[#141414]">{typedText || "Preview"}</span>
@@ -220,7 +220,7 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
 
         {tab === "upload" && (
           <div className="flex flex-col gap-2">
-            <div className="flex h-[160px] items-center justify-center rounded-[--radius-sm] border border-dashed border-border-strong bg-surface">
+            <div className="flex h-[160px] items-center justify-center rounded-(--radius-sm) border border-dashed border-border-strong bg-surface">
               {uploadedPreviewUrl ? (
                 <img src={uploadedPreviewUrl} alt="Uploaded signature preview" className="max-h-full max-w-full object-contain" />
               ) : (

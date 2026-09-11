@@ -14,7 +14,7 @@ export function TopBar({ children, className }: { children: ReactNode; className
         // garbled stack of characters. Scrolling keeps every control
         // reachable (a swipe away) instead of silently unreachable or
         // visually broken.
-        "flex h-14 shrink-0 items-center gap-3 overflow-x-auto border-b border-border bg-bg-elevated px-3",
+        "flex h-14 shrink-0 items-center gap-3 overflow-x-auto border-b border-border bg-bg-elevated px-3 shadow-(--shadow-sm)",
         className,
       )}
     >
@@ -27,10 +27,16 @@ export function TopBarSection({
   children,
   className,
   align = "start",
+  grouped = false,
 }: {
   children: ReactNode;
   className?: string;
   align?: "start" | "center" | "end";
+  /** Wraps the section in a recessed rounded cluster (bg-surface) instead of
+   * relying on a thin vertical Separator to read as "these buttons belong
+   * together" — a grouped-ribbon feel closer to Acrobat/Sejda's toolbars,
+   * used for a related run of icon buttons within one section. */
+  grouped?: boolean;
 }) {
   return (
     <div
@@ -46,6 +52,7 @@ export function TopBarSection({
         "flex min-w-0 shrink-0 items-center gap-1.5",
         align === "center" && "grow justify-center",
         align === "end" && "ml-auto justify-end",
+        grouped && "rounded-(--radius-md) bg-surface p-1 gap-0.5",
         className,
       )}
     >

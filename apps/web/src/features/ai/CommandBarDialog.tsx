@@ -154,7 +154,7 @@ export function CommandBarDialog({ open, onOpenChange }: { open: boolean; onOpen
     >
       <div className="flex flex-col gap-3">
         {availability === "unavailable" && (
-          <p className="rounded-[--radius-md] border border-border bg-surface p-3 text-sm text-text-muted">
+          <p className="rounded-(--radius-md) border border-border bg-surface p-3 text-sm text-text-muted">
             This browser/device doesn't support WebGPU, which the AI command bar requires. Every other PDFLoom AI feature still works here — and every
             command it can run is also available directly from the rail/menus.
           </p>
@@ -169,7 +169,7 @@ export function CommandBarDialog({ open, onOpenChange }: { open: boolean; onOpen
             }}
             disabled={availability !== "available" || isResolving}
             placeholder='e.g. "rotate page 3 clockwise", "delete pages 2 and 5"'
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring] disabled:opacity-50"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring) disabled:opacity-50"
           />
         )}
 
@@ -177,7 +177,7 @@ export function CommandBarDialog({ open, onOpenChange }: { open: boolean; onOpen
         {understandError && <p className="text-sm text-danger">{understandError} Try rephrasing, or use the rail/menus directly.</p>}
 
         {pending && (
-          <div className="flex items-start gap-2 rounded-[--radius-md] border border-ai/40 bg-ai-muted p-3 text-sm text-text">
+          <div className="flex items-start gap-2 rounded-(--radius-md) border border-ai/40 bg-ai-muted p-3 text-sm text-text">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-ai" />
             <span>{pending.description}</span>
           </div>

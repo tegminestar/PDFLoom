@@ -128,13 +128,13 @@ export function BatchDialog({ open, onOpenChange }: { open: boolean; onOpenChang
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           {(["compress", "watermark"] as const).map((op) => (
             <button
               key={op}
               type="button"
               onClick={() => setOperation(op)}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium capitalize transition-colors ${operation === op ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium capitalize transition-colors ${operation === op ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               {op}
             </button>
@@ -142,13 +142,13 @@ export function BatchDialog({ open, onOpenChange }: { open: boolean; onOpenChang
         </div>
 
         {operation === "compress" ? (
-          <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+          <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
             {QUALITY_PRESETS.map((p) => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => setPreset(p.id)}
-                className={`flex-1 rounded-[--radius-sm] py-1.5 text-xs font-medium transition-colors ${preset === p.id ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+                className={`flex-1 rounded-(--radius-sm) py-1.5 text-xs font-medium transition-colors ${preset === p.id ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
               >
                 {p.label}
               </button>
@@ -160,13 +160,13 @@ export function BatchDialog({ open, onOpenChange }: { open: boolean; onOpenChang
             value={watermarkText}
             onChange={(e) => setWatermarkText(e.target.value)}
             placeholder="Watermark text"
-            className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
           />
         )}
 
         <div className="flex flex-col gap-2">
           {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2">
+            <div key={i} className="flex items-center gap-2 rounded-(--radius-sm) border border-border-strong bg-surface p-2">
               <FileText className="h-4 w-4 shrink-0 text-text-faint" />
               <span className="flex-1 truncate text-sm text-text">{file.name}</span>
               <button type="button" onClick={() => removeFile(i)} className="text-text-faint hover:text-text">

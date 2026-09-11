@@ -99,16 +99,16 @@ export function SignatureCaptureModal({ kind, onCapture, onClose }: SignatureCap
   const canUse = tab === "draw" ? hasDrawn : typedText.trim().length > 0;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-[--color-overlay] p-4" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="flex w-full max-w-lg flex-col gap-3 rounded-[--radius-lg] border border-border-strong bg-bg-elevated p-5 shadow-[--shadow-floating]">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-(--color-overlay) p-4" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="flex w-full max-w-lg flex-col gap-3 rounded-(--radius-lg) border border-border-strong bg-bg-elevated p-5 shadow-(--shadow-floating)">
         <h2 className="text-sm font-semibold text-text">{kind === "signature" ? "Draw or type your signature" : "Draw or type your initials"}</h2>
-        <div className="flex gap-1 rounded-[--radius-sm] bg-surface p-1">
+        <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           {(["draw", "type"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`flex-1 rounded-[--radius-sm] py-1.5 text-sm font-medium capitalize transition-colors ${tab === t ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
+              className={`flex-1 rounded-(--radius-sm) py-1.5 text-sm font-medium capitalize transition-colors ${tab === t ? "bg-primary text-primary-text" : "text-text-muted hover:text-text"}`}
             >
               {t}
             </button>
@@ -119,7 +119,7 @@ export function SignatureCaptureModal({ kind, onCapture, onClose }: SignatureCap
             <canvas
               ref={canvasRef}
               style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
-              className="cursor-crosshair touch-none self-center rounded-[--radius-sm] border border-border-strong bg-white"
+              className="cursor-crosshair touch-none self-center rounded-(--radius-sm) border border-border-strong bg-white"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -137,10 +137,10 @@ export function SignatureCaptureModal({ kind, onCapture, onClose }: SignatureCap
               value={typedText}
               onChange={(e) => setTypedText(e.target.value)}
               placeholder="Type your name"
-              className="h-10 rounded-[--radius-sm] border border-border-strong bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+              className="h-10 rounded-(--radius-sm) border border-border-strong bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             <div
-              className="flex items-center justify-center rounded-[--radius-sm] border border-border-strong bg-white px-4"
+              className="flex items-center justify-center rounded-(--radius-sm) border border-border-strong bg-white px-4"
               style={{ height: CANVAS_HEIGHT, fontFamily: "'Caveat', cursive" }}
             >
               <span className="text-5xl text-[#141414]">{typedText || "Preview"}</span>

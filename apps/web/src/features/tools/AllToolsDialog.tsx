@@ -38,10 +38,10 @@ export function AllToolsDialog({ open, onOpenChange, groups }: { open: boolean; 
                     tool.onSelect();
                     onOpenChange(false);
                   }}
-                  className="flex flex-col items-start gap-2 rounded-[--radius-md] border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-hover"
+                  className="flex flex-col items-start gap-2 rounded-(--radius-md) border border-border bg-bg-elevated p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-hover"
                 >
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-[--radius-sm] ${
+                    className={`flex h-8 w-8 items-center justify-center rounded-(--radius-sm) ${
                       tool.tone === "ai" ? "bg-ai-muted text-ai" : "bg-primary-muted text-primary"
                     }`}
                   >
