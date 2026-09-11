@@ -1,11 +1,45 @@
 import { Button, Dialog, toast } from "@pdfloom/ui";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLoomStore, type SignatureAsset } from "../../app/store";
+import { getSavedSignatureDataUrl, setSavedSignatureDataUrl } from "./signatureStorage";
 
 type CreatorTab = "draw" | "type" | "upload";
 
 const CANVAS_WIDTH = 480;
 const CANVAS_HEIGHT = 160;
+
+const INK_COLORS = [
+  { id: "black", label: "Black", hex: "#141414" },
+  { id: "blue", label: "Blue", hex: "#1a56db" },
+  { id: "navy", label: "Navy", hex: "#1e3a5f" },
+  { id: "red", label: "Red", hex: "#c92a2a" },
+] as const;
+
+// A rasterized snapshot for the "use my saved signature" quick-reuse
+// thumbnail only — the real typed-signature placement stays real vector
+// text via SignatureAsset's "typed" kind, never this. Caveat/black matches
+// how that vector text actually renders once placed.
+function renderTypedPreview(text: string): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_WIDTH * 2;
+  canvas.height = CANVAS_HEIGHT * 2;
+  const ctx = canvas.getContext("2d")!;
+  ctx.scale(2, 2);
+  ctx.font = "48px 'Caveat', cursive";
+  ctx.fillStyle = "#141414";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 12, CANVAS_HEIGHT / 2);
+  return canvas.toDataURL("image/png");
+}
+
+function dataUrlFromBytes(bytes: Uint8Array, mimeType: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(new Blob([bytes as BlobPart], { type: mimeType }));
+  });
+}
 
 export interface SignatureCreatorDialogProps {
   open: boolean;
@@ -27,6 +61,9 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
   const [tab, setTab] = useState<CreatorTab>("draw");
   const [typedText, setTypedText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{ bytes: Uint8Array; type: "png" | "jpg"; aspectRatio: number } | null>(null);
+  const [color, setColor] = useState<(typeof INK_COLORS)[number]>(INK_COLORS[0]);
+  const [saveForReuse, setSaveForReuse] = useState(true);
+  const [savedAsset, setSavedAssetState] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef(false);
@@ -34,6 +71,10 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
   const [hasDrawn, setHasDrawn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSavedAssetState(getSavedSignatureDataUrl(slot));
+  }, [slot]);
 
   useEffect(() => {
     if (!uploadedFile) {
@@ -57,7 +98,6 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
         ctx.scale(2, 2);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.strokeStyle = "#141414";
         ctx.lineWidth = 2.5;
       }
     }
@@ -81,6 +121,7 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
     if (!ctx || !lastPointRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const point = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    ctx.strokeStyle = color.hex;
     ctx.beginPath();
     ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y);
     ctx.lineTo(point.x, point.y);
@@ -118,6 +159,11 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
 
   const handleSave = async () => {
     let asset: SignatureAsset | null = null;
+    // Only for the "use my saved signature" quick-reuse thumbnail elsewhere
+    // (SignerPage's SignatureCaptureModal, or reopening this dialog) — the
+    // real placement mechanism for each kind is untouched (typed stays real
+    // vector text, never rasterized, when actually placed onto a page).
+    let reuseDataUrl: string | null = null;
 
     if (tab === "draw") {
       if (!hasDrawn || !canvasRef.current) {
@@ -128,25 +174,36 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
       if (!blob) return;
       const bytes = new Uint8Array(await blob.arrayBuffer());
       asset = { kind: "image", imageBytes: bytes, imageType: "png", aspectRatio: CANVAS_WIDTH / CANVAS_HEIGHT };
+      reuseDataUrl = canvasRef.current.toDataURL("image/png");
     } else if (tab === "type") {
       if (!typedText.trim()) {
         toast.warning("Type a name first");
         return;
       }
       asset = { kind: "typed", text: typedText.trim() };
+      if (saveForReuse) reuseDataUrl = renderTypedPreview(typedText.trim());
     } else {
       if (!uploadedFile) {
         toast.warning("Choose an image first");
         return;
       }
       asset = { kind: "image", imageBytes: uploadedFile.bytes, imageType: uploadedFile.type, aspectRatio: uploadedFile.aspectRatio };
+      if (saveForReuse) reuseDataUrl = await dataUrlFromBytes(uploadedFile.bytes, uploadedFile.type === "png" ? "image/png" : "image/jpeg");
     }
 
+    if (saveForReuse && reuseDataUrl) setSavedSignatureDataUrl(slot, reuseDataUrl);
     saveSignatureAsset(slot, asset);
     onOpenChange(false);
     setTypedText("");
     setUploadedFile(null);
     handleClearDraw();
+  };
+
+  const handleUseSaved = () => {
+    if (!savedAsset) return;
+    const bytes = Uint8Array.from(atob(savedAsset.split(",")[1]!), (c) => c.charCodeAt(0));
+    saveSignatureAsset(slot, { kind: "image", imageBytes: bytes, imageType: "png", aspectRatio: CANVAS_WIDTH / CANVAS_HEIGHT });
+    onOpenChange(false);
   };
 
   return (
@@ -168,6 +225,17 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
       }
     >
       <div className="flex flex-col gap-3">
+        {savedAsset && (
+          <button
+            type="button"
+            onClick={handleUseSaved}
+            className="flex items-center gap-3 rounded-(--radius-md) border border-primary/40 bg-primary-muted px-3 py-2 text-left transition-colors hover:border-primary/60"
+          >
+            <img src={savedAsset} alt="" className="h-8 w-20 rounded-(--radius-sm) bg-white object-contain" />
+            <span className="text-sm font-medium text-primary">Use my saved {slot}</span>
+          </button>
+        )}
+
         <div className="flex gap-1 rounded-(--radius-sm) bg-surface p-1">
           {(["draw", "type", "upload"] as const).map((t) => (
             <button
@@ -183,6 +251,20 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
 
         {tab === "draw" && (
           <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-faint">Ink color</span>
+              {INK_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-label={c.label}
+                  aria-pressed={color.id === c.id}
+                  onClick={() => setColor(c)}
+                  className={`h-6 w-6 rounded-full border-2 transition-transform ${color.id === c.id ? "scale-110 border-text" : "border-transparent hover:scale-105"}`}
+                  style={{ backgroundColor: c.hex }}
+                />
+              ))}
+            </div>
             <canvas
               ref={canvasRef}
               style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
@@ -243,6 +325,11 @@ export function SignatureCreatorDialog({ open, onOpenChange, slot }: SignatureCr
             />
           </div>
         )}
+
+        <label className="flex items-center gap-2 text-xs text-text-muted">
+          <input type="checkbox" checked={saveForReuse} onChange={(e) => setSaveForReuse(e.target.checked)} />
+          Save for future use on this device
+        </label>
       </div>
     </Dialog>
   );

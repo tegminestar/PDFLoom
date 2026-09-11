@@ -18,6 +18,14 @@
    (packages/core/src/pdf/signature.ts) — used here only for the on-screen
    live preview while typing a signature, so preview and output match. */
 @import "@fontsource/caveat/latin-700.css";
+/* Additional typed-signature style choices (SignatureCaptureModal's style
+   grid) — each only has a single 400 weight upstream, unlike Caveat. */
+@import "@fontsource/dancing-script/latin-400.css";
+@import "@fontsource/dancing-script/latin-ext-400.css";
+@import "@fontsource/sacramento/latin-400.css";
+@import "@fontsource/sacramento/latin-ext-400.css";
+@import "@fontsource/pacifico/latin-400.css";
+@import "@fontsource/pacifico/latin-ext-400.css";
 
 @import "@pdfloom/ui/styles.css";
 
