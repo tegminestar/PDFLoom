@@ -269,12 +269,18 @@ async function finishOpeningDocument(set: LoomSetter, get: () => LoomState, open
     handle: opened.handle,
   };
   const outline = await doc.getOutline();
+  // Resume where the reader left off on this file (matched by name+size,
+  // the same imperfect-but-practical identity recentsStore itself uses —
+  // there's no stable path to key off in a sandboxed browser) rather than
+  // always restarting at page 1. Read before recordOpen below has a chance
+  // to touch this file's row.
+  const resumePage = await recentsStore.findLastPage(meta.name, meta.sizeBytes).catch(() => null);
   set((s) => ({
     document: doc,
     meta,
     outline,
     isLoading: false,
-    currentPage: 1,
+    currentPage: resumePage && resumePage >= 1 && resumePage <= doc.pageCount ? resumePage : 1,
     pageNavigationNonce: s.pageNavigationNonce + 1,
     undoStack: [],
     redoStack: [],
@@ -890,3 +896,20 @@ export const useLoomStore = create<LoomState>((set, get) => ({
 
   clearSearch: () => set({ searchQuery: "", searchResults: [], activeSearchIndex: -1, isSearching: false }),
 }));
+
+// Persists the current page to recentsStore (debounced) so reopening this
+// file later can resume here — see finishOpeningDocument's own read of it.
+// A store-level subscription (rather than a React effect) catches every
+// path that changes currentPage — direct navigation, search jumps, scroll
+// tracking — without each one needing its own persistence call. Debounced
+// since currentPage can change rapidly while scrolling.
+let pagePersistTimer: ReturnType<typeof setTimeout> | null = null;
+useLoomStore.subscribe((state, prevState) => {
+  if (state.currentPage === prevState.currentPage || !state.meta) return;
+  const { id } = state.meta;
+  const page = state.currentPage;
+  if (pagePersistTimer) clearTimeout(pagePersistTimer);
+  pagePersistTimer = setTimeout(() => {
+    void recentsStore.setLastPage(id, page);
+  }, 800);
+});

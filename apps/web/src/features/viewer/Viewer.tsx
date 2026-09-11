@@ -118,7 +118,17 @@ export function Viewer() {
   // while the user is scrolling manually (see updateCurrentPageFromScroll
   // above), and re-triggering scrollIntoView from that would fight the
   // user's own scroll on every page-boundary crossing.
-  const lastHandledNonce = useRef(pageNavigationNonce);
+  //
+  // Seeded to a value the nonce can never legitimately be (it starts at 0
+  // and only exists once opening a document has already bumped it past 0)
+  // rather than to `pageNavigationNonce` itself — a fresh mount must always
+  // treat the nonce already in place as "new," or the very first navigation
+  // request (e.g. resuming a document at a page other than 1) is silently
+  // swallowed: this effect would see its own initial value as "already
+  // handled" and never call scrollToPage, leaving the page that happened to
+  // be under scrollTop 0 (yielded by updateCurrentPageFromScroll's own
+  // mount-time call, above) to win instead.
+  const lastHandledNonce = useRef(-1);
   useEffect(() => {
     if (lastHandledNonce.current === pageNavigationNonce) return;
     lastHandledNonce.current = pageNavigationNonce;

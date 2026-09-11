@@ -80,6 +80,7 @@ export const recentsStore = {
       handle,
       ...(previous?.pinned !== undefined ? { pinned: previous.pinned } : {}),
       ...(previous?.tags !== undefined ? { tags: previous.tags } : {}),
+      ...(previous?.lastPageNumber !== undefined ? { lastPageNumber: previous.lastPageNumber } : {}),
     });
 
     // Pinned entries are the user's explicit "keep this" signal — excluding
@@ -108,6 +109,21 @@ export const recentsStore = {
     const record = await db.get("recents", id);
     if (!record) return;
     await db.put("recents", { ...record, tags });
+  },
+
+  async setLastPage(id: string, pageNumber: number): Promise<void> {
+    const db = await getDb();
+    const record = await db.get("recents", id);
+    if (!record) return;
+    await db.put("recents", { ...record, lastPageNumber: pageNumber });
+  },
+
+  /** Looks up the last page read for a file by name+size (the same imperfect-but-practical file identity `record()` itself dedupes on) — used to resume a document at the page it was left on, independent of whether it's reopened via the Recent list or a fresh "Open a PDF". */
+  async findLastPage(name: string, sizeBytes: number): Promise<number | null> {
+    const db = await getDb();
+    const all = await db.getAllFromIndex("recents", "by-lastOpenedAt");
+    const match = all.find((r) => r.name === name && r.sizeBytes === sizeBytes);
+    return match?.lastPageNumber ?? null;
   },
 
   async getHandle(id: string): Promise<FileSystemFileHandle | null> {

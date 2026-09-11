@@ -30,4 +30,6 @@ export interface RecentFileEntry {
   pinned?: boolean;
   /** Freeform local labels for organizing recents into ad-hoc groupings (e.g. "RFP-2026", "Acme contract") — entirely local, never synced anywhere. */
   tags?: string[];
+  /** The page the reader was on when this file was last open — reopening the same file (by name+size, not just via the Recent list) resumes here instead of always restarting at page 1. */
+  lastPageNumber?: number;
 }
