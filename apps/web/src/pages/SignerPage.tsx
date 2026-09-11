@@ -63,7 +63,21 @@ export function SignerPage() {
 
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [initialsDataUrl, setInitialsDataUrl] = useState<string | null>(null);
-  const [captureModal, setCaptureModal] = useState<"signature" | "initials" | null>(null);
+  // What the active capture modal will do once a signature/initials image is
+  // drawn: fill just one field (a deliberate, reviewed placement) or every
+  // remaining field of that type (the "all at once" fast path). The backend
+  // still stores one shared image per signer per type — it always did — so
+  // this doesn't change what gets submitted, only how deliberately the
+  // signer places it beforehand.
+  const [captureTarget, setCaptureTarget] = useState<{ fieldType: "signature" | "initials"; fieldId: string | null } | null>(null);
+  // Other asset types the "sign all at once" action still needs captured
+  // before it can mark every remaining field placed.
+  const [bulkQueue, setBulkQueue] = useState<("signature" | "initials")[]>([]);
+  // Which specific fields the signer has explicitly placed. Clicking one
+  // field used to silently stamp every same-type field across the whole
+  // document at once, with no chance to review each location first. Now a
+  // field only shows the captured image once its own id lands in this set.
+  const [placedFieldIds, setPlacedFieldIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -116,9 +130,65 @@ export function SignerPage() {
     };
   }, [view]);
 
-  const needsSignature = view?.fields.some((f) => f.fieldType === "signature") ?? false;
-  const needsInitials = view?.fields.some((f) => f.fieldType === "initials") ?? false;
-  const canSubmit = (!needsSignature || !!signatureDataUrl) && (!needsInitials || !!initialsDataUrl);
+  const signableFields = view?.fields.filter((f): f is SignerField & { fieldType: "signature" | "initials" } => f.fieldType === "signature" || f.fieldType === "initials") ?? [];
+  const unplacedFields = signableFields.filter((f) => !placedFieldIds.has(f.id));
+  const canSubmit = signableFields.length > 0 && unplacedFields.length === 0;
+
+  // A single field was clicked: reuse the already-captured image for its
+  // type if there is one (no need to redraw the same signature twice), or
+  // open the capture modal targeted at just that field.
+  const handleFieldClick = (field: SignerField) => {
+    if (field.fieldType === "date") return;
+    const existing = field.fieldType === "signature" ? signatureDataUrl : initialsDataUrl;
+    if (existing) {
+      setPlacedFieldIds((prev) => new Set(prev).add(field.id));
+      return;
+    }
+    setCaptureTarget({ fieldType: field.fieldType, fieldId: field.id });
+  };
+
+  // "Sign all at once": walk every asset type still needed, skipping
+  // straight to marking fields placed for any type already captured, and
+  // opening the modal only for the first type that still needs a drawing —
+  // the rest queue up behind it.
+  const handleSignAllAtOnce = () => {
+    const neededTypes = Array.from(new Set(unplacedFields.map((f) => f.fieldType)));
+    const stillNeedsCapture = neededTypes.filter((t) => (t === "signature" ? !signatureDataUrl : !initialsDataUrl));
+    const alreadyCaptured = neededTypes.filter((t) => (t === "signature" ? !!signatureDataUrl : !!initialsDataUrl));
+    if (alreadyCaptured.length > 0) {
+      setPlacedFieldIds((prev) => {
+        const next = new Set(prev);
+        for (const f of unplacedFields) if (alreadyCaptured.includes(f.fieldType)) next.add(f.id);
+        return next;
+      });
+    }
+    if (stillNeedsCapture.length === 0) return;
+    setCaptureTarget({ fieldType: stillNeedsCapture[0], fieldId: null });
+    setBulkQueue(stillNeedsCapture.slice(1));
+  };
+
+  const handleCapture = (dataUrl: string) => {
+    if (!captureTarget) return;
+    const { fieldType, fieldId } = captureTarget;
+    if (fieldType === "signature") setSignatureDataUrl(dataUrl);
+    else setInitialsDataUrl(dataUrl);
+    setPlacedFieldIds((prev) => {
+      const next = new Set(prev);
+      if (fieldId) {
+        next.add(fieldId);
+      } else if (view) {
+        for (const f of view.fields) if (f.fieldType === fieldType) next.add(f.id);
+      }
+      return next;
+    });
+    if (bulkQueue.length > 0) {
+      const [nextType, ...rest] = bulkQueue;
+      setCaptureTarget({ fieldType: nextType, fieldId: null });
+      setBulkQueue(rest);
+    } else {
+      setCaptureTarget(null);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!token || !canSubmit) return;
@@ -237,11 +307,23 @@ export function SignerPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="border-b border-border px-6 py-4">
-        <h1 className="font-serif text-lg font-medium text-text">Review &amp; sign</h1>
-        <p className="text-sm text-text-muted">
-          {view.originalFilename} — signing as {view.signerName ?? view.signerEmail}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-6 py-4">
+        <div>
+          <h1 className="font-serif text-lg font-medium text-text">Review &amp; sign</h1>
+          <p className="text-sm text-text-muted">
+            {view.originalFilename} — signing as {view.signerName ?? view.signerEmail}
+          </p>
+          {signableFields.length > 0 && (
+            <p className="text-xs text-text-faint">
+              {signableFields.length - unplacedFields.length} of {signableFields.length} fields placed — click each one to review and sign it
+            </p>
+          )}
+        </div>
+        {unplacedFields.length > 1 && (
+          <Button variant="secondary" size="sm" onClick={handleSignAllAtOnce}>
+            Sign all remaining at once
+          </Button>
+        )}
       </header>
 
       <div className="flex flex-1 flex-col items-center gap-6 overflow-y-auto p-6">
@@ -256,7 +338,8 @@ export function SignerPage() {
               fields={view.fields.filter((f) => f.pageNumber === pageNumber)}
               signatureDataUrl={signatureDataUrl}
               initialsDataUrl={initialsDataUrl}
-              onFieldClick={(fieldType) => fieldType !== "date" && setCaptureModal(fieldType)}
+              placedFieldIds={placedFieldIds}
+              onFieldClick={handleFieldClick}
             />
           ))
         )}
@@ -272,15 +355,14 @@ export function SignerPage() {
       </div>
       <HonestyFooter />
 
-      {captureModal && (
+      {captureTarget && (
         <SignatureCaptureModal
-          kind={captureModal}
-          onClose={() => setCaptureModal(null)}
-          onCapture={(dataUrl) => {
-            if (captureModal === "signature") setSignatureDataUrl(dataUrl);
-            else setInitialsDataUrl(dataUrl);
-            setCaptureModal(null);
+          kind={captureTarget.fieldType}
+          onClose={() => {
+            setCaptureTarget(null);
+            setBulkQueue([]);
           }}
+          onCapture={handleCapture}
         />
       )}
 
@@ -318,10 +400,11 @@ interface SignerPageCanvasProps {
   fields: SignerField[];
   signatureDataUrl: string | null;
   initialsDataUrl: string | null;
-  onFieldClick: (fieldType: FieldType) => void;
+  placedFieldIds: Set<string>;
+  onFieldClick: (field: SignerField) => void;
 }
 
-function SignerPageCanvas({ doc, pageNumber, fields, signatureDataUrl, initialsDataUrl, onFieldClick }: SignerPageCanvasProps) {
+function SignerPageCanvas({ doc, pageNumber, fields, signatureDataUrl, initialsDataUrl, placedFieldIds, onFieldClick }: SignerPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [screenRects, setScreenRects] = useState<Record<string, { x: number; y: number; width: number; height: number }>>({});
 
@@ -356,13 +439,15 @@ function SignerPageCanvas({ doc, pageNumber, fields, signatureDataUrl, initialsD
             </div>
           );
         }
-        const captured = field.fieldType === "signature" ? signatureDataUrl : initialsDataUrl;
+        const isPlaced = placedFieldIds.has(field.id);
+        const captured = isPlaced ? (field.fieldType === "signature" ? signatureDataUrl : initialsDataUrl) : null;
         return (
           <button
             key={field.id}
             type="button"
-            onClick={() => onFieldClick(field.fieldType)}
+            onClick={() => onFieldClick(field)}
             style={style}
+            aria-label={captured ? undefined : `Click to ${field.fieldType === "signature" ? "sign" : "initial"} this field`}
             className="absolute flex items-center justify-center overflow-hidden rounded-[2px] border-2 border-dashed border-primary bg-primary-muted text-xs font-medium text-primary hover:bg-primary/20"
           >
             {captured ? <img src={captured} alt="" className="h-full w-full object-contain" /> : field.fieldType === "signature" ? "Click to sign" : "Click to initial"}
