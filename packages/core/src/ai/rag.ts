@@ -11,18 +11,20 @@ const MAX_WORDS_PER_CHUNK = 200;
 export interface DocumentChunk {
   text: string;
   pageNumber: number;
+  /** Which source document this chunk came from — unset for the single-document chat, which has only one possible source. Set when chunks from more than one document share an index (multi-document chat), so citations can distinguish them. */
+  documentName?: string;
 }
 
 export interface EmbeddedChunk extends DocumentChunk {
   embedding: number[];
 }
 
-/** Splits per-page text into retrieval-sized chunks, tagging each with the page it came from (for citing "page N" in an answer). */
-export function chunkPagesForRag(pageTexts: { pageNumber: number; text: string }[]): DocumentChunk[] {
+/** Splits per-page text into retrieval-sized chunks, tagging each with the page (and optionally the document) it came from, for citing "page N" — or "document X, page N" once more than one document shares an index — in an answer. */
+export function chunkPagesForRag(pageTexts: { pageNumber: number; text: string }[], documentName?: string): DocumentChunk[] {
   const chunks: DocumentChunk[] = [];
   for (const { pageNumber, text } of pageTexts) {
     for (const chunk of chunkText(text, MAX_WORDS_PER_CHUNK)) {
-      chunks.push({ text: chunk, pageNumber });
+      chunks.push({ text: chunk, pageNumber, ...(documentName ? { documentName } : {}) });
     }
   }
   return chunks;
@@ -95,14 +97,18 @@ export function preloadEmbeddingModel(): Promise<unknown> {
 
 /** Builds the system prompt that grounds the chat model's answer in the retrieved excerpts, rather than letting a ~360M-parameter model answer from its own (unreliable, at that size) general knowledge. */
 export function buildRagSystemPrompt(relevantChunks: (DocumentChunk & { score: number })[]): string {
+  const multiDocument = relevantChunks.some((c) => c.documentName);
+  const documentWord = multiDocument ? "one or more PDF documents" : "a PDF document";
   if (relevantChunks.length === 0) {
-    return "You are answering questions about a PDF document, but no relevant passages were found for this question. Say plainly that you couldn't find anything relevant in the document, rather than guessing.";
+    return `You are answering questions about ${documentWord}, but no relevant passages were found for this question. Say plainly that you couldn't find anything relevant, rather than guessing.`;
   }
-  const excerpts = relevantChunks.map((c, i) => `[Excerpt ${i + 1}, page ${c.pageNumber}]\n${c.text}`).join("\n\n");
+  const excerpts = relevantChunks
+    .map((c, i) => `[Excerpt ${i + 1}${c.documentName ? `, "${c.documentName}"` : ""}, page ${c.pageNumber}]\n${c.text}`)
+    .join("\n\n");
   return [
-    "You are answering questions about a PDF document using ONLY the excerpts below.",
+    `You are answering questions about ${documentWord} using ONLY the excerpts below.`,
     "If the excerpts don't contain the answer, say so plainly rather than guessing or using outside knowledge.",
-    "When you use an excerpt, mention which page it came from.",
+    multiDocument ? "When you use an excerpt, mention which document and page it came from." : "When you use an excerpt, mention which page it came from.",
     "",
     excerpts,
   ].join("\n");

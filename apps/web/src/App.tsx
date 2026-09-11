@@ -47,6 +47,7 @@ import { FeedbackDialog } from "./features/feedback/FeedbackDialog";
 import { AllToolsDialog, type ToolGroup } from "./features/tools/AllToolsDialog";
 import { AccessibilityDialog } from "./features/ai/AccessibilityDialog";
 import { ChatDialog } from "./features/ai/ChatDialog";
+import { MultiDocChatDialog } from "./features/ai/MultiDocChatDialog";
 import { CommandBarDialog } from "./features/ai/CommandBarDialog";
 import { ExplainSelectionToolbar } from "./features/ai/ExplainSelectionToolbar";
 import { AccountButton } from "./features/account/AccountButton";
@@ -129,6 +130,7 @@ export function App() {
   const [translateOpen, setTranslateOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [multiDocChatOpen, setMultiDocChatOpen] = useState(false);
   const [commandBarOpen, setCommandBarOpen] = useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
@@ -318,6 +320,7 @@ export function App() {
                 { id: "translate", label: "Translate…", icon: <Sparkles />, tone: "ai", onSelect: () => setTranslateOpen(true) },
                 { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, tone: "ai", onSelect: () => setAccessibilityOpen(true) },
                 { id: "chat", label: "Chat with your PDF…", icon: <Sparkles />, tone: "ai", onSelect: () => setChatOpen(true) },
+                { id: "multi-doc-chat", label: "Chat across documents…", icon: <Sparkles />, tone: "ai", onSelect: () => setMultiDocChatOpen(true) },
                 { id: "command-bar", label: "AI command bar…", icon: <Sparkles />, tone: "ai", onSelect: () => setCommandBarOpen(true) },
                 { id: "quick-create", label: "Quick Create…", icon: <LayoutTemplate />, tone: "ai", onSelect: () => setQuickCreateOpen(true) },
               ],
@@ -391,6 +394,7 @@ export function App() {
       setTranslateOpen,
       setAccessibilityOpen,
       setChatOpen,
+      setMultiDocChatOpen,
       setCommandBarOpen,
       setQuickCreateOpen,
       imagePicker.open,
@@ -454,6 +458,7 @@ export function App() {
           { icon: Sparkles, label: "Translate", description: "In-place translation overlay.", tone: "ai", onSelect: () => setTranslateOpen(true) },
           { icon: Sparkles, label: "Image alt text", description: "Auto-generate accessibility descriptions.", tone: "ai", onSelect: () => setAccessibilityOpen(true) },
           { icon: Sparkles, label: "Chat with your PDF", description: "Ask questions grounded in the document.", tone: "ai", onSelect: () => setChatOpen(true) },
+          { icon: Sparkles, label: "Chat across documents", description: "Ask questions across several PDFs at once.", tone: "ai", onSelect: () => setMultiDocChatOpen(true) },
           { icon: Sparkles, label: "AI command bar", description: "Type a request, PDFLoom does the rest.", tone: "ai", onSelect: () => setCommandBarOpen(true) },
           { icon: LayoutTemplate, label: "Quick Create", description: "Flyers, social posts, and slides from a template.", tone: "ai", onSelect: () => setQuickCreateOpen(true) },
         ],
@@ -482,6 +487,7 @@ export function App() {
       setTranslateOpen,
       setAccessibilityOpen,
       setChatOpen,
+      setMultiDocChatOpen,
       setCommandBarOpen,
       setQuickCreateOpen,
       setBatchOpen,
@@ -561,12 +567,13 @@ export function App() {
           <RailItem icon={<Users />} label="Live Review" active={liveReviewOpen} onClick={() => setLiveReviewOpen(true)} />
           <DropdownMenu
             align="start"
-            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen || commandBarOpen} />}
+            trigger={<RailItem icon={<Sparkles />} label="AI tools" tone="ai" active={summarizeOpen || translateOpen || accessibilityOpen || chatOpen || multiDocChatOpen || commandBarOpen} />}
             items={[
               { id: "summarize", label: "Summarize…", icon: <Sparkles />, onSelect: () => setSummarizeOpen(true) },
               { id: "translate", label: "Translate…", icon: <Sparkles />, onSelect: () => setTranslateOpen(true) },
               { id: "accessibility", label: "Image alt text…", icon: <Sparkles />, onSelect: () => setAccessibilityOpen(true) },
               { id: "chat", label: "Chat with your PDF…", icon: <Sparkles />, onSelect: () => setChatOpen(true) },
+              { id: "multi-doc-chat", label: "Chat across documents…", icon: <Sparkles />, onSelect: () => setMultiDocChatOpen(true) },
               { id: "command-bar", label: "AI command bar…", icon: <Sparkles />, onSelect: () => setCommandBarOpen(true) },
             ]}
           />
@@ -665,7 +672,7 @@ export function App() {
             activePanel === "attachments" && <AttachmentsPanel />}
           <div className="min-w-0 flex-1">
             {!meta ? (
-              <WelcomeScreen />
+              <WelcomeScreen onOpenMultiDocChat={() => setMultiDocChatOpen(true)} />
             ) : mainView === "organize" ? (
               <OrganizeView />
             ) : mainView === "compare" && compareTarget ? (
@@ -686,6 +693,7 @@ export function App() {
       <VoiceToFillButton />
       <AccountButton />
       <PasswordPromptDialog />
+      <MultiDocChatDialog open={multiDocChatOpen} onOpenChange={setMultiDocChatOpen} />
       {meta && (
         <>
           <WatermarkDialog open={watermarkOpen} onOpenChange={setWatermarkOpen} />
