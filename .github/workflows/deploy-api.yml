@@ -111,6 +111,7 @@ jobs:
               SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
               SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               ANALYTICS_OWNER_EMAIL="${{ secrets.ANALYTICS_OWNER_EMAIL }}" \
+              RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
               APP_URL="${{ secrets.APP_URL }}" \
               SCM_DO_BUILD_DURING_DEPLOYMENT=false \
               WEBSITE_NODE_DEFAULT_VERSION=~24 \
