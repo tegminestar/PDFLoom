@@ -6,14 +6,21 @@ export interface CardProps {
   title: string;
   description: string;
   tone?: "default" | "ai";
-  /** `sm` matches a dense grid (tool pickers, templates); `md` matches a spacious feature grid. */
-  size?: "sm" | "md";
+  /** `xs` drops the description for a very dense browsing grid (large template libraries); `sm` matches a dense grid (tool pickers, templates); `md` matches a spacious feature grid. */
+  size?: "xs" | "sm" | "md";
   /** Renders as a `<button>` when provided, a static `<div>` otherwise. */
   onClick?: () => void;
   className?: string;
 }
 
 const SIZE_CLASSES = {
+  xs: {
+    card: "gap-1.5 rounded-(--radius-sm) p-2",
+    iconBox: "h-6 w-6 rounded-(--radius-sm)",
+    icon: "h-3.5 w-3.5",
+    title: "text-xs font-medium leading-snug",
+    description: "hidden",
+  },
   sm: {
     card: "gap-2 rounded-(--radius-md) p-3",
     iconBox: "h-8 w-8 rounded-(--radius-sm)",
