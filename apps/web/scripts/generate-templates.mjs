@@ -1222,6 +1222,903 @@ async function subcontractorAgreement() {
   });
 }
 
+// --- 32. Rental Application ------------------------------------------------------
+async function rentalApplication() {
+  return build((d) => {
+    d.title("Rental Application");
+    d.fieldRow([
+      { name: "applicant_name", label: "Applicant Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "phone", label: "Phone", width: 160 },
+      { name: "email", label: "Email", width: 220 },
+      { name: "ssn_last4", label: "SSN (last 4)", width: 100 },
+    ]);
+    d.fieldRow([{ name: "current_address", label: "Current Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "current_landlord", label: "Current Landlord Name & Phone", width: 300 },
+      { name: "monthly_rent_current", label: "Current Monthly Rent", width: 180 },
+    ]);
+    d.heading("Employment");
+    d.fieldRow([
+      { name: "employer_name", label: "Employer Name", width: 260 },
+      { name: "job_title", label: "Job Title", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "monthly_income", label: "Gross Monthly Income", width: 200 },
+      { name: "employment_length", label: "Length of Employment", width: 200 },
+    ]);
+    d.heading("Household");
+    d.fieldRow([
+      { name: "occupants", label: "Number of Occupants", width: 160 },
+      { name: "pets", label: "Pets (type/breed/weight)", width: 300 },
+    ]);
+    d.checkboxRow("smoker", "Applicant or occupant smokes");
+    d.fieldRow([{ name: "references", label: "Personal References (name / relationship / phone)", width: CONTENT_W, multiline: true }]);
+    d.paragraph("I authorize the landlord to verify the information above, including a credit and background check, as permitted by law.");
+    d.fieldRow([
+      { name: "applicant_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(
+      "Fair housing law prohibits screening criteria based on protected characteristics — confirm your screening questions and process comply with federal, state, and local fair housing requirements.",
+    );
+  });
+}
+
+// --- 33. Move-In / Move-Out Inspection Checklist -----------------------------------
+async function moveInMoveOutChecklist() {
+  return build((d) => {
+    d.title("Move-In / Move-Out Inspection Checklist");
+    d.fieldRow([
+      { name: "property_address", label: "Property Address", width: 300 },
+      { name: "unit", label: "Unit #", width: 160 },
+    ]);
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 260 },
+      { name: "inspection_date", label: "Inspection Date", width: 200 },
+    ]);
+    d.dropdownRow("inspection_type", "Inspection Type", ["Move-in", "Move-out"], { width: 180 });
+    d.heading("Room-by-Room Condition (note damage, or write \"Good\")");
+    for (const room of ["Living Room", "Kitchen", "Bedroom(s)", "Bathroom(s)", "Hallways / Closets", "Windows & Doors", "Appliances", "Walls & Paint", "Floors / Carpet", "Exterior / Yard (if applicable)"]) {
+      d.fieldRow([{ name: room.toLowerCase().replace(/[^a-z]+/g, "_"), label: room, width: CONTENT_W }]);
+    }
+    d.fieldRow([{ name: "keys_received", label: "Keys / Fobs / Remotes Received (count)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Landlord / Agent", "Tenant");
+    d.disclaimer("Complete this at both move-in and move-out and compare the two — this is the primary evidence used to resolve security deposit disputes.");
+  });
+}
+
+// --- 34. Tenant Ledger --------------------------------------------------------------
+async function tenantLedger() {
+  return build((d) => {
+    d.title("Tenant Ledger");
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 260 },
+      { name: "property_address", label: "Property / Unit", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "monthly_rent", label: "Monthly Rent", width: 180 },
+      { name: "lease_start", label: "Lease Start", width: 180 },
+    ]);
+    d.heading("Payment History");
+    const colWidths = [80, 150, 90, 90];
+    const colLabels = ["Date", "Description", "Charge", "Payment"];
+    for (let row = 1; row <= 10; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `entry_${row}_${label.toLowerCase()}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 16 },
+      );
+    }
+    d.fieldRow([{ name: "running_balance", label: "Current Balance", width: 200 }]);
+    d.disclaimer("Template provided for general reference only. Confirm this meets your local accounting and record-retention requirements.");
+  });
+}
+
+// --- 35. Maintenance Request ---------------------------------------------------------
+async function maintenanceRequest() {
+  return build((d) => {
+    d.title("Maintenance Request");
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 240 },
+      { name: "unit", label: "Unit / Property Address", width: 240 },
+    ]);
+    d.fieldRow([
+      { name: "phone", label: "Best Contact Phone", width: 200 },
+      { name: "date_submitted", label: "Date Submitted", width: 180 },
+    ]);
+    d.dropdownRow("urgency", "Urgency", ["Emergency (safety/no water/no heat)", "Urgent", "Routine"], { width: 300 });
+    d.fieldRow([{ name: "issue_location", label: "Location of Issue (e.g. kitchen, bathroom)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "issue_description", label: "Description of Problem", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("permission_to_enter", "Landlord/maintenance staff may enter without tenant present");
+    d.fieldRow([{ name: "preferred_times", label: "Preferred Access Times", width: CONTENT_W }]);
+    d.heading("For Office Use");
+    d.fieldRow([
+      { name: "assigned_to", label: "Assigned To", width: 260 },
+      { name: "date_completed", label: "Date Completed", width: 200 },
+    ]);
+    d.disclaimer("Emergency issues (gas leaks, active flooding, no heat in freezing weather) should also be reported by phone immediately, not only in writing.");
+  });
+}
+
+// --- 36. Pet Addendum ------------------------------------------------------------------
+async function petAddendum() {
+  return build((d) => {
+    d.title("Pet Addendum to Lease Agreement");
+    d.paragraph("This Addendum amends the Lease Agreement between Landlord and Tenant identified below to permit the pet(s) described here.");
+    d.fieldRow([
+      { name: "landlord_name", label: "Landlord Name", width: 260 },
+      { name: "tenant_name", label: "Tenant Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "property_address", label: "Property Address", width: CONTENT_W }]);
+    d.heading("Pet Information");
+    d.fieldRow([
+      { name: "pet_type", label: "Type / Breed", width: 200 },
+      { name: "pet_weight", label: "Weight", width: 120 },
+      { name: "pet_name", label: "Pet Name", width: 140 },
+    ]);
+    d.fieldRow([{ name: "vaccination_status", label: "Vaccination / License Status", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "pet_deposit", label: "Pet Deposit", width: 180 },
+      { name: "pet_rent", label: "Additional Monthly Pet Rent", width: 220 },
+    ]);
+    d.paragraph(
+      "Tenant agrees to keep the pet under control at all times, clean up after the pet, and is responsible for any damage the pet causes beyond normal wear and tear. Landlord may revoke this Addendum if the pet causes damage or disturbs other residents.",
+    );
+    d.spacer(6);
+    d.signatureBlock("Landlord", "Tenant");
+    d.disclaimer(GENERIC_DISCLAIMER + " Service and support animals are generally not \"pets\" under fair housing law and may not be subject to pet fees/deposits — confirm your policy complies with applicable law.");
+  });
+}
+
+// --- 37. Eviction Notice ---------------------------------------------------------------
+async function evictionNotice() {
+  return build((d) => {
+    d.title("Notice to Vacate / Pay Rent");
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 240 },
+      { name: "property_address", label: "Property Address", width: 240 },
+    ]);
+    d.fieldRow([{ name: "notice_date", label: "Date of This Notice", width: 200 }]);
+    d.dropdownRow("notice_reason", "Reason for Notice", ["Non-payment of rent", "Lease violation", "End of tenancy (no fault)", "Other"], { width: 260 });
+    d.fieldRow([{ name: "amount_owed", label: "Amount Owed (if non-payment)", width: 220 }]);
+    d.fieldRow([{ name: "violation_description", label: "Description of Violation (if applicable)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "cure_or_vacate_by", label: "Deadline to Cure / Vacate By", width: 220 }]);
+    d.paragraph(
+      "You are hereby notified that you must cure the above condition or vacate the premises by the date stated above, or legal proceedings may be initiated to recover possession of the property.",
+    );
+    d.spacer(6);
+    d.fieldRow([
+      { name: "landlord_signature", label: "Landlord / Agent — Signature (type full name)", width: 300 },
+      { name: "date_served", label: "Date Served", width: 200 },
+    ]);
+    d.disclaimer(
+      "Eviction notices are one of the most strictly regulated documents in landlord-tenant law: required notice periods, exact wording, and service methods vary sharply by state/locality, and getting this wrong can void the whole eviction. Do not rely on this generic template for an actual eviction — use your jurisdiction's required form and process, and consult a landlord-tenant attorney.",
+    );
+  });
+}
+
+// --- 38. Rent Increase Notice --------------------------------------------------------
+async function rentIncreaseNotice() {
+  return build((d) => {
+    d.title("Notice of Rent Increase");
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 240 },
+      { name: "property_address", label: "Property Address", width: 240 },
+    ]);
+    d.fieldRow([{ name: "notice_date", label: "Date of This Notice", width: 200 }]);
+    d.fieldRow([
+      { name: "current_rent", label: "Current Monthly Rent", width: 200 },
+      { name: "new_rent", label: "New Monthly Rent", width: 200 },
+    ]);
+    d.fieldRow([{ name: "effective_date", label: "Effective Date of New Rent", width: 220 }]);
+    d.paragraph("This notice is provided in accordance with the notice period required under your lease and applicable law. Please contact us with any questions.");
+    d.spacer(6);
+    d.fieldRow([{ name: "landlord_signature", label: "Landlord / Agent — Signature (type full name)", width: 300 }]);
+    d.disclaimer(
+      "Required advance-notice periods for rent increases (and whether increases are capped or restricted at all, under rent control/stabilization) vary by jurisdiction — confirm the applicable rule before sending this notice.",
+    );
+  });
+}
+
+// --- 39. Security Deposit Return / Itemization ---------------------------------------
+async function securityDepositReturn() {
+  return build((d) => {
+    d.title("Security Deposit Return Statement");
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 240 },
+      { name: "property_address", label: "Property Address", width: 240 },
+    ]);
+    d.fieldRow([
+      { name: "move_out_date", label: "Move-Out Date", width: 200 },
+      { name: "deposit_held", label: "Original Deposit Held", width: 200 },
+    ]);
+    d.heading("Deductions");
+    const colWidths = [280, 90, 90];
+    const colLabels = ["Description", "Amount", "Ref."];
+    for (let row = 1; row <= 6; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `deduction_${row}_${label.toLowerCase().replace(/[^a-z]/g, "")}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 16 },
+      );
+    }
+    d.fieldRow([
+      { name: "total_deductions", label: "Total Deductions", width: 200 },
+      { name: "amount_returned", label: "Amount Being Returned", width: 200 },
+    ]);
+    d.disclaimer(
+      "Most jurisdictions require an itemized deduction statement within a strict deadline (often 14-30 days after move-out) and returning any undisputed balance within that same window — confirm your jurisdiction's exact deadline and required format.",
+    );
+  });
+}
+
+// --- 40. Lease Renewal / Extension Agreement -----------------------------------------
+async function leaseRenewal() {
+  return build((d) => {
+    d.title("Lease Renewal / Extension Agreement");
+    d.paragraph("This Renewal extends the existing Lease Agreement between the Landlord and Tenant identified below on the terms stated here.");
+    d.fieldRow([
+      { name: "landlord_name", label: "Landlord Name", width: 260 },
+      { name: "tenant_name", label: "Tenant Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "property_address", label: "Property Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "original_lease_date", label: "Original Lease Date", width: 220 },
+      { name: "current_end_date", label: "Current Lease End Date", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "new_end_date", label: "New Lease End Date", width: 220 },
+      { name: "new_monthly_rent", label: "Monthly Rent for Renewal Term", width: 220 },
+    ]);
+    d.checkboxRow("other_terms_unchanged", "All other terms of the original Lease remain unchanged");
+    d.fieldRow([{ name: "updated_terms", label: "Updated Terms (if any)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.signatureBlock("Landlord", "Tenant");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 41. Property Inspection Report --------------------------------------------------
+async function propertyInspectionReport() {
+  return build((d) => {
+    d.title("Property Inspection Report");
+    d.fieldRow([
+      { name: "property_address", label: "Property Address", width: 300 },
+      { name: "inspection_date", label: "Inspection Date", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "inspector_name", label: "Inspector Name", width: 200 },
+      { name: "inspection_type", label: "Inspection Type (routine/move-out/annual)", width: 280 },
+    ]);
+    d.heading("Findings by Area");
+    for (const area of ["Roof & Exterior", "Foundation & Structure", "Electrical", "Plumbing", "HVAC", "Interior / Fixtures", "Safety (smoke/CO detectors, exits)"]) {
+      d.fieldRow([{ name: area.toLowerCase().replace(/[^a-z]+/g, "_"), label: area, width: CONTENT_W }]);
+    }
+    d.fieldRow([{ name: "overall_condition", label: "Overall Condition Summary", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "recommended_repairs", label: "Recommended Repairs / Follow-Up", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([{ name: "inspector_signature", label: "Inspector — Signature (type full name)", width: 300 }]);
+    d.disclaimer("Template provided for general reference only, and is not a substitute for a licensed home inspector's report where one is required (e.g. for a real estate transaction).");
+  });
+}
+
+// --- 42. HOA Violation Notice ---------------------------------------------------------
+async function hoaViolationNotice() {
+  return build((d) => {
+    d.title("HOA Violation Notice");
+    d.fieldRow([
+      { name: "association_name", label: "Association Name", width: 260 },
+      { name: "owner_name", label: "Property Owner Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "property_address", label: "Property Address", width: CONTENT_W }]);
+    d.fieldRow([{ name: "notice_date", label: "Date of Notice", width: 200 }]);
+    d.dropdownRow("violation_type", "Type of Violation", ["Architectural / exterior", "Landscaping", "Parking", "Noise", "Pet", "Other"], { width: 260 });
+    d.fieldRow([{ name: "violation_description", label: "Description of Violation", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "governing_provision", label: "CC&R / Bylaw Provision Cited", width: CONTENT_W }]);
+    d.fieldRow([{ name: "cure_by_date", label: "Deadline to Cure", width: 220 }]);
+    d.fieldRow([{ name: "potential_fine", label: "Potential Fine if Not Cured", width: 220 }]);
+    d.disclaimer("HOA enforcement procedures (required notice, hearing rights, fine limits) are governed by your association's own governing documents and state HOA law — confirm compliance before issuing.");
+  });
+}
+
+// --- 43. Roommate Agreement -----------------------------------------------------------
+async function roommateAgreement() {
+  return build((d) => {
+    d.title("Roommate Agreement");
+    d.paragraph("This Agreement is between the co-tenants identified below, sharing the residence described below, and is intended to supplement (not replace) any lease with the landlord.");
+    d.fieldRow([{ name: "property_address", label: "Shared Residence Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "roommate_1", label: "Roommate 1 Name", width: 160 },
+      { name: "roommate_2", label: "Roommate 2 Name", width: 160 },
+      { name: "roommate_3", label: "Roommate 3 Name (if any)", width: 150 },
+    ]);
+    d.fieldRow([
+      { name: "total_rent", label: "Total Monthly Rent", width: 180 },
+      { name: "rent_split", label: "Each Roommate's Share", width: 220 },
+    ]);
+    d.fieldRow([{ name: "utilities_split", label: "Utilities / Shared Expenses Split", width: CONTENT_W }]);
+    d.fieldRow([{ name: "chore_schedule", label: "Chore / Cleaning Schedule", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "house_rules", label: "House Rules (guests, quiet hours, shared items)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "roommate_1_signature", label: "Roommate 1 — Signature (type full name)", width: (CONTENT_W - 24) / 2 },
+      { name: "roommate_2_signature", label: "Roommate 2 — Signature (type full name)", width: (CONTENT_W - 24) / 2 },
+    ]);
+    d.disclaimer("This is a private agreement between roommates and does not modify anyone's obligations to the landlord under the actual lease.");
+  });
+}
+
+// --- 44. Short-Term Rental Agreement --------------------------------------------------
+async function shortTermRentalAgreement() {
+  return build((d) => {
+    d.title("Short-Term Rental Agreement");
+    d.paragraph("This Agreement covers a short-term stay at the property described below between the Host and Guest identified here.");
+    d.fieldRow([
+      { name: "host_name", label: "Host Name", width: 260 },
+      { name: "guest_name", label: "Guest Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "property_address", label: "Property Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "checkin_date", label: "Check-In Date", width: 180 },
+      { name: "checkout_date", label: "Check-Out Date", width: 180 },
+      { name: "max_guests", label: "Max Guests", width: 120 },
+    ]);
+    d.fieldRow([
+      { name: "total_rate", label: "Total Rate", width: 160 },
+      { name: "cleaning_fee", label: "Cleaning Fee", width: 140 },
+      { name: "security_deposit", label: "Security Deposit", width: 160 },
+    ]);
+    d.dropdownRow("cancellation_policy", "Cancellation Policy", ["Flexible", "Moderate", "Firm", "Strict"], { width: 200 });
+    d.checkboxRow("no_smoking", "No smoking on the property");
+    d.checkboxRow("no_pets", "No pets allowed");
+    d.checkboxRow("no_parties", "No parties or events");
+    d.fieldRow([{ name: "house_rules", label: "Additional House Rules", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.signatureBlock("Host", "Guest");
+    d.disclaimer(GENERIC_DISCLAIMER + " Short-term rental regulations (permits, occupancy taxes, local restrictions) vary significantly by city — confirm compliance before hosting.");
+  });
+}
+
+// --- 45. Rent Receipt ------------------------------------------------------------------
+async function rentReceipt() {
+  return build((d) => {
+    d.title("Rent Receipt");
+    d.fieldRow([
+      { name: "receipt_number", label: "Receipt #", width: 160 },
+      { name: "payment_date", label: "Date of Payment", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "tenant_name", label: "Tenant Name", width: 240 },
+      { name: "property_address", label: "Property / Unit", width: 240 },
+    ]);
+    d.fieldRow([
+      { name: "period_covered", label: "Rental Period Covered", width: 220 },
+      { name: "amount_paid", label: "Amount Paid", width: 180 },
+    ]);
+    d.dropdownRow("payment_method", "Payment Method", ["Cash", "Check", "Bank transfer", "Money order", "Other"], { width: 220 });
+    d.fieldRow([{ name: "balance_remaining", label: "Balance Remaining (if partial payment)", width: 260 }]);
+    d.fieldRow([{ name: "received_by", label: "Received By (type full name)", width: 300 }]);
+    d.disclaimer("Template provided for general reference only.");
+  });
+}
+
+// --- 46. Quote / Estimate -----------------------------------------------------------
+async function quoteEstimate() {
+  return build((d) => {
+    d.title("Quote / Estimate");
+    d.fieldRow([
+      { name: "quote_number", label: "Quote #", width: 140 },
+      { name: "quote_date", label: "Date", width: 140 },
+      { name: "valid_until", label: "Valid Until", width: 180 },
+    ]);
+    d.heading("From");
+    d.fieldRow([{ name: "from_business", label: "Business Name", width: CONTENT_W }]);
+    d.heading("Prepared For");
+    d.fieldRow([{ name: "client_name", label: "Client Name", width: CONTENT_W }]);
+    d.heading("Scope & Pricing");
+    const colWidths = [220, 60, 90, 90];
+    const colLabels = ["Description", "Qty", "Rate", "Amount"];
+    for (let row = 1; row <= 5; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `item_${row}_${label.toLowerCase()}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 18 },
+      );
+    }
+    d.fieldRow([{ name: "estimated_total", label: "Estimated Total", width: 200 }]);
+    d.fieldRow([{ name: "terms", label: "Terms & Assumptions", width: CONTENT_W, multiline: true }]);
+    d.disclaimer("An estimate, not a final invoice — actual charges may vary based on the terms noted above.");
+  });
+}
+
+// --- 47. Receipt ----------------------------------------------------------------------
+async function genericReceipt() {
+  return build((d) => {
+    d.title("Receipt");
+    d.fieldRow([
+      { name: "receipt_number", label: "Receipt #", width: 160 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "received_from", label: "Received From", width: 300 },
+      { name: "amount", label: "Amount", width: 180 },
+    ]);
+    d.fieldRow([{ name: "payment_for", label: "For Payment Of", width: CONTENT_W }]);
+    d.dropdownRow("payment_method", "Payment Method", ["Cash", "Check", "Card", "Bank transfer", "Other"], { width: 200 });
+    d.fieldRow([{ name: "received_by", label: "Received By (type full name)", width: 300 }]);
+    d.disclaimer("Template provided for general reference only.");
+  });
+}
+
+// --- 48. Timesheet ----------------------------------------------------------------------
+async function timesheet() {
+  return build((d) => {
+    d.title("Timesheet");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Name", width: 260 },
+      { name: "pay_period", label: "Pay Period", width: 220 },
+    ]);
+    d.heading("Hours Worked");
+    const colWidths = [90, 90, 90, 90, 100];
+    const colLabels = ["Date", "Time In", "Time Out", "Break", "Total Hrs"];
+    for (let row = 1; row <= 7; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `day_${row}_${label.toLowerCase().replace(/[^a-z]/g, "")}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 16 },
+      );
+    }
+    d.fieldRow([{ name: "total_hours", label: "Total Hours for Period", width: 220 }]);
+    d.spacer(6);
+    d.signatureBlock("Employee", "Supervisor Approval");
+    d.disclaimer("Template provided for general reference only. Confirm this meets your organization's payroll and wage-and-hour recordkeeping requirements.");
+  });
+}
+
+// --- 49. Expense Report -------------------------------------------------------------
+async function expenseReport() {
+  return build((d) => {
+    d.title("Expense Report");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Name", width: 260 },
+      { name: "department", label: "Department", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "report_period", label: "Report Period", width: 220 },
+      { name: "report_date", label: "Date Submitted", width: 200 },
+    ]);
+    d.heading("Expenses");
+    const colWidths = [80, 190, 90, 90];
+    const colLabels = ["Date", "Description", "Category", "Amount"];
+    for (let row = 1; row <= 8; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `expense_${row}_${label.toLowerCase()}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 16 },
+      );
+    }
+    d.fieldRow([{ name: "total_amount", label: "Total Amount Requested", width: 220 }]);
+    d.checkboxRow("receipts_attached", "Receipts attached for all expenses over the required threshold");
+    d.spacer(6);
+    d.signatureBlock("Employee", "Manager Approval");
+    d.disclaimer("Template provided for general reference only. Align expense categories and receipt requirements with your organization's own expense policy.");
+  });
+}
+
+// --- 50. Reference Letter -----------------------------------------------------------
+async function referenceLetter() {
+  return build((d) => {
+    d.title("Reference Letter");
+    d.fieldRow([
+      { name: "date", label: "Date", width: 200 },
+      { name: "referee_name", label: "Person Being Referred", width: 260 },
+    ]);
+    d.fieldRow([
+      { name: "author_name", label: "Your Name", width: 260 },
+      { name: "author_title", label: "Your Title / Relationship", width: 220 },
+    ]);
+    d.fieldRow([{ name: "relationship_duration", label: "How Long / In What Capacity You've Known Them", width: CONTENT_W }]);
+    d.fieldRow([{ name: "reference_body", label: "Reference (skills, character, recommendation)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "contact_info", label: "Your Contact Information (for follow-up questions)", width: CONTENT_W }]);
+    d.spacer(6);
+    d.fieldRow([{ name: "author_signature", label: "Signature (type full name)", width: 300 }]);
+    d.disclaimer("Template provided for general reference only.");
+  });
+}
+
+// --- 51. Resignation Letter ----------------------------------------------------------
+async function resignationLetter() {
+  return build((d) => {
+    d.title("Resignation Letter");
+    d.fieldRow([
+      { name: "date", label: "Date", width: 200 },
+      { name: "employee_name", label: "Your Name", width: 260 },
+    ]);
+    d.fieldRow([
+      { name: "manager_name", label: "Manager / Recipient Name", width: 260 },
+      { name: "company_name", label: "Company Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "last_day", label: "Intended Last Day of Work", width: 220 }]);
+    d.fieldRow([{ name: "reason", label: "Reason (optional)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "additional_notes", label: "Additional Notes (transition plan, thanks, etc.)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([{ name: "employee_signature", label: "Signature (type full name)", width: 300 }]);
+    d.disclaimer("Check your employment contract and company policy for any required notice period before finalizing your last day.");
+  });
+}
+
+// --- 52. Meeting Agenda -------------------------------------------------------------
+async function meetingAgenda() {
+  return build((d) => {
+    d.title("Meeting Agenda");
+    d.fieldRow([
+      { name: "meeting_title", label: "Meeting Title", width: 240 },
+      { name: "meeting_date", label: "Date", width: 130 },
+      { name: "meeting_time", label: "Time", width: 106 },
+    ]);
+    d.fieldRow([
+      { name: "location", label: "Location / Method", width: 270 },
+      { name: "facilitator", label: "Facilitator", width: 200 },
+    ]);
+    d.fieldRow([{ name: "attendees", label: "Attendees", width: CONTENT_W }]);
+    d.heading("Agenda Items");
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `item_${i}_topic`, label: `${i}. Topic`, width: 300 },
+        { name: `item_${i}_owner`, label: "Owner", width: 120 },
+        { name: `item_${i}_time`, label: "Time Allotted", width: 60 },
+      ]);
+    }
+    d.fieldRow([{ name: "goals", label: "Meeting Goals / Desired Outcomes", width: CONTENT_W, multiline: true }]);
+    d.disclaimer("Template provided for general reference only.");
+  });
+}
+
+// --- 53. Budget Request Form ---------------------------------------------------------
+async function budgetRequestForm() {
+  return build((d) => {
+    d.title("Budget Request Form");
+    d.fieldRow([
+      { name: "requestor_name", label: "Requestor Name", width: 260 },
+      { name: "department", label: "Department", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "fiscal_period", label: "Fiscal Period", width: 220 },
+      { name: "request_date", label: "Date Submitted", width: 200 },
+    ]);
+    d.fieldRow([{ name: "purpose", label: "Purpose of Request", width: CONTENT_W, multiline: true }]);
+    d.heading("Itemized Amounts");
+    const colWidths = [280, 90, 90];
+    const colLabels = ["Line Item", "Amount", "Category"];
+    for (let row = 1; row <= 6; row++) {
+      d.fieldRow(
+        colLabels.map((label, i) => ({ name: `line_${row}_${label.toLowerCase().replace(/[^a-z]/g, "")}`, label: row === 1 ? label : "", width: colWidths[i] })),
+        { height: 16 },
+      );
+    }
+    d.fieldRow([{ name: "total_requested", label: "Total Requested", width: 220 }]);
+    d.fieldRow([{ name: "justification", label: "Business Justification", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.signatureBlock("Requestor", "Budget Approver");
+    d.disclaimer("Template provided for general reference only. Align approval thresholds and categories with your organization's own budgeting policy.");
+  });
+}
+
+// --- 54. Internal Memo ---------------------------------------------------------------
+async function internalMemo() {
+  return build((d) => {
+    d.title("Internal Memo");
+    d.fieldRow([
+      { name: "to", label: "To", width: 260 },
+      { name: "from", label: "From", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "date", label: "Date", width: 180 },
+      { name: "subject", label: "Subject", width: 300 },
+    ]);
+    d.fieldRow([{ name: "message", label: "Message", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "action_required", label: "Action Required (if any)", width: CONTENT_W }]);
+    d.disclaimer("Template provided for general reference only.");
+  });
+}
+
+// --- 55. Change Order Form ------------------------------------------------------------
+async function changeOrderForm() {
+  return build((d) => {
+    d.title("Change Order Form");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "change_order_number", label: "Change Order #", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "requested_by", label: "Requested By", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.fieldRow([{ name: "description_of_change", label: "Description of Change", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "reason_for_change", label: "Reason for Change", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "cost_impact", label: "Cost Impact (+/-)", width: 220 },
+      { name: "schedule_impact", label: "Schedule Impact (+/- days)", width: 240 },
+    ]);
+    d.spacer(6);
+    d.signatureBlock("Requestor", "Approving Authority");
+    d.disclaimer("Template provided for general reference only. Confirm this meets any contract-specific change-order procedure that governs the underlying agreement.");
+  });
+}
+
+// --- 56. Independent Contractor Agreement --------------------------------------------
+async function independentContractorAgreement() {
+  return build((d) => {
+    d.title("Independent Contractor Agreement");
+    d.paragraph('This Agreement is entered into between the Client and Contractor identified below, for the services described here.');
+    d.fieldRow([
+      { name: "client_name", label: "Client Name", width: 260 },
+      { name: "contractor_name", label: "Contractor Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "services_description", label: "Description of Services", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "payment_amount", label: "Payment Amount / Rate", width: 220 },
+      { name: "payment_schedule", label: "Payment Schedule", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "start_date", label: "Start Date", width: 180 },
+      { name: "end_date", label: "End Date (if applicable)", width: 220 },
+    ]);
+    d.paragraph(
+      "1. Independent Contractor Status. Contractor is an independent contractor, not an employee, and is responsible for their own taxes, insurance, and benefits. 2. Ownership of Work Product. Work product created under this Agreement belongs to Client upon full payment, unless stated otherwise. 3. No Exclusivity. Unless stated otherwise, Contractor may perform services for other clients.",
+    );
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Client", "Contractor");
+    d.disclaimer(GENERIC_DISCLAIMER + " Worker classification (employee vs. independent contractor) is governed by specific legal tests that vary by jurisdiction and agency — misclassification carries real legal and tax risk. Confirm this classification is correct before relying on this Agreement.");
+  });
+}
+
+// --- 57. Purchase Agreement (general goods/business) -----------------------------------
+async function purchaseAgreement() {
+  return build((d) => {
+    d.title("Purchase Agreement");
+    d.paragraph("This Agreement documents the sale of the item(s) or business assets described below from the Seller to the Buyer identified here.");
+    d.fieldRow([
+      { name: "seller_name", label: "Seller Name", width: 260 },
+      { name: "buyer_name", label: "Buyer Name", width: 220 },
+    ]);
+    d.fieldRow([{ name: "item_description", label: "Description of What's Being Purchased", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "purchase_price", label: "Purchase Price", width: 200 },
+      { name: "deposit_amount", label: "Deposit (if any)", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "closing_date", label: "Closing / Delivery Date", width: 220 },
+      { name: "payment_method", label: "Payment Method", width: 220 },
+    ]);
+    d.checkboxRow("as_is", "Sold \"as is\" with no warranties");
+    d.fieldRow([{ name: "contingencies", label: "Contingencies (financing, inspection, etc.)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Seller", "Buyer");
+    d.disclaimer(GENERIC_DISCLAIMER + " For real estate or business-asset purchases specifically, additional disclosures, title work, and regulatory filings are typically required — have this reviewed by qualified counsel.");
+  });
+}
+
+// --- 58. Partnership Agreement ---------------------------------------------------------
+async function partnershipAgreement() {
+  return build((d) => {
+    d.title("Partnership Agreement");
+    d.paragraph("This Partnership Agreement is entered into by the Partners identified below to operate the business described here as a partnership.");
+    d.fieldRow([{ name: "business_name", label: "Partnership / Business Name", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "partner_1", label: "Partner 1 Name", width: 200 },
+      { name: "partner_1_share", label: "Ownership %", width: 90 },
+      { name: "partner_2", label: "Partner 2 Name", width: 190 },
+    ]);
+    d.fieldRow([{ name: "partner_2_share", label: "Partner 2 Ownership %", width: 180 }]);
+    d.fieldRow([{ name: "capital_contributions", label: "Initial Capital Contributions (per partner)", width: CONTENT_W }]);
+    d.paragraph(
+      "1. Profit and Loss Sharing. Profits and losses are shared in proportion to ownership percentage unless stated otherwise. 2. Management. Each partner has an equal voice in management unless stated otherwise. 3. Withdrawal. A partner may withdraw upon written notice as specified below; the remaining partners may continue the business.",
+    );
+    d.fieldRow([{ name: "withdrawal_notice_period", label: "Required Notice Period to Withdraw", width: 260 }]);
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Partner 1", "Partner 2");
+    d.disclaimer(GENERIC_DISCLAIMER + " Partnership taxation, liability exposure, and dissolution rules vary by entity type and jurisdiction — have this reviewed by a qualified attorney or accountant before forming a partnership.");
+  });
+}
+
+// --- 59. LLC Operating Agreement --------------------------------------------------------
+async function operatingAgreementLLC() {
+  return build((d) => {
+    d.title("LLC Operating Agreement");
+    d.paragraph("This Operating Agreement governs the internal operations of the limited liability company identified below.");
+    d.fieldRow([
+      { name: "llc_name", label: "LLC Name", width: 300 },
+      { name: "formation_state", label: "State of Formation", width: 200 },
+    ]);
+    d.fieldRow([{ name: "principal_address", label: "Principal Business Address", width: CONTENT_W }]);
+    d.heading("Members");
+    d.fieldRow([
+      { name: "member_1", label: "Member 1 Name", width: 200 },
+      { name: "member_1_percent", label: "Ownership %", width: 90 },
+      { name: "member_2", label: "Member 2 Name", width: 190 },
+    ]);
+    d.fieldRow([{ name: "member_2_percent", label: "Member 2 Ownership %", width: 180 }]);
+    d.dropdownRow("management_structure", "Management Structure", ["Member-managed", "Manager-managed"], { width: 220 });
+    d.paragraph(
+      "1. Capital Contributions. Each member's initial contribution is as recorded in the company's books. 2. Distributions. Distributions are made in proportion to ownership percentage unless stated otherwise. 3. Limited Liability. No member is personally liable for the LLC's debts solely by virtue of membership.",
+    );
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Member 1", "Member 2");
+    d.disclaimer(GENERIC_DISCLAIMER + " LLC statutes and default rules vary significantly by state — have this reviewed by a qualified attorney to confirm it matches your state's requirements and your actual intentions.");
+  });
+}
+
+// --- 60. Employment Contract (full) -----------------------------------------------------
+async function employmentContract() {
+  return build((d) => {
+    d.title("Employment Contract");
+    d.paragraph("This Employment Contract is entered into between the Employer and Employee identified below.");
+    d.fieldRow([
+      { name: "employer_name", label: "Employer Name", width: 260 },
+      { name: "employee_name", label: "Employee Name", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "job_title", label: "Job Title", width: 260 },
+      { name: "start_date", label: "Start Date", width: 220 },
+    ]);
+    d.dropdownRow("employment_type", "Employment Type", ["At-will", "Fixed-term", "Probationary"], { width: 220 });
+    d.fieldRow([{ name: "contract_end_date", label: "Contract End Date (if fixed-term)", width: 260 }]);
+    d.fieldRow([
+      { name: "compensation", label: "Compensation", width: 220 },
+      { name: "pay_frequency", label: "Pay Frequency", width: 220 },
+    ]);
+    d.fieldRow([{ name: "benefits", label: "Benefits", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "duties", label: "Duties and Responsibilities", width: CONTENT_W, multiline: true }]);
+    d.dropdownRow("termination_notice", "Termination Notice Period", ["None (at-will)", "2 weeks", "30 days", "60 days"], { width: 220 });
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Employer", "Employee");
+    d.disclaimer(GENERIC_DISCLAIMER + " Employment terms and required disclosures vary by jurisdiction — have this reviewed by qualified employment counsel or HR guidance specific to your location.");
+  });
+}
+
+// --- 61. Affidavit ------------------------------------------------------------------------
+async function affidavit() {
+  return build((d) => {
+    d.title("Affidavit");
+    d.fieldRow([
+      { name: "affiant_name", label: "Affiant (Person Making This Statement)", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([{ name: "affiant_address", label: "Affiant Address", width: CONTENT_W }]);
+    d.paragraph("I, the Affiant identified above, being duly sworn, depose and state the following under penalty of perjury:");
+    d.fieldRow([{ name: "statement", label: "Statement of Facts", width: CONTENT_W, multiline: true }]);
+    d.paragraph("I declare that the foregoing is true and correct to the best of my knowledge.");
+    d.fieldRow([{ name: "affiant_signature", label: "Affiant — Signature (type full name)", width: 300 }]);
+    d.heading("Notary Acknowledgment (if required)");
+    d.fieldRow([
+      { name: "notary_name", label: "Notary Name", width: 260 },
+      { name: "notary_commission_expires", label: "Commission Expires", width: 220 },
+    ]);
+    d.disclaimer(
+      "Affidavits are typically required to be signed in person before a notary public or other authorized officer to be legally valid — this template alone does not satisfy that requirement. Confirm your jurisdiction's exact execution requirements before use, and never state anything here you don't know to be true (affidavits carry criminal perjury penalties).",
+    );
+  });
+}
+
+// --- 62. Cease and Desist Letter ---------------------------------------------------------
+async function ceaseAndDesistLetter() {
+  return build((d) => {
+    d.title("Cease and Desist Letter");
+    d.fieldRow([
+      { name: "sender_name", label: "Your Name / Organization", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.fieldRow([{ name: "recipient_name", label: "Recipient Name / Organization", width: CONTENT_W }]);
+    d.fieldRow([{ name: "recipient_address", label: "Recipient Address", width: CONTENT_W }]);
+    d.dropdownRow("conduct_type", "Type of Conduct", ["Harassment", "Defamation", "Trademark/copyright infringement", "Breach of contract", "Other"], { width: 300 });
+    d.fieldRow([{ name: "conduct_description", label: "Description of the Conduct at Issue", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "demand", label: "What You're Demanding They Stop / Do", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "deadline", label: "Deadline to Comply", width: 220 }]);
+    d.paragraph("Failure to comply by the above deadline may result in further legal action to protect my/our rights.");
+    d.spacer(6);
+    d.fieldRow([{ name: "sender_signature", label: "Signature (type full name)", width: 300 }]);
+    d.disclaimer("This is a serious legal document with real consequences depending on how it's used and responded to — have it reviewed by a qualified attorney before sending, especially for anything beyond a minor personal dispute.");
+  });
+}
+
+// --- 63. Demand Letter ---------------------------------------------------------------------
+async function demandLetter() {
+  return build((d) => {
+    d.title("Demand Letter");
+    d.fieldRow([
+      { name: "sender_name", label: "Your Name", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.fieldRow([{ name: "recipient_name", label: "Recipient Name", width: CONTENT_W }]);
+    d.fieldRow([{ name: "recipient_address", label: "Recipient Address", width: CONTENT_W }]);
+    d.fieldRow([{ name: "background", label: "Background of the Dispute", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "amount_demanded", label: "Amount Demanded", width: 220 },
+      { name: "deadline", label: "Deadline to Respond / Pay", width: 220 },
+    ]);
+    d.paragraph("If this matter is not resolved by the deadline above, I may pursue further legal remedies, including filing a claim in the appropriate court.");
+    d.spacer(6);
+    d.fieldRow([{ name: "sender_signature", label: "Signature (type full name)", width: 300 }]);
+    d.disclaimer("Small claims court has its own specific procedures and dollar limits by jurisdiction. For disputes beyond a small personal amount, have this letter reviewed by a qualified attorney before sending.");
+  });
+}
+
+// --- 64. Settlement Agreement ------------------------------------------------------------
+async function settlementAgreement() {
+  return build((d) => {
+    d.title("Settlement Agreement");
+    d.paragraph("This Settlement Agreement resolves the dispute between the Parties identified below on the terms set out here.");
+    d.fieldRow([
+      { name: "party_a", label: "Party A", width: 260 },
+      { name: "party_b", label: "Party B", width: 220 },
+    ]);
+    d.fieldRow([{ name: "dispute_description", label: "Description of the Dispute Being Settled", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "settlement_amount", label: "Settlement Amount (if any)", width: 220 },
+      { name: "payment_deadline", label: "Payment Deadline", width: 220 },
+    ]);
+    d.paragraph(
+      "1. Mutual Release. Upon performance of the terms above, each Party releases the other from all claims related to the dispute described above. 2. No Admission. This Agreement is not an admission of liability or wrongdoing by either Party. 3. Confidentiality. The Parties agree to keep the terms of this settlement confidential, except as required by law.",
+    );
+    d.fieldRow([{ name: "governing_law", label: "Governing Law (State / Country)", width: 260 }]);
+    d.spacer(6);
+    d.signatureBlock("Party A", "Party B");
+    d.disclaimer(GENERIC_DISCLAIMER + " Settlement agreements resolving an active legal claim often need to be filed with or approved by a court — confirm the requirements for your specific matter with qualified counsel.");
+  });
+}
+
+// --- 65. Notary Acknowledgment -------------------------------------------------------------
+async function notaryAcknowledgment() {
+  return build((d) => {
+    d.title("Notary Acknowledgment");
+    d.fieldRow([
+      { name: "state", label: "State", width: 200 },
+      { name: "county", label: "County", width: 200 },
+    ]);
+    d.paragraph(
+      "On the date below, before me personally appeared the individual named below, known to me (or proved to me on the basis of satisfactory evidence) to be the person whose name is subscribed to the attached document, and acknowledged executing it for the purposes stated therein.",
+    );
+    d.fieldRow([
+      { name: "signer_name", label: "Name of Signer", width: 300 },
+      { name: "date_acknowledged", label: "Date", width: 200 },
+    ]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "notary_signature", label: "Notary Public — Signature (type full name)", width: 300 },
+      { name: "commission_expires", label: "My Commission Expires", width: 200 },
+    ]);
+    d.disclaimer(
+      "This is a general-reference notarial certificate only — most jurisdictions require the exact statutory wording for a valid notarial acknowledgment, and notarization itself requires the signer to personally appear before a commissioned notary. Use your state/jurisdiction's required official wording, not this template's, for anything that actually needs to be notarized.",
+    );
+  });
+}
+
+// --- 66. Contract Addendum -----------------------------------------------------------------
+async function contractAddendum() {
+  return build((d) => {
+    d.title("Contract Addendum");
+    d.paragraph("This Addendum amends the Agreement identified below between the Parties identified here, effective as of the date below.");
+    d.fieldRow([
+      { name: "original_agreement_name", label: "Original Agreement (title and date)", width: CONTENT_W },
+    ]);
+    d.fieldRow([
+      { name: "party_a", label: "Party A", width: 260 },
+      { name: "party_b", label: "Party B", width: 220 },
+    ]);
+    d.fieldRow([{ name: "effective_date", label: "Effective Date of This Addendum", width: 220 }]);
+    d.fieldRow([{ name: "changes_description", label: "Description of Changes to the Original Agreement", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("other_terms_unchanged", "All other terms of the original Agreement remain in full force and effect");
+    d.spacer(6);
+    d.signatureBlock("Party A", "Party B");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const templates = [
@@ -1256,6 +2153,41 @@ async function main() {
     { file: "proof-of-loss.pdf", make: proofOfLoss },
     { file: "vendor-registration-form.pdf", make: vendorRegistrationForm },
     { file: "subcontractor-agreement.pdf", make: subcontractorAgreement },
+    { file: "rental-application.pdf", make: rentalApplication },
+    { file: "move-in-move-out-checklist.pdf", make: moveInMoveOutChecklist },
+    { file: "tenant-ledger.pdf", make: tenantLedger },
+    { file: "maintenance-request.pdf", make: maintenanceRequest },
+    { file: "pet-addendum.pdf", make: petAddendum },
+    { file: "eviction-notice.pdf", make: evictionNotice },
+    { file: "rent-increase-notice.pdf", make: rentIncreaseNotice },
+    { file: "security-deposit-return.pdf", make: securityDepositReturn },
+    { file: "lease-renewal.pdf", make: leaseRenewal },
+    { file: "property-inspection-report.pdf", make: propertyInspectionReport },
+    { file: "hoa-violation-notice.pdf", make: hoaViolationNotice },
+    { file: "roommate-agreement.pdf", make: roommateAgreement },
+    { file: "short-term-rental-agreement.pdf", make: shortTermRentalAgreement },
+    { file: "rent-receipt.pdf", make: rentReceipt },
+    { file: "quote-estimate.pdf", make: quoteEstimate },
+    { file: "receipt.pdf", make: genericReceipt },
+    { file: "timesheet.pdf", make: timesheet },
+    { file: "expense-report.pdf", make: expenseReport },
+    { file: "reference-letter.pdf", make: referenceLetter },
+    { file: "resignation-letter.pdf", make: resignationLetter },
+    { file: "meeting-agenda.pdf", make: meetingAgenda },
+    { file: "budget-request-form.pdf", make: budgetRequestForm },
+    { file: "internal-memo.pdf", make: internalMemo },
+    { file: "change-order-form.pdf", make: changeOrderForm },
+    { file: "independent-contractor-agreement.pdf", make: independentContractorAgreement },
+    { file: "purchase-agreement.pdf", make: purchaseAgreement },
+    { file: "partnership-agreement.pdf", make: partnershipAgreement },
+    { file: "operating-agreement-llc.pdf", make: operatingAgreementLLC },
+    { file: "employment-contract.pdf", make: employmentContract },
+    { file: "affidavit.pdf", make: affidavit },
+    { file: "cease-and-desist-letter.pdf", make: ceaseAndDesistLetter },
+    { file: "demand-letter.pdf", make: demandLetter },
+    { file: "settlement-agreement.pdf", make: settlementAgreement },
+    { file: "notary-acknowledgment.pdf", make: notaryAcknowledgment },
+    { file: "contract-addendum.pdf", make: contractAddendum },
   ];
   for (const t of templates) {
     const bytes = await t.make();
