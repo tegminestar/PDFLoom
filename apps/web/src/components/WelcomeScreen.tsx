@@ -64,6 +64,7 @@ import {
   PhoneCall,
   PiggyBank,
   Pill,
+  Pin,
   PlaneTakeoff,
   Receipt,
   ReceiptText,
@@ -423,9 +424,19 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
     setRecents((prev) => prev.filter((r) => r.id !== id));
   };
 
+  // Deliberately spares pinned files — pinning something is the user's
+  // explicit "keep this" signal, so a blanket "Clear all" silently
+  // discarding it too would defeat the point of pinning in the first place.
   const handleClearRecents = async () => {
-    await recentsStore.clear();
-    setRecents([]);
+    const unpinned = recents.filter((r) => !r.pinned);
+    await Promise.all(unpinned.map((r) => recentsStore.remove(r.id)));
+    setRecents((prev) => prev.filter((r) => r.pinned));
+  };
+
+  const handleTogglePin = async (entry: RecentFileEntry) => {
+    const nextPinned = !entry.pinned;
+    await recentsStore.setPinned(entry.id, nextPinned);
+    setRecents((prev) => prev.map((r) => (r.id === entry.id ? { ...r, pinned: nextPinned } : r)));
   };
 
   const handleOpenRecent = async (entry: RecentFileEntry) => {
@@ -451,6 +462,12 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
       setRecents((prev) => prev.filter((r) => r.id !== entry.id));
     }
   };
+
+  // Pinned files first (most-recently-pinned-opened first within that
+  // group), everything else after — recents is already sorted by
+  // lastOpenedAt from the store, so a stable sort here only needs to move
+  // pinned rows to the front without disturbing either group's own order.
+  const sortedRecents = [...recents].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
 
   const featuredTemplates = TEMPLATES.filter((t) => t.featured);
   const otherTemplates = TEMPLATES.filter((t) => !t.featured);
@@ -666,30 +683,45 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
         <div className="flex min-w-0 flex-col gap-2 rounded-(--radius-xl) border border-border bg-bg-elevated/60 p-4">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-heading font-semibold text-text">Recent</h2>
-            {recents.length > 0 && (
+            {recents.some((r) => !r.pinned) && (
               <button type="button" onClick={() => void handleClearRecents()} className="text-xs text-text-faint underline decoration-dotted hover:text-text">
-                Clear all
+                Clear unpinned
               </button>
             )}
           </div>
           {recents.length === 0 ? (
-            <p className="px-1 text-sm text-text-faint">Files you open will show up here.</p>
+            <p className="px-1 text-sm text-text-faint">
+              Files you open will show up here. Pin one to keep it around — pinned files stay listed even once the rest scroll off the recent list.
+            </p>
           ) : (
             <table className="w-full table-fixed text-left text-sm">
               <thead>
                 <tr className="text-xs text-text-faint">
+                  <th className="w-7 pb-2" />
                   <th className="w-auto pb-2 pr-2 font-medium">Name</th>
                   <th className="w-20 pb-2 pr-2 text-right font-medium">Opened</th>
                   <th className="w-9 pb-2" />
                 </tr>
               </thead>
               <tbody>
-                {recents.map((entry) => (
+                {sortedRecents.map((entry) => (
                   <tr
                     key={entry.id}
                     onClick={() => void handleOpenRecent(entry)}
-                    className="cursor-pointer border-t border-border hover:bg-surface-hover"
+                    className={cn("cursor-pointer border-t border-border hover:bg-surface-hover", entry.pinned && "bg-primary-muted/40")}
                   >
+                    <td className="py-2 pl-0.5 align-top">
+                      <IconButton
+                        icon={entry.pinned ? <Pin className="fill-current" /> : <Pin />}
+                        label={entry.pinned ? `Unpin ${entry.name}` : `Pin ${entry.name}`}
+                        size="sm"
+                        variant={entry.pinned ? "active" : "default"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleTogglePin(entry);
+                        }}
+                      />
+                    </td>
                     <td className="py-2 pr-2">
                       <span className="flex items-center gap-2">
                         <FileText className="h-4 w-4 shrink-0 text-text-faint" />

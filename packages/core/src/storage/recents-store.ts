@@ -70,15 +70,44 @@ export const recentsStore = {
     const duplicate = existingForSameFile.find((r) => r.name === entry.name && r.sizeBytes === entry.sizeBytes && r.id !== entry.id);
     if (duplicate) await db.delete("recents", duplicate.id);
 
-    await db.put("recents", { ...entry, handle });
+    // `entry` itself never carries pinned/tags (the caller — store.ts's
+    // recordOpen — only knows basic file metadata) — carry them forward
+    // from whichever existing row this reopen replaces, so pinning a file
+    // or tagging it isn't silently undone the next time it's opened.
+    const previous = duplicate ?? existingForSameFile.find((r) => r.id === entry.id);
+    await db.put("recents", {
+      ...entry,
+      handle,
+      ...(previous?.pinned !== undefined ? { pinned: previous.pinned } : {}),
+      ...(previous?.tags !== undefined ? { tags: previous.tags } : {}),
+    });
 
+    // Pinned entries are the user's explicit "keep this" signal — excluding
+    // them from the eviction pool means pinning something before it ages
+    // out of MAX_RECENTS actually protects it, rather than pinning being a
+    // no-op display flag that a busy day of opening files quietly deletes.
     const all = await db.getAllFromIndex("recents", "by-lastOpenedAt");
-    if (all.length > MAX_RECENTS) {
-      const excess = all.sort((a, b) => a.lastOpenedAt - b.lastOpenedAt).slice(0, all.length - MAX_RECENTS);
+    const evictable = all.filter((r) => !r.pinned);
+    if (evictable.length > MAX_RECENTS) {
+      const excess = evictable.sort((a, b) => a.lastOpenedAt - b.lastOpenedAt).slice(0, evictable.length - MAX_RECENTS);
       const tx = db.transaction("recents", "readwrite");
       await Promise.all(excess.map((item) => tx.store.delete(item.id)));
       await tx.done;
     }
+  },
+
+  async setPinned(id: string, pinned: boolean): Promise<void> {
+    const db = await getDb();
+    const record = await db.get("recents", id);
+    if (!record) return;
+    await db.put("recents", { ...record, pinned });
+  },
+
+  async setTags(id: string, tags: string[]): Promise<void> {
+    const db = await getDb();
+    const record = await db.get("recents", id);
+    if (!record) return;
+    await db.put("recents", { ...record, tags });
   },
 
   async getHandle(id: string): Promise<FileSystemFileHandle | null> {
