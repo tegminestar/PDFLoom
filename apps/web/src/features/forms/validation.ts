@@ -29,3 +29,27 @@ export function getMissingRequiredFields(fields: FormFieldInfo[], values: Record
   }
   return missing;
 }
+
+/**
+ * One entry per field name, in document order — the list Next/Previous
+ * field navigation and the fill-progress indicator both walk, deduped the
+ * same way getMissingRequiredFields is (a radio group's widgets all share
+ * one name and must count as a single field, not one per option).
+ */
+export function getUniqueFields(fields: FormFieldInfo[]): FormFieldInfo[] {
+  const seen = new Set<string>();
+  const unique: FormFieldInfo[] = [];
+  for (const field of fields) {
+    if (seen.has(field.name)) continue;
+    seen.add(field.name);
+    unique.push(field);
+  }
+  return unique;
+}
+
+/** How many of the document's distinct fields (any type, not just required) currently have a value. */
+export function getFieldFillProgress(fields: FormFieldInfo[], values: Record<string, FormFieldValue>): { filled: number; total: number } {
+  const unique = getUniqueFields(fields);
+  const filled = unique.filter((f) => !isFieldValueMissing(f.type, values[f.name])).length;
+  return { filled, total: unique.length };
+}

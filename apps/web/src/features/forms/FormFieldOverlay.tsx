@@ -2,6 +2,7 @@ import type { PdfDocument } from "@pdfloom/core";
 import { cn } from "@pdfloom/ui";
 import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { notifyFieldFocused } from "./fieldNavigation";
 import { isFieldValueMissing } from "./validation";
 
 export interface FormFieldOverlayProps {
@@ -88,6 +89,7 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               data-field-name={field.name}
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
+              onFocus={() => notifyFieldFocused(field.name)}
               disabled={field.readOnly}
               title={missing ? "Required" : undefined}
               className={cn(inputClass, "resize-none", missing && "border-red-500")}
@@ -100,6 +102,7 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
               type="text"
               value={typeof value === "string" ? value : ""}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
+              onFocus={() => notifyFieldFocused(field.name)}
               disabled={field.readOnly}
               title={missing ? "Required" : undefined}
               className={cn(inputClass, missing && "border-red-500")}
@@ -112,9 +115,11 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
           return (
             <input
               key={`${field.name}-${i}`}
+              data-field-name={field.name}
               type="checkbox"
               checked={typeof value === "boolean" ? value : false}
               onChange={(e) => setFormFieldValue(field.name, e.target.checked)}
+              onFocus={() => notifyFieldFocused(field.name)}
               disabled={field.readOnly}
               title={missing ? "Required" : undefined}
               className={cn("absolute accent-[var(--loom-primary)]", missingRingClass)}
@@ -131,10 +136,12 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
           return (
             <input
               key={`${field.name}-${i}`}
+              data-field-name={field.name}
               type="radio"
               name={field.name}
               checked={value === field.widgetOnValue}
               onChange={() => setFormFieldValue(field.name, field.widgetOnValue!)}
+              onFocus={() => notifyFieldFocused(field.name)}
               disabled={field.readOnly}
               title={missing ? "Required" : undefined}
               className={cn("absolute accent-[var(--loom-primary)]", missingRingClass)}
@@ -148,8 +155,10 @@ export function FormFieldOverlay({ doc, pageNumber, scale, rotation }: FormField
           return (
             <select
               key={`${field.name}-${i}`}
+              data-field-name={field.name}
               value={selected}
               onChange={(e) => setFormFieldValue(field.name, e.target.value)}
+              onFocus={() => notifyFieldFocused(field.name)}
               disabled={field.readOnly}
               title={missing ? "Required" : undefined}
               className={cn(inputClass, missing && "border-red-500")}

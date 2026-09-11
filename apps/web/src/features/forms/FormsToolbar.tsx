@@ -1,11 +1,12 @@
-import { IconButton, Separator, TopBar, TopBarSection, Button as ToolbarButton, cn, toast } from "@pdfloom/ui";
-import { CheckSquare, ChevronDown, Circle, Redo2, Type, Undo2 } from "lucide-react";
+import { IconButton, Progress, Separator, TopBar, TopBarSection, Button as ToolbarButton, cn, toast } from "@pdfloom/ui";
+import { CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Circle, Redo2, Type, Undo2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useLoomStore, type FieldDesignTool } from "../../app/store";
 import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
-import { getMissingRequiredFields } from "./validation";
+import { focusAdjacentField } from "./fieldNavigation";
+import { getFieldFillProgress, getMissingRequiredFields } from "./validation";
 
 const DESIGN_TOOLS: { id: FieldDesignTool; label: string; icon: ReactNode }[] = [
   { id: "text", label: "Text field", icon: <Type /> },
@@ -28,7 +29,9 @@ export function FormsToolbar() {
   const redo = useLoomStore((s) => s.redo);
   const canUndo = useLoomStore((s) => s.canUndo);
   const canRedo = useLoomStore((s) => s.canRedo);
+  const setCurrentPage = useLoomStore((s) => s.setCurrentPage);
   const fieldCount = new Set(formFields.map((f) => f.name)).size;
+  const { filled, total } = getFieldFillProgress(formFields, formFieldValues);
 
   const describeMissing = (missing: ReturnType<typeof getMissingRequiredFields>) => {
     const names = missing.slice(0, 5).map((f) => f.name);
@@ -108,10 +111,24 @@ export function FormsToolbar() {
               />
             ))}
           </>
+        ) : fieldCount === 0 ? (
+          <span className="text-xs text-text-faint">This document has no fillable fields.</span>
         ) : (
-          <span className="text-xs text-text-faint">
-            {fieldCount === 0 ? "This document has no fillable fields." : `${fieldCount} field${fieldCount === 1 ? "" : "s"} detected`}
-          </span>
+          <div className="flex items-center gap-3">
+            <IconButton
+              icon={<ChevronLeft />}
+              label="Previous field"
+              size="sm"
+              onClick={() => void focusAdjacentField(formFields, -1, setCurrentPage)}
+            />
+            <Progress value={(filled / total) * 100} label={`${filled} of ${total} fields filled`} className="w-40" />
+            <IconButton
+              icon={<ChevronRight />}
+              label="Next field"
+              size="sm"
+              onClick={() => void focusAdjacentField(formFields, 1, setCurrentPage)}
+            />
+          </div>
         )}
       </TopBarSection>
 
