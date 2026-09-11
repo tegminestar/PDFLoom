@@ -668,7 +668,7 @@ export function App() {
             !editOpen &&
             !redactOpen &&
             !signOpen &&
-            activePanel === "outline" && <OutlinePanel />}
+            activePanel === "outline" && <OutlinePanel key={meta.id} />}
           {meta &&
             mainView === "read" &&
             !annotateOpen &&

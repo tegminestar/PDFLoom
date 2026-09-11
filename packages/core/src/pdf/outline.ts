@@ -1,4 +1,4 @@
-import { PDFDict, PDFName, PDFNumber, PDFRef, PDFString, PDFDocument } from "pdf-lib";
+import { PDFContext, PDFDict, PDFName, PDFNumber, PDFRef, PDFString, PDFDocument } from "pdf-lib";
 
 async function loadForMutation(source: Uint8Array): Promise<PDFDocument> {
   return PDFDocument.load(source, { updateMetadata: false });
@@ -59,6 +59,84 @@ export async function addOutlineEntry(source: Uint8Array, title: string, pageInd
   const countObj = outlinesDict.get(CountKey);
   const currentCount = countObj instanceof PDFNumber ? countObj.asNumber() : 0;
   outlinesDict.set(CountKey, PDFNumber.of(currentCount + 1));
+
+  return doc.save();
+}
+
+function getOutlinesDict(doc: PDFDocument): PDFDict {
+  const outlinesRef = doc.catalog.get(PDFName.of("Outlines"));
+  if (!(outlinesRef instanceof PDFRef)) throw new Error("This document has no bookmarks.");
+  return doc.context.lookup(outlinesRef, PDFDict);
+}
+
+/** Walks the /First → /Next linked list to find the ref of the Nth (0-based) top-level bookmark — the same order pdf.js's getOutline() reports them in, since both simply follow this list front to back. */
+function nthTopLevelItemRef(context: PDFContext, outlinesDict: PDFDict, index: number): PDFRef | undefined {
+  let currentRef = outlinesDict.get(PDFName.of("First"));
+  let i = 0;
+  while (currentRef instanceof PDFRef) {
+    if (i === index) return currentRef;
+    const dict = context.lookup(currentRef, PDFDict);
+    currentRef = dict.get(PDFName.of("Next"));
+    i++;
+  }
+  return undefined;
+}
+
+/**
+ * Renames the Nth top-level bookmark. Callers are responsible for only ever
+ * passing an index they know refers to a bookmark PDFLoom itself created
+ * earlier in the same session (see OutlinePanel) — see addOutlineEntry's
+ * docstring for why arbitrary pre-existing bookmarks aren't safe to target
+ * this way.
+ */
+export async function renameOutlineEntry(source: Uint8Array, topLevelIndex: number, title: string): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const outlinesDict = getOutlinesDict(doc);
+  const itemRef = nthTopLevelItemRef(doc.context, outlinesDict, topLevelIndex);
+  if (!itemRef) throw new Error("Bookmark not found.");
+  const itemDict = doc.context.lookup(itemRef, PDFDict);
+  itemDict.set(PDFName.of("Title"), PDFString.of(title));
+  return doc.save();
+}
+
+/** Deletes the Nth top-level bookmark, relinking its former neighbors' Prev/Next so the list stays valid. Same caller-responsibility note as renameOutlineEntry. */
+export async function deleteOutlineEntry(source: Uint8Array, topLevelIndex: number): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const context = doc.context;
+  const outlinesDict = getOutlinesDict(doc);
+  const itemRef = nthTopLevelItemRef(context, outlinesDict, topLevelIndex);
+  if (!itemRef) throw new Error("Bookmark not found.");
+  const itemDict = context.lookup(itemRef, PDFDict);
+
+  const PrevKey = PDFName.of("Prev");
+  const NextKey = PDFName.of("Next");
+  const prevRef = itemDict.get(PrevKey);
+  const nextRef = itemDict.get(NextKey);
+
+  if (prevRef instanceof PDFRef) {
+    const prevDict = context.lookup(prevRef, PDFDict);
+    if (nextRef instanceof PDFRef) prevDict.set(NextKey, nextRef);
+    else prevDict.delete(NextKey);
+  } else if (nextRef instanceof PDFRef) {
+    outlinesDict.set(PDFName.of("First"), nextRef);
+  } else {
+    outlinesDict.delete(PDFName.of("First"));
+  }
+
+  if (nextRef instanceof PDFRef) {
+    const nextDict = context.lookup(nextRef, PDFDict);
+    if (prevRef instanceof PDFRef) nextDict.set(PrevKey, prevRef);
+    else nextDict.delete(PrevKey);
+  } else if (prevRef instanceof PDFRef) {
+    outlinesDict.set(PDFName.of("Last"), prevRef);
+  } else {
+    outlinesDict.delete(PDFName.of("Last"));
+  }
+
+  const CountKey = PDFName.of("Count");
+  const countObj = outlinesDict.get(CountKey);
+  const currentCount = countObj instanceof PDFNumber ? countObj.asNumber() : 1;
+  outlinesDict.set(CountKey, PDFNumber.of(Math.max(0, currentCount - 1)));
 
   return doc.save();
 }
