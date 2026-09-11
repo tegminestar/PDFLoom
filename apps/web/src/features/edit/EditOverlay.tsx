@@ -640,6 +640,15 @@ export function EditOverlay({ doc, pageNumber, scale, rotation, pageContainerRef
             style={{ left: textEdit.rect.x, top: textEdit.rect.y + textEdit.rect.height + 6 }}
           >
             <span className="text-xs font-semibold uppercase tracking-wide text-text-faint">Replace text</span>
+            {/* Makes a wrong-target click immediately obvious: on a dense
+                real-world layout (tightly-packed resume bullets, overlapping
+                text runs), the text layer's hit-test can occasionally grab a
+                different span than the one visually clicked — previously the
+                only sign of that was the textarea pre-filling with unexpected
+                text, easy to miss and type over before noticing. */}
+            <p className="truncate rounded-[--radius-sm] bg-bg px-2 py-1 text-xs text-text-faint" title={textEdit.originalText}>
+              Editing: <span className="text-text-muted">&ldquo;{textEdit.originalText}&rdquo;</span>
+            </p>
             <textarea
               autoFocus
               rows={3}
