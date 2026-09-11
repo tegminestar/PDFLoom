@@ -1,12 +1,29 @@
-import { Button, Dialog, IconButton, cn, toast } from "@pdfloom/ui";
+import { Button, Dialog, IconButton, Mark, cn, toast } from "@pdfloom/ui";
 import { ShieldCheck, ShieldOff, Sparkles, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useAuthStore } from "../app/auth";
 import { apiUrl, isAuthConfigured, supabase } from "../app/supabase";
 import { AccountDialog } from "../features/account/AccountDialog";
 import { BreakdownBars } from "../features/analytics/BreakdownBars";
 import { EventsOverTimeChart } from "../features/analytics/EventsOverTimeChart";
 import { StatTile } from "../features/analytics/StatTile";
+
+function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
+        <Link to="/" className="flex items-center gap-2.5">
+          <Mark size={28} className="rounded-(--radius-sm)" />
+          <span className="font-serif text-lg font-medium tracking-tight">PDFLoom</span>
+        </Link>
+        <Button asChild variant="primary" size="sm">
+          <Link to="/app">Open the app</Link>
+        </Button>
+      </div>
+    </header>
+  );
+}
 
 interface DashboardUser {
   id: string;
@@ -62,7 +79,14 @@ function formatRelativeTime(iso: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-const centeredPage = "flex min-h-screen items-center justify-center bg-bg p-6";
+function CenteredPage({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-bg">
+      <SiteHeader />
+      <div className="flex flex-1 items-center justify-center p-6">{children}</div>
+    </div>
+  );
+}
 
 /**
  * Not linked from any nav — reached only by visiting /analytics directly.
@@ -197,23 +221,23 @@ export function AnalyticsDashboardPage() {
 
   if (!isAuthConfigured) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <p className="text-sm text-text-muted">Analytics isn't set up on this deployment.</p>
-      </div>
+      </CenteredPage>
     );
   }
 
   if (authLoading) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <p className="text-sm text-text-muted">Loading…</p>
-      </div>
+      </CenteredPage>
     );
   }
 
   if (!user) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm text-text-muted">Sign in to view analytics.</p>
           <Button variant="primary" size="sm" onClick={() => setAccountOpen(true)}>
@@ -221,13 +245,14 @@ export function AnalyticsDashboardPage() {
           </Button>
         </div>
         <AccountDialog open={accountOpen} onOpenChange={setAccountOpen} />
-      </div>
+      </CenteredPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg px-4 py-8 sm:px-8">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <div className="min-h-screen bg-bg">
+      <SiteHeader />
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 sm:px-8">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-2xl font-medium text-text">Analytics</h1>
@@ -235,7 +260,7 @@ export function AnalyticsDashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-text-faint">{user.email}</span>
-            <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+            <Button variant="secondary" size="sm" onClick={() => void signOut()}>
               Sign out
             </Button>
           </div>
@@ -459,7 +484,7 @@ export function AnalyticsDashboardPage() {
         width={400}
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
+            <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
             <Button variant="danger" size="sm" disabled={pendingUserId === deleteTarget?.id} onClick={() => void handleDelete()}>

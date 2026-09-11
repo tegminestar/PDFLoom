@@ -68,6 +68,13 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       title="Account"
       description={user ? undefined : "Sign in to manage a PDFLoom Pro subscription. The editor itself never requires an account."}
       width={400}
+      footer={
+        user ? (
+          <Button variant="secondary" size="sm" onClick={() => void signOut()}>
+            Sign out
+          </Button>
+        ) : undefined
+      }
     >
       {!user ? (
         magicLinkSent ? (
@@ -155,10 +162,6 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               </Button>
             </div>
           )}
-
-          <Button variant="ghost" size="sm" onClick={() => void signOut()}>
-            Sign out
-          </Button>
         </div>
       )}
     </Dialog>

@@ -336,7 +336,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
                 Back
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => handleClose(false)} disabled={isSending}>
+            <Button variant="secondary" size="sm" onClick={() => handleClose(false)} disabled={isSending}>
               Cancel
             </Button>
             {step === "signers" && (

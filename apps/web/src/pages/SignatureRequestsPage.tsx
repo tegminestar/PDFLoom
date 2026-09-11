@@ -1,9 +1,26 @@
-import { Button, Dialog, IconButton, cn, toast } from "@pdfloom/ui";
+import { Button, Dialog, IconButton, Mark, cn, toast } from "@pdfloom/ui";
 import { Check, Copy, Download, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { useAuthStore } from "../app/auth";
 import { apiUrl, isAuthConfigured, supabase } from "../app/supabase";
 import { AccountDialog } from "../features/account/AccountDialog";
+
+function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-10 border-b border-border bg-bg/85 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
+        <Link to="/" className="flex items-center gap-2.5">
+          <Mark size={28} className="rounded-(--radius-sm)" />
+          <span className="font-serif text-lg font-medium tracking-tight">PDFLoom</span>
+        </Link>
+        <Button asChild variant="primary" size="sm">
+          <Link to="/app">Open the app</Link>
+        </Button>
+      </div>
+    </header>
+  );
+}
 
 interface RequestSigner {
   email: string;
@@ -52,7 +69,14 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-const centeredPage = "flex min-h-screen items-center justify-center bg-bg p-6";
+function CenteredPage({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-bg">
+      <SiteHeader />
+      <div className="flex flex-1 items-center justify-center p-6">{children}</div>
+    </div>
+  );
+}
 
 /**
  * Not linked from any nav — reached only by visiting /signatures directly,
@@ -186,21 +210,21 @@ export function SignatureRequestsPage() {
 
   if (!isAuthConfigured) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <p className="text-sm text-text-muted">Signature requests aren't set up on this deployment.</p>
-      </div>
+      </CenteredPage>
     );
   }
   if (authLoading) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <p className="text-sm text-text-muted">Loading…</p>
-      </div>
+      </CenteredPage>
     );
   }
   if (!user) {
     return (
-      <div className={centeredPage}>
+      <CenteredPage>
         <div className="flex flex-col items-center gap-3">
           <p className="text-sm text-text-muted">Sign in to view your signature requests.</p>
           <Button variant="primary" size="sm" onClick={() => setAccountOpen(true)}>
@@ -208,13 +232,14 @@ export function SignatureRequestsPage() {
           </Button>
         </div>
         <AccountDialog open={accountOpen} onOpenChange={setAccountOpen} />
-      </div>
+      </CenteredPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg px-4 py-8 sm:px-8">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+    <div className="min-h-screen bg-bg">
+      <SiteHeader />
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-2xl font-medium text-text">Signature Requests</h1>
@@ -222,7 +247,7 @@ export function SignatureRequestsPage() {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-text-faint">{user.email}</span>
-            <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+            <Button variant="secondary" size="sm" onClick={() => void signOut()}>
               Sign out
             </Button>
           </div>
@@ -346,7 +371,7 @@ export function SignatureRequestsPage() {
         width={400}
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setVoidTarget(null)}>
+            <Button variant="secondary" size="sm" onClick={() => setVoidTarget(null)}>
               Cancel
             </Button>
             <Button variant="danger" size="sm" disabled={pendingId === voidTarget?.id} onClick={() => void handleVoid()}>
@@ -366,7 +391,7 @@ export function SignatureRequestsPage() {
         width={400}
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(null)}>
+            <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
             <Button variant="danger" size="sm" disabled={pendingId === deleteTarget?.id} onClick={() => void handleDeleteRequest()}>

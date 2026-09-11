@@ -298,7 +298,7 @@ export function SignerPage() {
               className="resize-none rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setDeclineOpen(false)}>
+              <Button variant="secondary" size="sm" onClick={() => setDeclineOpen(false)}>
                 Cancel
               </Button>
               <Button variant="danger" size="sm" disabled={!declineReason.trim() || isDeclining} onClick={() => void handleDecline()}>
