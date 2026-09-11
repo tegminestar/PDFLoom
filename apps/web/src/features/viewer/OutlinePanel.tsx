@@ -1,6 +1,6 @@
-import type { OutlineNode } from "@pdfloom/core";
-import { Panel, cn } from "@pdfloom/ui";
-import { ChevronRight } from "lucide-react";
+import { getPdfWorkerClient, type OutlineNode } from "@pdfloom/core";
+import { IconButton, Panel, toast, cn } from "@pdfloom/ui";
+import { BookmarkPlus, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
 
@@ -49,14 +49,73 @@ function OutlineEntry({ node, depth, onNavigate }: { node: OutlineNode; depth: n
 
 export function OutlinePanel() {
   const outline = useLoomStore((s) => s.outline);
+  const document = useLoomStore((s) => s.document);
+  const currentPage = useLoomStore((s) => s.currentPage);
   const setCurrentPage = useLoomStore((s) => s.setCurrentPage);
   const setActivePanel = useLoomStore((s) => s.setActivePanel);
+  const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
+
+  const [isAdding, setIsAdding] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const startAdding = () => {
+    setTitleInput(`Page ${currentPage}`);
+    setIsAdding(true);
+  };
+
+  const commitAdd = async () => {
+    const title = titleInput.trim();
+    setIsAdding(false);
+    if (!title || !document) return;
+    setIsSaving(true);
+    try {
+      const client = await getPdfWorkerClient();
+      const bytes = await document.getRawBytes();
+      const newBytes = await client.addOutlineEntry(bytes, title, currentPage - 1);
+      await applyPdfMutation(newBytes);
+      toast.success("Bookmark added", `"${title}" now points to page ${currentPage}.`);
+    } catch (error) {
+      toast.error("Couldn't add the bookmark", error instanceof Error ? error.message : undefined);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
-    <Panel title="Bookmarks" onClose={() => setActivePanel(null)} width={240}>
-      {outline.length === 0 ? (
+    <Panel
+      title="Bookmarks"
+      onClose={() => setActivePanel(null)}
+      width={240}
+      headerActions={
+        <IconButton
+          icon={<BookmarkPlus />}
+          label={`Add bookmark for page ${currentPage}`}
+          size="sm"
+          disabled={!document || isSaving}
+          onClick={startAdding}
+        />
+      }
+    >
+      {isAdding && (
+        <div className="border-b border-border p-2">
+          <input
+            autoFocus
+            value={titleInput}
+            onChange={(e) => setTitleInput(e.target.value)}
+            onBlur={() => void commitAdd()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              else if (e.key === "Escape") setIsAdding(false);
+            }}
+            placeholder="Bookmark title"
+            className="h-8 w-full rounded-(--radius-sm) border border-border-strong bg-surface px-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
+          />
+        </div>
+      )}
+      {outline.length === 0 && !isAdding ? (
         <p className="px-2 py-4 text-center text-xs text-text-faint">
-          This document has no bookmarks.
+          This document has no bookmarks. Use the button above to add one for the page you're on.
         </p>
       ) : (
         outline.map((node, i) => (

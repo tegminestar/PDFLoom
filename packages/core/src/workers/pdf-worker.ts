@@ -10,6 +10,7 @@ import * as forms from "../pdf/forms";
 import * as markdown from "../pdf/markdown";
 import * as ocrOverlay from "../pdf/ocr-overlay";
 import * as organize from "../pdf/organize";
+import * as outline from "../pdf/outline";
 import * as portfolio from "../pdf/portfolio";
 import * as redact from "../pdf/redact";
 import * as sanitize from "../pdf/sanitize";
@@ -23,6 +24,7 @@ import * as stamps from "../pdf/stamps";
 const api = {
   ...accessibility,
   ...organize,
+  ...outline,
   ...portfolio,
   ...annotations,
   ...stamps,
