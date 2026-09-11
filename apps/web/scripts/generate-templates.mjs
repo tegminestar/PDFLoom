@@ -2119,6 +2119,1401 @@ async function contractAddendum() {
   });
 }
 
+const MEDICAL_DISCLAIMER =
+  "This is a general-reference template, not medical or legal advice, and does not by itself satisfy HIPAA or other health-privacy regulatory requirements. Pair it with your practice's own privacy-practices notice, confirm required fields for your specialty and jurisdiction, and have a qualified professional review it.";
+
+// --- 67. Employee Tax Withholding Form (unofficial, W-4-style) --------------------------
+async function employeeTaxWithholdingForm() {
+  return build((d) => {
+    d.title("Employee Tax Withholding Form");
+    d.paragraph(
+      "This is an unofficial, general-reference withholding worksheet an employer can use to collect an employee's withholding elections. It is not a substitute for the actual IRS Form W-4 or any state-specific equivalent, which employees must also file where required.",
+      { size: 8.5, color: FAINT },
+    );
+    d.heading("Employee Information");
+    d.fieldRow([
+      { name: "employee_name", label: "Full Legal Name", width: 260 },
+      { name: "ssn_last4", label: "SSN (last 4 digits)", width: 120 },
+      { name: "date", label: "Date", width: 100 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Home Address", width: CONTENT_W }]);
+    d.radioRow("filing_status", "Filing Status", ["Single", "Married filing jointly", "Head of household"]);
+    d.heading("Withholding Adjustments");
+    d.fieldRow([
+      { name: "dependents_amount", label: "Dependent/Credit Amount ($)", width: 220 },
+      { name: "other_income", label: "Other Income (not from jobs, $)", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "deductions", label: "Deductions (other than standard, $)", width: 220 },
+      { name: "extra_withholding", label: "Extra Withholding Per Pay Period ($)", width: 220 },
+    ]);
+    d.checkboxRow("multiple_jobs", "Employee holds multiple jobs or spouse also works (Two-Earners worksheet applies)");
+    d.spacer(6);
+    d.paragraph("Under penalties of perjury, I declare this information is true, correct, and complete to the best of my knowledge.");
+    d.fieldRow([
+      { name: "employee_signature", label: "Employee — Signature (type full name)", width: 300 },
+      { name: "signature_date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 68. Employee Handbook Acknowledgment -----------------------------------------------
+async function employeeHandbookAcknowledgment() {
+  return build((d) => {
+    d.title("Employee Handbook Acknowledgment");
+    d.paragraph(
+      "I acknowledge that I have received, read, and understand the Employee Handbook described below, and agree to comply with the policies it contains. I understand the handbook is not an employment contract and that its policies may be revised at any time.",
+    );
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 260 },
+      { name: "employee_id", label: "Employee ID (if applicable)", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "handbook_title", label: "Handbook Title / Version", width: 260 },
+      { name: "handbook_date", label: "Handbook Date", width: 220 },
+    ]);
+    d.checkboxRow("received_electronic", "I received an electronic copy of the handbook");
+    d.checkboxRow("received_printed", "I received a printed copy of the handbook");
+    d.checkboxRow("had_opportunity_to_ask", "I had the opportunity to ask questions about its contents");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "employee_signature", label: "Employee — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 69. Termination Notice --------------------------------------------------------------
+async function terminationNotice() {
+  return build((d) => {
+    d.title("Notice of Employment Termination");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 220 },
+      { name: "employee_id", label: "Employee ID", width: 140 },
+      { name: "department", label: "Department", width: 120 },
+    ]);
+    d.fieldRow([
+      { name: "hire_date", label: "Original Hire Date", width: 180 },
+      { name: "termination_date", label: "Effective Termination Date", width: 200 },
+    ]);
+    d.radioRow("termination_type", "Type", ["Voluntary", "Involuntary", "Layoff / Reduction in force", "End of contract"]);
+    d.fieldRow([{ name: "reason", label: "Reason for Termination", width: CONTENT_W, multiline: true }]);
+    d.heading("Final Pay & Benefits");
+    d.fieldRow([
+      { name: "final_paycheck_date", label: "Final Paycheck Date", width: 220 },
+      { name: "unused_pto_payout", label: "Unused PTO Payout ($)", width: 220 },
+    ]);
+    d.checkboxRow("benefits_info_provided", "COBRA / benefits continuation information provided");
+    d.checkboxRow("company_property_returned", "All company property has been returned");
+    d.spacer(6);
+    d.signatureBlock("Employer Representative", "Employee");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 70. Background Check Authorization ---------------------------------------------------
+async function backgroundCheckAuthorization() {
+  return build((d) => {
+    d.title("Background Check Disclosure & Authorization");
+    d.paragraph(
+      "I understand that, in connection with my application or continued employment, a consumer report and/or investigative consumer report may be obtained about me, which may include criminal history, employment and education verification, and other background information as permitted by applicable law.",
+    );
+    d.fieldRow([
+      { name: "full_name", label: "Full Legal Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 150 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Current Address", width: CONTENT_W }]);
+    d.fieldRow([{ name: "prior_addresses", label: "Prior Addresses (last 7 years, if applicable)", width: CONTENT_W }]);
+    d.checkboxRow("consent_criminal", "I authorize a criminal history search");
+    d.checkboxRow("consent_employment", "I authorize verification of prior employment");
+    d.checkboxRow("consent_education", "I authorize verification of education history");
+    d.paragraph("I authorize the release of the information described above and understand I may request a copy of any report obtained.");
+    d.fieldRow([
+      { name: "applicant_signature", label: "Applicant — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(
+      "This template does not by itself satisfy the Fair Credit Reporting Act (FCRA) or state-equivalent notice and authorization requirements, which are strict about format and standalone disclosure. Have counsel confirm compliance before use.",
+    );
+  });
+}
+
+// --- 71. Training Attendance Sheet --------------------------------------------------------
+async function trainingAttendanceSheet() {
+  return build((d) => {
+    d.title("Training Attendance Sheet");
+    d.fieldRow([
+      { name: "training_title", label: "Training / Session Title", width: 300 },
+      { name: "date", label: "Date", width: 150 },
+    ]);
+    d.fieldRow([
+      { name: "instructor", label: "Instructor / Facilitator", width: 260 },
+      { name: "location", label: "Location", width: 220 },
+    ]);
+    d.heading("Attendees");
+    for (let i = 1; i <= 8; i++) {
+      d.fieldRow([
+        { name: `attendee_${i}_name`, label: `Attendee ${i} — Name`, width: 220 },
+        { name: `attendee_${i}_department`, label: "Department", width: 130 },
+        { name: `attendee_${i}_signature`, label: "Signature", width: 110 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 72. Disciplinary Action Form ----------------------------------------------------------
+async function disciplinaryActionForm() {
+  return build((d) => {
+    d.title("Employee Disciplinary Action Form");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 220 },
+      { name: "employee_id", label: "Employee ID", width: 140 },
+      { name: "date", label: "Date of Incident", width: 120 },
+    ]);
+    d.radioRow("action_level", "Action Level", ["Verbal warning", "Written warning", "Final warning", "Suspension"]);
+    d.fieldRow([{ name: "policy_violated", label: "Policy or Rule Violated", width: CONTENT_W }]);
+    d.fieldRow([{ name: "incident_description", label: "Description of Incident", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "prior_incidents", label: "Prior Related Incidents (if any)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "corrective_action", label: "Expected Corrective Action / Improvement Plan", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("employee_acknowledges", "Employee acknowledges receipt of this notice (not necessarily agreement with its contents)");
+    d.spacer(6);
+    d.signatureBlock("Supervisor", "Employee");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 73. Promotion Request Form -------------------------------------------------------------
+async function promotionRequestForm() {
+  return build((d) => {
+    d.title("Promotion Request Form");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 260 },
+      { name: "current_title", label: "Current Title", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "proposed_title", label: "Proposed New Title", width: 260 },
+      { name: "proposed_salary", label: "Proposed New Salary", width: 220 },
+    ]);
+    d.fieldRow([{ name: "justification", label: "Justification for Promotion", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "key_accomplishments", label: "Key Accomplishments Supporting This Request", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "requested_effective_date", label: "Requested Effective Date", width: 220 },
+      { name: "manager_name", label: "Requesting Manager", width: 220 },
+    ]);
+    d.spacer(6);
+    d.signatureBlock("Requesting Manager", "HR / Approver");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 74. Exit Interview Form -----------------------------------------------------------------
+async function exitInterviewForm() {
+  return build((d) => {
+    d.title("Exit Interview Form");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 260 },
+      { name: "last_day", label: "Last Day of Employment", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "position", label: "Position", width: 260 },
+      { name: "manager", label: "Manager", width: 220 },
+    ]);
+    d.radioRow("departure_reason", "Primary Reason for Leaving", ["New opportunity", "Compensation", "Career growth", "Work environment", "Other"]);
+    d.fieldRow([{ name: "reason_details", label: "Details", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "what_worked_well", label: "What Worked Well Here", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "what_could_improve", label: "What Could Be Improved", width: CONTENT_W, multiline: true }]);
+    d.radioRow("would_recommend", "Would you recommend this employer to others?", ["Yes", "No", "Maybe"]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "employee_signature", label: "Employee — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 75. Remote Work Agreement -----------------------------------------------------------------
+async function remoteWorkAgreement() {
+  return build((d) => {
+    d.title("Remote Work Agreement");
+    d.paragraph("This Agreement sets the terms under which the Employee identified below may work remotely, subject to the Employer's ongoing policies and business needs.");
+    d.fieldRow([
+      { name: "employee_name", label: "Employee Full Name", width: 260 },
+      { name: "title", label: "Title", width: 220 },
+    ]);
+    d.radioRow("arrangement_type", "Arrangement", ["Fully remote", "Hybrid", "Occasional"]);
+    d.fieldRow([{ name: "remote_work_location", label: "Primary Remote Work Location (address)", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "core_hours", label: "Required Core Hours", width: 260 },
+      { name: "start_date", label: "Effective Date", width: 220 },
+    ]);
+    d.heading("Equipment & Expenses");
+    d.checkboxRow("company_equipment_provided", "Employer will provide equipment (laptop, monitor, etc.)")
+    d.checkboxRow("internet_stipend", "Employer will provide an internet/home-office stipend");
+    d.fieldRow([{ name: "equipment_details", label: "Equipment/Stipend Details", width: CONTENT_W }]);
+    d.paragraph("Employee agrees to maintain a safe, secure, and confidential work environment and to remain reachable during core hours.");
+    d.spacer(6);
+    d.signatureBlock("Employer", "Employee");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 76. Medical History Form -----------------------------------------------------------------
+async function medicalHistoryForm() {
+  return build((d) => {
+    d.title("Medical History Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 220 },
+      { name: "date_of_birth", label: "Date of Birth", width: 150 },
+      { name: "date", label: "Date", width: 100 },
+    ]);
+    d.heading("Personal Medical History");
+    d.fieldRow([{ name: "past_surgeries", label: "Past Surgeries or Hospitalizations", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "chronic_conditions", label: "Chronic Conditions (diabetes, hypertension, etc.)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "current_medications", label: "Current Medications and Dosages", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "known_allergies", label: "Known Allergies", width: CONTENT_W }]);
+    d.heading("Family Medical History");
+    d.fieldRow([{ name: "family_history", label: "Relevant Family Medical History", width: CONTENT_W, multiline: true }]);
+    d.heading("Lifestyle");
+    d.fieldRow([
+      { name: "smoking_status", label: "Smoking Status", width: 160 },
+      { name: "alcohol_use", label: "Alcohol Use", width: 160 },
+      { name: "exercise_frequency", label: "Exercise Frequency", width: 120 },
+    ]);
+    d.paragraph("I certify the information above is accurate to the best of my knowledge.");
+    d.fieldRow([
+      { name: "patient_signature", label: "Signature (type full name)", width: 300 },
+      { name: "signature_date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 77. Insurance Information Form -----------------------------------------------------------
+async function insuranceInformationForm() {
+  return build((d) => {
+    d.title("Patient Insurance Information Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.heading("Primary Insurance");
+    d.fieldRow([
+      { name: "primary_provider", label: "Insurance Provider", width: 260 },
+      { name: "primary_policy_number", label: "Policy / Member Number", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "primary_group_number", label: "Group Number", width: 220 },
+      { name: "primary_holder_name", label: "Policyholder Name (if not patient)", width: 260 },
+    ]);
+    d.heading("Secondary Insurance (if applicable)");
+    d.fieldRow([
+      { name: "secondary_provider", label: "Insurance Provider", width: 260 },
+      { name: "secondary_policy_number", label: "Policy / Member Number", width: 220 },
+    ]);
+    d.checkboxRow("assignment_of_benefits", "I authorize payment of medical benefits directly to the provider");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "patient_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 78. Consent for Treatment -----------------------------------------------------------------
+async function consentForTreatment() {
+  return build((d) => {
+    d.title("Consent for Treatment");
+    d.paragraph(
+      "I voluntarily consent to receive medical evaluation and treatment from the practice named below. I understand that treatment may include examinations, tests, and procedures determined necessary by the treating provider, and that no guarantee has been made about the outcome of treatment.",
+    );
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "practice_name", label: "Practice / Provider Name", width: CONTENT_W }]);
+    d.checkboxRow("understands_risks", "I understand that all treatment carries some risk, and questions have been answered to my satisfaction");
+    d.checkboxRow("consents_to_share", "I consent to sharing relevant health information with other treating providers as needed for my care");
+    d.fieldRow([{ name: "representative_relationship", label: "Signing as Legal Representative — Relationship (if applicable)", width: CONTENT_W }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "signature", label: "Patient / Representative — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 79. Prescription Request Form ---------------------------------------------------------------
+async function prescriptionRequestForm() {
+  return build((d) => {
+    d.title("Prescription Refill Request Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "pharmacy_name", label: "Pharmacy Name", width: 260 },
+      { name: "pharmacy_phone", label: "Pharmacy Phone", width: 220 },
+    ]);
+    d.heading("Medication Requested");
+    d.fieldRow([
+      { name: "medication_name", label: "Medication Name", width: 220 },
+      { name: "dosage", label: "Dosage", width: 150 },
+      { name: "quantity", label: "Quantity", width: 90 },
+    ]);
+    d.fieldRow([{ name: "prescribing_provider", label: "Prescribing Provider (if known)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "notes", label: "Additional Notes for Provider", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "patient_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 80. Vaccination Record ------------------------------------------------------------------------
+async function vaccinationRecord() {
+  return build((d) => {
+    d.title("Vaccination Record");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.heading("Vaccination History");
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `vaccine_${i}_name`, label: `Vaccine ${i}`, width: 170 },
+        { name: `vaccine_${i}_date`, label: "Date Administered", width: 110 },
+        { name: `vaccine_${i}_lot`, label: "Lot Number", width: 90 },
+        { name: `vaccine_${i}_provider`, label: "Administered By", width: 100 },
+      ]);
+    }
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 81. Lab Requisition Form ------------------------------------------------------------------------
+async function labRequisitionForm() {
+  return build((d) => {
+    d.title("Laboratory Requisition Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 220 },
+      { name: "date_of_birth", label: "Date of Birth", width: 150 },
+      { name: "date", label: "Date", width: 100 },
+    ]);
+    d.fieldRow([
+      { name: "ordering_provider", label: "Ordering Provider", width: 260 },
+      { name: "diagnosis_code", label: "Diagnosis / ICD Code", width: 220 },
+    ]);
+    d.heading("Tests Requested");
+    d.checkboxRow("cbc", "Complete Blood Count (CBC)");
+    d.checkboxRow("metabolic_panel", "Comprehensive Metabolic Panel");
+    d.checkboxRow("lipid_panel", "Lipid Panel");
+    d.checkboxRow("thyroid_panel", "Thyroid Panel");
+    d.checkboxRow("urinalysis", "Urinalysis");
+    d.fieldRow([{ name: "other_tests", label: "Other Tests Requested", width: CONTENT_W }]);
+    d.radioRow("priority", "Priority", ["Routine", "STAT"]);
+    d.fieldRow([{ name: "provider_signature", label: "Ordering Provider — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 82. Referral Form ------------------------------------------------------------------------------
+async function referralForm() {
+  return build((d) => {
+    d.title("Patient Referral Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.heading("Referring Provider");
+    d.fieldRow([
+      { name: "referring_provider", label: "Referring Provider Name", width: 260 },
+      { name: "referring_practice", label: "Practice", width: 220 },
+    ]);
+    d.heading("Referred To");
+    d.fieldRow([
+      { name: "specialist_name", label: "Specialist / Facility Name", width: 260 },
+      { name: "specialty", label: "Specialty", width: 220 },
+    ]);
+    d.fieldRow([{ name: "reason_for_referral", label: "Reason for Referral", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "relevant_history", label: "Relevant Medical History / Findings", width: CONTENT_W, multiline: true }]);
+    d.radioRow("urgency", "Urgency", ["Routine", "Urgent", "Emergency"]);
+    d.fieldRow([{ name: "referring_provider_signature", label: "Referring Provider — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 83. Discharge Summary --------------------------------------------------------------------------
+async function dischargeSummary() {
+  return build((d) => {
+    d.title("Patient Discharge Summary");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 220 },
+      { name: "admission_date", label: "Admission Date", width: 140 },
+      { name: "discharge_date", label: "Discharge Date", width: 120 },
+    ]);
+    d.fieldRow([{ name: "primary_diagnosis", label: "Primary Diagnosis", width: CONTENT_W }]);
+    d.fieldRow([{ name: "treatment_summary", label: "Summary of Treatment Provided", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "discharge_medications", label: "Discharge Medications", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "follow_up_instructions", label: "Follow-Up Instructions", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "follow_up_provider", label: "Follow-Up Provider", width: 260 },
+      { name: "follow_up_date", label: "Follow-Up Appointment Date", width: 220 },
+    ]);
+    d.fieldRow([{ name: "attending_provider_signature", label: "Attending Provider — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 84. Medical Billing Form -----------------------------------------------------------------------
+async function medicalBillingForm() {
+  return build((d) => {
+    d.title("Medical Billing Statement");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "account_number", label: "Account Number", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "service_date", label: "Date of Service", width: 180 },
+      { name: "provider_name", label: "Provider", width: 240 },
+    ]);
+    d.heading("Charges");
+    for (let i = 1; i <= 5; i++) {
+      d.fieldRow([
+        { name: `charge_${i}_description`, label: "Service / CPT Description", width: 280 },
+        { name: `charge_${i}_amount`, label: "Amount ($)", width: 130 },
+      ]);
+    }
+    d.fieldRow([
+      { name: "insurance_paid", label: "Paid by Insurance ($)", width: 200 },
+      { name: "amount_due", label: "Patient Amount Due ($)", width: 200 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 85. Telehealth Consent --------------------------------------------------------------------------
+async function telehealthConsent() {
+  return build((d) => {
+    d.title("Telehealth Consent Form");
+    d.paragraph(
+      "I consent to receive healthcare services from the provider named below via telehealth (audio and/or video), and understand this may include diagnosis, treatment recommendations, and prescriptions where appropriate.",
+    );
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "provider_name", label: "Provider / Practice Name", width: CONTENT_W }]);
+    d.checkboxRow("understands_limitations", "I understand telehealth has limitations compared to an in-person exam and may require an in-person follow-up");
+    d.checkboxRow("understands_privacy", "I understand reasonable steps are taken to protect the privacy of this session, though no electronic transmission is fully secure");
+    d.checkboxRow("understands_technical_issues", "I understand the session may be interrupted or discontinued due to technical issues");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "patient_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 86. Allergy Information Form ------------------------------------------------------------------
+async function allergyInformationForm() {
+  return build((d) => {
+    d.title("Allergy Information Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.heading("Known Allergies");
+    for (let i = 1; i <= 5; i++) {
+      d.fieldRow([
+        { name: `allergy_${i}_substance`, label: "Substance (medication, food, other)", width: 200 },
+        { name: `allergy_${i}_reaction`, label: "Reaction", width: 180 },
+        { name: `allergy_${i}_severity`, label: "Severity", width: 80 },
+      ]);
+    }
+    d.checkboxRow("no_known_allergies", "Patient reports no known allergies");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "patient_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 87. Emergency Contact Form (medical) -------------------------------------------------------------
+async function emergencyContactFormMedical() {
+  return build((d) => {
+    d.title("Emergency Contact Information Form");
+    d.fieldRow([
+      { name: "patient_name", label: "Patient Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.heading("Primary Emergency Contact");
+    d.fieldRow([
+      { name: "contact1_name", label: "Name", width: 190 },
+      { name: "contact1_relationship", label: "Relationship", width: 140 },
+      { name: "contact1_phone", label: "Phone", width: 130 },
+    ]);
+    d.heading("Secondary Emergency Contact");
+    d.fieldRow([
+      { name: "contact2_name", label: "Name", width: 190 },
+      { name: "contact2_relationship", label: "Relationship", width: 140 },
+      { name: "contact2_phone", label: "Phone", width: 130 },
+    ]);
+    d.heading("Additional Notes");
+    d.fieldRow([{ name: "medical_notes", label: "Medical Conditions Responders Should Know About", width: CONTENT_W, multiline: true }]);
+    d.disclaimer(MEDICAL_DISCLAIMER);
+  });
+}
+
+// --- 88. Loan Application ---------------------------------------------------------------------------
+async function loanApplication() {
+  return build((d) => {
+    d.title("Loan Application");
+    d.heading("Applicant Information");
+    d.fieldRow([
+      { name: "applicant_name", label: "Full Legal Name", width: 260 },
+      { name: "ssn_last4", label: "SSN (last 4 digits)", width: 120 },
+      { name: "date_of_birth", label: "Date of Birth", width: 100 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "phone", label: "Phone", width: 180 },
+      { name: "email", label: "Email", width: 220 },
+    ]);
+    d.heading("Employment & Income");
+    d.fieldRow([
+      { name: "employer", label: "Employer", width: 260 },
+      { name: "annual_income", label: "Annual Income ($)", width: 220 },
+    ]);
+    d.heading("Loan Requested");
+    d.fieldRow([
+      { name: "loan_amount", label: "Loan Amount Requested ($)", width: 220 },
+      { name: "loan_purpose", label: "Purpose of Loan", width: 220 },
+    ]);
+    d.radioRow("loan_type", "Loan Type", ["Personal", "Auto", "Mortgage", "Business", "Other"]);
+    d.fieldRow([{ name: "existing_debts", label: "Existing Debts / Monthly Obligations", width: CONTENT_W, multiline: true }]);
+    d.checkboxRow("authorizes_credit_check", "I authorize a credit check as part of this application");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Applicant — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 89. Credit Authorization Form ------------------------------------------------------------------
+async function creditAuthorizationForm() {
+  return build((d) => {
+    d.title("Credit Authorization Form");
+    d.paragraph(
+      "I authorize the party named below to obtain a copy of my credit report from one or more consumer reporting agencies for the purpose described below.",
+    );
+    d.fieldRow([
+      { name: "applicant_name", label: "Full Legal Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Address", width: CONTENT_W }]);
+    d.fieldRow([{ name: "requesting_party", label: "Party Requesting Authorization", width: CONTENT_W }]);
+    d.fieldRow([{ name: "purpose", label: "Purpose of Credit Check", width: CONTENT_W }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Applicant — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 90. Wire Transfer Form -------------------------------------------------------------------------
+async function wireTransferForm() {
+  return build((d) => {
+    d.title("Wire Transfer Request Form");
+    d.heading("Sender Information");
+    d.fieldRow([
+      { name: "sender_name", label: "Sender Name", width: 260 },
+      { name: "sender_account", label: "Sender Account Number", width: 220 },
+    ]);
+    d.heading("Recipient Information");
+    d.fieldRow([
+      { name: "recipient_name", label: "Recipient Name", width: 260 },
+      { name: "recipient_bank", label: "Recipient Bank", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "recipient_account", label: "Recipient Account Number / IBAN", width: 260 },
+      { name: "routing_swift", label: "Routing / SWIFT Code", width: 220 },
+    ]);
+    d.heading("Transfer Details");
+    d.fieldRow([
+      { name: "amount", label: "Amount", width: 180 },
+      { name: "currency", label: "Currency", width: 120 },
+      { name: "transfer_date", label: "Requested Date", width: 180 },
+    ]);
+    d.fieldRow([{ name: "memo", label: "Memo / Reference", width: CONTENT_W }]);
+    d.checkboxRow("confirms_details", "I confirm the recipient details above are accurate and authorize this transfer");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "sender_signature", label: "Sender — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 91. Budget Template ----------------------------------------------------------------------------
+async function budgetTemplate() {
+  return build((d) => {
+    d.title("Budget Template");
+    d.fieldRow([
+      { name: "budget_owner", label: "Prepared By", width: 260 },
+      { name: "period", label: "Budget Period", width: 220 },
+    ]);
+    d.heading("Income");
+    for (let i = 1; i <= 4; i++) {
+      d.fieldRow([
+        { name: `income_${i}_source`, label: "Source", width: 320 },
+        { name: `income_${i}_amount`, label: "Amount ($)", width: 140 },
+      ]);
+    }
+    d.heading("Expenses");
+    for (let i = 1; i <= 8; i++) {
+      d.fieldRow([
+        { name: `expense_${i}_category`, label: "Category", width: 320 },
+        { name: `expense_${i}_amount`, label: "Amount ($)", width: 140 },
+      ]);
+    }
+    d.fieldRow([
+      { name: "total_income", label: "Total Income ($)", width: 220 },
+      { name: "total_expenses", label: "Total Expenses ($)", width: 220 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 92. Audit Checklist -----------------------------------------------------------------------------
+async function auditChecklist() {
+  return build((d) => {
+    d.title("Internal Audit Checklist");
+    d.fieldRow([
+      { name: "audit_area", label: "Area / Department Audited", width: 260 },
+      { name: "auditor_name", label: "Auditor", width: 220 },
+    ]);
+    d.fieldRow([{ name: "audit_date", label: "Audit Date", width: 200 }]);
+    d.heading("Checklist Items");
+    const items = [
+      "Financial records are complete and reconciled",
+      "Required approvals are documented for all transactions",
+      "Segregation of duties is maintained",
+      "Access controls are reviewed and up to date",
+      "Policies and procedures are current and followed",
+      "Prior audit findings have been remediated",
+    ];
+    for (const item of items) d.checkboxRow(item.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 40), item);
+    d.fieldRow([{ name: "findings", label: "Findings / Exceptions Noted", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "corrective_actions", label: "Recommended Corrective Actions", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "auditor_signature", label: "Auditor — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 93. Invoice Financing Form ----------------------------------------------------------------------
+async function invoiceFinancingForm() {
+  return build((d) => {
+    d.title("Invoice Financing Application");
+    d.paragraph("Use this form to request financing against an outstanding invoice owed to your business by a customer.");
+    d.heading("Applicant (Business)");
+    d.fieldRow([
+      { name: "business_name", label: "Business Name", width: 260 },
+      { name: "contact_name", label: "Contact Name", width: 220 },
+    ]);
+    d.heading("Invoice Details");
+    d.fieldRow([
+      { name: "invoice_number", label: "Invoice Number", width: 180 },
+      { name: "invoice_amount", label: "Invoice Amount ($)", width: 180 },
+      { name: "invoice_date", label: "Invoice Date", width: 120 },
+    ]);
+    d.fieldRow([
+      { name: "customer_name", label: "Customer (Debtor) Name", width: 260 },
+      { name: "due_date", label: "Payment Due Date", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "amount_requested", label: "Financing Amount Requested ($)", width: 260 },
+    ]);
+    d.checkboxRow("invoice_not_pledged", "This invoice has not been pledged or financed elsewhere");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Applicant — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 94. Compliance Certification --------------------------------------------------------------------
+async function complianceCertification() {
+  return build((d) => {
+    d.title("Compliance Certification");
+    d.paragraph(
+      "I certify, on behalf of the organization named below, that the statements made in this certification are true and correct to the best of my knowledge as of the date signed.",
+    );
+    d.fieldRow([
+      { name: "organization_name", label: "Organization Name", width: 260 },
+      { name: "certifying_period", label: "Period Covered", width: 220 },
+    ]);
+    d.checkboxRow("policies_in_place", "Required policies and procedures are documented and in effect");
+    d.checkboxRow("training_completed", "Required staff training has been completed");
+    d.checkboxRow("no_known_violations", "No known material violations occurred during this period");
+    d.fieldRow([{ name: "exceptions_noted", label: "Exceptions or Issues Noted (if any)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "certifying_officer", label: "Certifying Officer — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 95. KYC (Know Your Customer) Form -----------------------------------------------------------------
+async function kycForm() {
+  return build((d) => {
+    d.title("Know Your Customer (KYC) Form");
+    d.heading("Identity Information");
+    d.fieldRow([
+      { name: "full_name", label: "Full Legal Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Residential Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "id_type", label: "ID Type (passport, license, etc.)", width: 260 },
+      { name: "id_number", label: "ID Number", width: 220 },
+    ]);
+    d.heading("Purpose & Source of Funds");
+    d.fieldRow([{ name: "account_purpose", label: "Purpose of Account / Relationship", width: CONTENT_W }]);
+    d.fieldRow([{ name: "source_of_funds", label: "Source of Funds", width: CONTENT_W }]);
+    d.checkboxRow("is_pep", "I am, or am closely associated with, a Politically Exposed Person (PEP)");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "customer_signature", label: "Customer — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 96. AML Questionnaire ---------------------------------------------------------------------------
+async function amlQuestionnaire() {
+  return build((d) => {
+    d.title("Anti-Money Laundering (AML) Questionnaire");
+    d.fieldRow([
+      { name: "entity_name", label: "Individual / Entity Name", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.checkboxRow("high_risk_jurisdiction", "Operates or has significant ties to a high-risk jurisdiction");
+    d.checkboxRow("cash_intensive", "Business is cash-intensive");
+    d.checkboxRow("third_party_funds", "Regularly receives funds on behalf of third parties");
+    d.checkboxRow("prior_regulatory_action", "Has been subject to prior regulatory action related to AML compliance");
+    d.fieldRow([{ name: "explanation", label: "Explanation for Any Items Checked Above", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "aml_program_description", label: "Description of AML Compliance Program (if applicable)", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "respondent_signature", label: "Respondent — Signature (type full name)", width: 300 },
+      { name: "signature_date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 97. Vendor Payment Request ------------------------------------------------------------------------
+async function vendorPaymentRequest() {
+  return build((d) => {
+    d.title("Vendor Payment Request");
+    d.fieldRow([
+      { name: "vendor_name", label: "Vendor Name", width: 260 },
+      { name: "vendor_id", label: "Vendor ID (if applicable)", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "invoice_number", label: "Invoice Number", width: 200 },
+      { name: "invoice_date", label: "Invoice Date", width: 160 },
+      { name: "amount", label: "Amount ($)", width: 120 },
+    ]);
+    d.fieldRow([{ name: "description", label: "Description of Goods/Services", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "requested_by", label: "Requested By", width: 260 },
+      { name: "cost_center", label: "Cost Center / Department", width: 220 },
+    ]);
+    d.radioRow("payment_method", "Payment Method", ["ACH", "Wire", "Check", "Card"]);
+    d.checkboxRow("approved_for_payment", "Approved for payment");
+    d.spacer(6);
+    d.signatureBlock("Requester", "Approver");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 98. Project Charter -----------------------------------------------------------------------------
+async function projectCharter() {
+  return build((d) => {
+    d.title("Project Charter");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "project_sponsor", label: "Sponsor", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "project_manager", label: "Project Manager", width: 260 },
+      { name: "start_date", label: "Start Date", width: 220 },
+    ]);
+    d.fieldRow([{ name: "objective", label: "Project Objective", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "scope", label: "Scope (in / out of scope)", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "deliverables", label: "Key Deliverables", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "milestones", label: "Major Milestones and Target Dates", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "budget", label: "Approved Budget ($)", width: 220 },
+      { name: "success_criteria", label: "Success Criteria", width: 220 },
+    ]);
+    d.spacer(6);
+    d.signatureBlock("Sponsor", "Project Manager");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 99. Action Item Log -----------------------------------------------------------------------------
+async function actionItemLog() {
+  return build((d) => {
+    d.title("Action Item Log");
+    d.fieldRow([
+      { name: "project_name", label: "Project / Meeting", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    for (let i = 1; i <= 8; i++) {
+      d.fieldRow([
+        { name: `item_${i}_description`, label: `Action Item ${i}`, width: 230 },
+        { name: `item_${i}_owner`, label: "Owner", width: 120 },
+        { name: `item_${i}_due`, label: "Due Date", width: 90 },
+        { name: `item_${i}_status`, label: "Status", width: 40 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 100. Risk Register --------------------------------------------------------------------------------
+async function riskRegister() {
+  return build((d) => {
+    d.title("Project Risk Register");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `risk_${i}_description`, label: `Risk ${i}`, width: 200 },
+        { name: `risk_${i}_likelihood`, label: "Likelihood", width: 90 },
+        { name: `risk_${i}_impact`, label: "Impact", width: 90 },
+        { name: `risk_${i}_mitigation`, label: "Mitigation Plan", width: 100 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 101. Project Change Request ------------------------------------------------------------------------
+async function projectChangeRequest() {
+  return build((d) => {
+    d.title("Project Change Request");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "request_date", label: "Request Date", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "requested_by", label: "Requested By", width: 260 },
+      { name: "priority", label: "Priority", width: 220 },
+    ]);
+    d.fieldRow([{ name: "change_description", label: "Description of Requested Change", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "justification", label: "Justification / Business Need", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "impact_scope_schedule_cost", label: "Impact on Scope, Schedule, and Cost", width: CONTENT_W, multiline: true }]);
+    d.radioRow("decision", "Decision", ["Approved", "Rejected", "Deferred"]);
+    d.spacer(6);
+    d.signatureBlock("Requester", "Approver");
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 102. Project Status Report --------------------------------------------------------------------------
+async function projectStatusReport() {
+  return build((d) => {
+    d.title("Project Status Report");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "reporting_period", label: "Reporting Period", width: 180 },
+    ]);
+    d.radioRow("overall_status", "Overall Status", ["On track", "At risk", "Off track", "Complete"]);
+    d.fieldRow([{ name: "accomplishments", label: "Accomplishments This Period", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "planned_next_period", label: "Planned for Next Period", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "blockers", label: "Blockers / Issues", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([
+      { name: "budget_status", label: "Budget Status", width: 220 },
+      { name: "schedule_status", label: "Schedule Status", width: 220 },
+    ]);
+    d.fieldRow([{ name: "prepared_by", label: "Prepared By", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 103. Issue Log -------------------------------------------------------------------------------------
+async function issueLog() {
+  return build((d) => {
+    d.title("Project Issue Log");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    for (let i = 1; i <= 8; i++) {
+      d.fieldRow([
+        { name: `issue_${i}_description`, label: `Issue ${i}`, width: 220 },
+        { name: `issue_${i}_owner`, label: "Owner", width: 120 },
+        { name: `issue_${i}_priority`, label: "Priority", width: 80 },
+        { name: `issue_${i}_status`, label: "Status", width: 60 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 104. Project Budget Tracker -------------------------------------------------------------------------
+async function projectBudgetTracker() {
+  return build((d) => {
+    d.title("Project Budget Tracker");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "period", label: "Period", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "total_budget", label: "Total Approved Budget ($)", width: 260 },
+      { name: "spent_to_date", label: "Spent to Date ($)", width: 220 },
+    ]);
+    d.heading("Budget Line Items");
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `line_${i}_category`, label: "Category", width: 240 },
+        { name: `line_${i}_budgeted`, label: "Budgeted ($)", width: 130 },
+        { name: `line_${i}_actual`, label: "Actual ($)", width: 106 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 105. Stakeholder Register ----------------------------------------------------------------------------
+async function stakeholderRegister() {
+  return build((d) => {
+    d.title("Stakeholder Register");
+    d.fieldRow([
+      { name: "project_name", label: "Project Name", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([
+        { name: `stakeholder_${i}_name`, label: `Stakeholder ${i}`, width: 180 },
+        { name: `stakeholder_${i}_role`, label: "Role/Interest", width: 140 },
+        { name: `stakeholder_${i}_influence`, label: "Influence", width: 80 },
+        { name: `stakeholder_${i}_contact`, label: "Contact", width: 76 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 106. Operational Checklist ---------------------------------------------------------------------------
+async function operationalChecklist() {
+  return build((d) => {
+    d.title("Operational Checklist");
+    d.fieldRow([
+      { name: "checklist_title", label: "Checklist Title", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([{ name: "completed_by", label: "Completed By", width: CONTENT_W }]);
+    d.heading("Checklist Items");
+    for (let i = 1; i <= 10; i++) {
+      d.checkboxRow(`item_${i}`, `Item ${i}: __________________________________________`);
+    }
+    d.fieldRow([{ name: "notes", label: "Notes", width: CONTENT_W, multiline: true }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 107. Standard Operating Procedure (SOP) Template -------------------------------------------------------
+async function sopTemplate() {
+  return build((d) => {
+    d.title("Standard Operating Procedure (SOP)");
+    d.fieldRow([
+      { name: "sop_title", label: "SOP Title", width: 300 },
+      { name: "sop_number", label: "SOP Number", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "effective_date", label: "Effective Date", width: 200 },
+      { name: "owner", label: "Process Owner", width: 220 },
+    ]);
+    d.fieldRow([{ name: "purpose", label: "Purpose", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "scope", label: "Scope", width: CONTENT_W, multiline: true }]);
+    d.heading("Procedure Steps");
+    for (let i = 1; i <= 6; i++) {
+      d.fieldRow([{ name: `step_${i}`, label: `Step ${i}`, width: CONTENT_W }]);
+    }
+    d.fieldRow([{ name: "safety_notes", label: "Safety / Compliance Notes", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "approved_by", label: "Approved By — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 108. Root Cause Analysis Report ---------------------------------------------------------------------------
+async function rootCauseAnalysis() {
+  return build((d) => {
+    d.title("Root Cause Analysis Report");
+    d.fieldRow([
+      { name: "issue_title", label: "Issue / Incident Title", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([{ name: "problem_statement", label: "Problem Statement", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "timeline", label: "Timeline of Events", width: CONTENT_W, multiline: true }]);
+    d.heading("Analysis (5 Whys or equivalent)");
+    for (let i = 1; i <= 5; i++) {
+      d.fieldRow([{ name: `why_${i}`, label: `Why ${i}`, width: CONTENT_W }]);
+    }
+    d.fieldRow([{ name: "root_cause", label: "Identified Root Cause", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "corrective_actions", label: "Corrective / Preventive Actions", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "prepared_by", label: "Prepared By — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 109. Meeting Minutes (General) -----------------------------------------------------------------------------
+async function meetingMinutesGeneral() {
+  return build((d) => {
+    d.title("Meeting Minutes");
+    d.fieldRow([
+      { name: "meeting_title", label: "Meeting Title", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "location", label: "Location / Platform", width: 260 },
+      { name: "facilitator", label: "Facilitator", width: 220 },
+    ]);
+    d.fieldRow([{ name: "attendees", label: "Attendees", width: CONTENT_W }]);
+    d.heading("Agenda Items & Discussion");
+    d.fieldRow([{ name: "discussion", label: "Discussion Summary", width: CONTENT_W, multiline: true }]);
+    d.heading("Decisions Made");
+    d.fieldRow([{ name: "decisions", label: "Decisions", width: CONTENT_W, multiline: true }]);
+    d.heading("Action Items");
+    for (let i = 1; i <= 4; i++) {
+      d.fieldRow([
+        { name: `action_${i}_description`, label: `Action Item ${i}`, width: 260 },
+        { name: `action_${i}_owner`, label: "Owner", width: 130 },
+        { name: `action_${i}_due`, label: "Due Date", width: 86 },
+      ]);
+    }
+    d.fieldRow([{ name: "next_meeting_date", label: "Next Meeting Date", width: 220 }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 110. General Consent Form ------------------------------------------------------------------------------
+async function generalConsentForm() {
+  return build((d) => {
+    d.title("General Consent Form");
+    d.paragraph(
+      "I, the undersigned, voluntarily consent to participate in the activity or service described below, and acknowledge that I have had the opportunity to ask questions before signing.",
+    );
+    d.fieldRow([
+      { name: "participant_name", label: "Participant Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "activity_description", label: "Description of Activity / Service", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "organization_name", label: "Organization Name", width: CONTENT_W }]);
+    d.checkboxRow("understands_risks", "I understand the risks involved and consent to participate");
+    d.fieldRow([{ name: "guardian_relationship", label: "Signing as Parent/Guardian — Relationship (if applicable)", width: CONTENT_W }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 111. Event Registration Form ---------------------------------------------------------------------------
+async function eventRegistrationForm() {
+  return build((d) => {
+    d.title("Event Registration Form");
+    d.fieldRow([
+      { name: "event_name", label: "Event Name", width: 300 },
+      { name: "event_date", label: "Event Date", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "attendee_name", label: "Attendee Full Name", width: 260 },
+      { name: "email", label: "Email", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "phone", label: "Phone", width: 200 },
+      { name: "organization", label: "Organization (if applicable)", width: 220 },
+    ]);
+    d.dropdownRow("ticket_type", "Ticket Type", ["General Admission", "VIP", "Student", "Group"], { width: 240 });
+    d.checkboxRow("dietary_restrictions", "I have dietary restrictions (describe below)");
+    d.fieldRow([{ name: "dietary_details", label: "Dietary Details / Accommodations", width: CONTENT_W }]);
+    d.fieldRow([{ name: "emergency_contact", label: "Emergency Contact (name and phone)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 112. Complaint Form -----------------------------------------------------------------------------------
+async function complaintForm() {
+  return build((d) => {
+    d.title("Complaint Form");
+    d.fieldRow([
+      { name: "complainant_name", label: "Full Name", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "contact_phone", label: "Phone", width: 200 },
+      { name: "contact_email", label: "Email", width: 220 },
+    ]);
+    d.fieldRow([{ name: "complaint_against", label: "Complaint Regarding (person, department, or service)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "incident_date", label: "Date of Incident", width: 200 }]);
+    d.fieldRow([{ name: "complaint_description", label: "Description of Complaint", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "desired_resolution", label: "Desired Resolution", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "signature", label: "Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 113. Survey Form --------------------------------------------------------------------------------------
+async function surveyForm() {
+  return build((d) => {
+    d.title("Survey Form");
+    d.fieldRow([
+      { name: "survey_title", label: "Survey Title", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    for (let i = 1; i <= 5; i++) {
+      d.fieldRow([{ name: `question_${i}`, label: `Question ${i}`, width: CONTENT_W }]);
+      d.radioRow(`answer_${i}`, "Response", ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]);
+    }
+    d.fieldRow([{ name: "additional_comments", label: "Additional Comments", width: CONTENT_W, multiline: true }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 114. Membership Application ----------------------------------------------------------------------------
+async function membershipApplication() {
+  return build((d) => {
+    d.title("Membership Application");
+    d.fieldRow([
+      { name: "applicant_name", label: "Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "phone", label: "Phone", width: 200 },
+      { name: "email", label: "Email", width: 220 },
+    ]);
+    d.dropdownRow("membership_type", "Membership Type", ["Individual", "Family", "Student", "Senior", "Corporate"], { width: 240 });
+    d.fieldRow([{ name: "referred_by", label: "Referred By (optional)", width: CONTENT_W }]);
+    d.checkboxRow("agrees_to_terms", "I agree to abide by the organization's bylaws and code of conduct");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 115. Donation Form -----------------------------------------------------------------------------------
+async function donationForm() {
+  return build((d) => {
+    d.title("Donation Form");
+    d.fieldRow([
+      { name: "donor_name", label: "Donor Full Name", width: 260 },
+      { name: "date", label: "Date", width: 200 },
+    ]);
+    d.fieldRow([{ name: "address", label: "Address", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "donation_amount", label: "Donation Amount ($)", width: 220 },
+      { name: "payment_method", label: "Payment Method", width: 220 },
+    ]);
+    d.radioRow("donation_type", "Type", ["One-time", "Monthly recurring", "In-kind"]);
+    d.checkboxRow("anonymous", "I wish to remain anonymous");
+    d.checkboxRow("tax_receipt_requested", "I would like a tax-deductible receipt");
+    d.fieldRow([{ name: "designation", label: "Designation (fund or program, if any)", width: CONTENT_W }]);
+    d.spacer(6);
+    d.fieldRow([{ name: "donor_signature", label: "Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 116. Volunteer Application ----------------------------------------------------------------------------
+async function volunteerApplication() {
+  return build((d) => {
+    d.title("Volunteer Application");
+    d.fieldRow([
+      { name: "applicant_name", label: "Full Name", width: 260 },
+      { name: "date_of_birth", label: "Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([
+      { name: "phone", label: "Phone", width: 200 },
+      { name: "email", label: "Email", width: 220 },
+    ]);
+    d.fieldRow([{ name: "availability", label: "Availability (days/times)", width: CONTENT_W }]);
+    d.fieldRow([{ name: "areas_of_interest", label: "Areas of Interest", width: CONTENT_W }]);
+    d.fieldRow([{ name: "relevant_experience", label: "Relevant Skills or Experience", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "emergency_contact", label: "Emergency Contact (name and phone)", width: CONTENT_W }]);
+    d.checkboxRow("background_check_consent", "I consent to a background check if required for this role");
+    d.spacer(6);
+    d.fieldRow([
+      { name: "applicant_signature", label: "Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 117. Gift Certificate -----------------------------------------------------------------------------------
+async function giftCertificate() {
+  return build((d) => {
+    d.title("Gift Certificate");
+    d.fieldRow([
+      { name: "business_name", label: "Business / Issuer Name", width: 300 },
+      { name: "certificate_number", label: "Certificate Number", width: 180 },
+    ]);
+    d.fieldRow([
+      { name: "recipient_name", label: "Recipient Name", width: 260 },
+      { name: "amount_or_service", label: "Value / Service Described", width: 220 },
+    ]);
+    d.fieldRow([
+      { name: "issue_date", label: "Issue Date", width: 200 },
+      { name: "expiration_date", label: "Expiration Date (if any)", width: 220 },
+    ]);
+    d.fieldRow([{ name: "terms", label: "Terms of Redemption", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "issuer_signature", label: "Issued By — Signature (type full name)", width: CONTENT_W }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 118. Personal Budget -----------------------------------------------------------------------------------
+async function personalBudget() {
+  return build((d) => {
+    d.title("Personal Budget");
+    d.fieldRow([
+      { name: "name", label: "Name", width: 300 },
+      { name: "month", label: "Month / Period", width: 180 },
+    ]);
+    d.heading("Monthly Income");
+    d.fieldRow([{ name: "monthly_income", label: "Total Monthly Income ($)", width: 260 }]);
+    d.heading("Monthly Expenses");
+    const categories = ["Housing", "Utilities", "Groceries", "Transportation", "Insurance", "Debt Payments", "Savings", "Entertainment"];
+    for (const cat of categories) {
+      d.fieldRow([
+        { name: `expense_${cat.toLowerCase().replace(/\s+/g, "_")}`, label: cat, width: 340 },
+        { name: `expense_${cat.toLowerCase().replace(/\s+/g, "_")}_amount`, label: "Amount ($)", width: 120 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 119. Household Inventory --------------------------------------------------------------------------------
+async function householdInventory() {
+  return build((d) => {
+    d.title("Household Inventory");
+    d.paragraph("A record of household belongings and their approximate value — useful for insurance claims or estate planning.");
+    d.fieldRow([
+      { name: "property_address", label: "Property Address", width: 320 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    for (let i = 1; i <= 10; i++) {
+      d.fieldRow([
+        { name: `item_${i}_description`, label: "Item", width: 190 },
+        { name: `item_${i}_room`, label: "Room", width: 90 },
+        { name: `item_${i}_value`, label: "Value ($)", width: 90 },
+        { name: `item_${i}_serial`, label: "Serial # (if any)", width: 106 },
+      ]);
+    }
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 120. Emergency Plan -----------------------------------------------------------------------------------
+async function emergencyPlan() {
+  return build((d) => {
+    d.title("Household Emergency Plan");
+    d.fieldRow([
+      { name: "household_name", label: "Household Name", width: 300 },
+      { name: "date", label: "Date", width: 180 },
+    ]);
+    d.heading("Emergency Contacts");
+    d.fieldRow([
+      { name: "contact1_name", label: "Contact 1 — Name", width: 190 },
+      { name: "contact1_phone", label: "Phone", width: 150 },
+      { name: "contact1_relationship", label: "Relationship", width: 120 },
+    ]);
+    d.fieldRow([
+      { name: "contact2_name", label: "Contact 2 — Name", width: 190 },
+      { name: "contact2_phone", label: "Phone", width: 150 },
+      { name: "contact2_relationship", label: "Relationship", width: 120 },
+    ]);
+    d.heading("Meeting Points");
+    d.fieldRow([
+      { name: "meeting_point_local", label: "Local Meeting Point", width: 260 },
+      { name: "meeting_point_regional", label: "Out-of-Area Meeting Point", width: 220 },
+    ]);
+    d.heading("Important Information");
+    d.fieldRow([{ name: "medical_needs", label: "Medical Needs / Medications to Bring", width: CONTENT_W, multiline: true }]);
+    d.fieldRow([{ name: "important_documents_location", label: "Location of Important Documents", width: CONTENT_W }]);
+    d.fieldRow([{ name: "utility_shutoff_notes", label: "Utility Shutoff Locations / Notes", width: CONTENT_W, multiline: true }]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
+// --- 121. Travel Consent for Minors --------------------------------------------------------------------------
+async function travelConsentForMinors() {
+  return build((d) => {
+    d.title("Minor Travel Consent Form");
+    d.paragraph(
+      "I, the undersigned parent/legal guardian, give permission for the minor named below to travel as described, accompanied by the adult(s) named below.",
+    );
+    d.fieldRow([
+      { name: "minor_name", label: "Minor's Full Name", width: 260 },
+      { name: "minor_date_of_birth", label: "Minor's Date of Birth", width: 200 },
+    ]);
+    d.fieldRow([{ name: "traveling_with", label: "Traveling With (name(s) of accompanying adult(s))", width: CONTENT_W }]);
+    d.fieldRow([
+      { name: "destination", label: "Destination", width: 260 },
+      { name: "travel_dates", label: "Travel Dates", width: 220 },
+    ]);
+    d.fieldRow([{ name: "transportation_mode", label: "Mode of Transportation", width: CONTENT_W }]);
+    d.heading("Parent/Guardian Information");
+    d.fieldRow([
+      { name: "guardian_name", label: "Parent/Guardian Full Name", width: 260 },
+      { name: "guardian_phone", label: "Phone", width: 220 },
+    ]);
+    d.fieldRow([{ name: "emergency_medical_info", label: "Emergency Medical Information / Allergies", width: CONTENT_W, multiline: true }]);
+    d.spacer(6);
+    d.fieldRow([
+      { name: "guardian_signature", label: "Parent/Guardian — Signature (type full name)", width: 300 },
+      { name: "date", label: "Date", width: 160 },
+    ]);
+    d.disclaimer(GENERIC_DISCLAIMER);
+  });
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   const templates = [
@@ -2188,6 +3583,61 @@ async function main() {
     { file: "settlement-agreement.pdf", make: settlementAgreement },
     { file: "notary-acknowledgment.pdf", make: notaryAcknowledgment },
     { file: "contract-addendum.pdf", make: contractAddendum },
+    { file: "employee-tax-withholding.pdf", make: employeeTaxWithholdingForm },
+    { file: "employee-handbook-acknowledgment.pdf", make: employeeHandbookAcknowledgment },
+    { file: "termination-notice.pdf", make: terminationNotice },
+    { file: "background-check-authorization.pdf", make: backgroundCheckAuthorization },
+    { file: "training-attendance-sheet.pdf", make: trainingAttendanceSheet },
+    { file: "disciplinary-action-form.pdf", make: disciplinaryActionForm },
+    { file: "promotion-request-form.pdf", make: promotionRequestForm },
+    { file: "exit-interview-form.pdf", make: exitInterviewForm },
+    { file: "remote-work-agreement.pdf", make: remoteWorkAgreement },
+    { file: "medical-history-form.pdf", make: medicalHistoryForm },
+    { file: "insurance-information-form.pdf", make: insuranceInformationForm },
+    { file: "consent-for-treatment.pdf", make: consentForTreatment },
+    { file: "prescription-request-form.pdf", make: prescriptionRequestForm },
+    { file: "vaccination-record.pdf", make: vaccinationRecord },
+    { file: "lab-requisition-form.pdf", make: labRequisitionForm },
+    { file: "referral-form.pdf", make: referralForm },
+    { file: "discharge-summary.pdf", make: dischargeSummary },
+    { file: "medical-billing-form.pdf", make: medicalBillingForm },
+    { file: "telehealth-consent.pdf", make: telehealthConsent },
+    { file: "allergy-information-form.pdf", make: allergyInformationForm },
+    { file: "emergency-contact-form.pdf", make: emergencyContactFormMedical },
+    { file: "loan-application.pdf", make: loanApplication },
+    { file: "credit-authorization.pdf", make: creditAuthorizationForm },
+    { file: "wire-transfer-form.pdf", make: wireTransferForm },
+    { file: "budget-template.pdf", make: budgetTemplate },
+    { file: "audit-checklist.pdf", make: auditChecklist },
+    { file: "invoice-financing-form.pdf", make: invoiceFinancingForm },
+    { file: "compliance-certification.pdf", make: complianceCertification },
+    { file: "kyc-form.pdf", make: kycForm },
+    { file: "aml-questionnaire.pdf", make: amlQuestionnaire },
+    { file: "vendor-payment-request.pdf", make: vendorPaymentRequest },
+    { file: "project-charter.pdf", make: projectCharter },
+    { file: "action-item-log.pdf", make: actionItemLog },
+    { file: "risk-register.pdf", make: riskRegister },
+    { file: "project-change-request.pdf", make: projectChangeRequest },
+    { file: "project-status-report.pdf", make: projectStatusReport },
+    { file: "issue-log.pdf", make: issueLog },
+    { file: "project-budget-tracker.pdf", make: projectBudgetTracker },
+    { file: "stakeholder-register.pdf", make: stakeholderRegister },
+    { file: "operational-checklist.pdf", make: operationalChecklist },
+    { file: "sop-template.pdf", make: sopTemplate },
+    { file: "root-cause-analysis.pdf", make: rootCauseAnalysis },
+    { file: "meeting-minutes.pdf", make: meetingMinutesGeneral },
+    { file: "general-consent-form.pdf", make: generalConsentForm },
+    { file: "event-registration-form.pdf", make: eventRegistrationForm },
+    { file: "complaint-form.pdf", make: complaintForm },
+    { file: "survey-form.pdf", make: surveyForm },
+    { file: "membership-application.pdf", make: membershipApplication },
+    { file: "donation-form.pdf", make: donationForm },
+    { file: "volunteer-application.pdf", make: volunteerApplication },
+    { file: "gift-certificate.pdf", make: giftCertificate },
+    { file: "personal-budget.pdf", make: personalBudget },
+    { file: "household-inventory.pdf", make: householdInventory },
+    { file: "emergency-plan.pdf", make: emergencyPlan },
+    { file: "travel-consent-for-minors.pdf", make: travelConsentForMinors },
   ];
   for (const t of templates) {
     const bytes = await t.make();
