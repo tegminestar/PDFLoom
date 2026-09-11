@@ -63,6 +63,16 @@ reused for a new set of signers later — this is a deliberately longer-
 lived exception to "temporary," disclosed for the same reason the
 one-request case is.
 
+Signature requests can also notify people by email (via Resend) when a
+request is created, completed, or declined — this is a second, separate
+third party that sees a signer's or owner's email address, the
+document's filename, and the sender's display name, but never the
+document's actual bytes/content (the email only ever contains a link,
+never an attachment). This is best-effort: if it's not configured
+(`RESEND_API_KEY` unset) or a send fails, nothing else in the flow
+breaks — the owner-facing "copy this link yourself" path already shown
+in the UI keeps working regardless.
+
 Every signature-request/template endpoint that mutates something is
 scoped one of two ways, never a third: owner-authenticated endpoints
 (creating, listing, voiding a request; creating, listing, deleting a

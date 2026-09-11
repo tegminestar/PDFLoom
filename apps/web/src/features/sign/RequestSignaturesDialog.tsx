@@ -68,6 +68,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
   const [pageNumber, setPageNumber] = useState(1);
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
+  const [senderName, setSenderName] = useState("");
 
   const [isSending, setIsSending] = useState(false);
   const [links, setLinks] = useState<CreatedLink[] | null>(null);
@@ -198,6 +199,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
           body: JSON.stringify({
             templateId: selectedTemplateId,
             signingMode,
+            senderName: senderName.trim() || undefined,
             roleAssignments: (templateRoles ?? []).map((r, i) => ({ roleId: r.id, email: signers[i]!.email.trim(), name: signers[i]!.name.trim() || undefined })),
           }),
         });
@@ -243,6 +245,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
           filename: meta.name,
           fileBase64,
           signingMode,
+          senderName: senderName.trim() || undefined,
           signers: validSigners.map((s) => {
             const i = signers.indexOf(s);
             return {
@@ -289,6 +292,7 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
     setPageNumber(1);
     setSaveAsTemplate(false);
     setTemplateName("");
+    setSenderName("");
     setLinks(null);
   };
 
@@ -557,6 +561,19 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
         </div>
       ) : step === "review" ? (
         <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="px-1 text-xs font-medium text-text-muted" htmlFor="sender-name-input">
+              Your name (shown to signers)
+            </label>
+            <input
+              id="sender-name-input"
+              type="text"
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              placeholder="e.g. Jane Doe"
+              className="h-9 rounded-[--radius-sm] border border-border-strong bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[--color-focus-ring]"
+            />
+          </div>
           <div className="flex flex-col gap-2">
             {signers.map((s, i) => (
               <div key={i} className="flex items-center justify-between gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5 text-sm">
@@ -570,8 +587,9 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
             ))}
           </div>
           <p className="text-xs text-text-faint">
-            Signing order: {signingMode === "sequential" ? "in the order listed above" : "any order"}. No email is sent
-            automatically — you'll get a link to share with each signer yourself.
+            Signing order: {signingMode === "sequential" ? "in the order listed above" : "any order"}. Each signer gets
+            an emailed link automatically — you'll also see every link here to copy and share yourself if you'd
+            rather.
           </p>
           {mode === "scratch" && (
             <div className="flex flex-col gap-2 rounded-[--radius-sm] border border-border-strong bg-surface p-2.5">

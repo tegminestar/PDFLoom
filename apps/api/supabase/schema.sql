@@ -208,6 +208,13 @@ alter table public.signature_requests add column if not exists completed_pdf_has
 alter table public.signature_requests add column if not exists template_id uuid
   references public.signature_templates(id) on delete set null;
 
+-- v3: the name a signer sees identifying who sent them the document (e.g.
+-- "Jane Doe via PDFLoom") -- shown in the automated notification email
+-- (see apps/api/src/routes/signatureRequests.ts's Resend integration) and
+-- on the completion certificate. Nullable: falls back to the owner's
+-- account email when not provided.
+alter table public.signature_requests add column if not exists sender_name text;
+
 -- Self-hosted analytics — replaces the paid Plausible Cloud script. Every
 -- row is one beacon from trackEvent() (apps/web/src/app/analytics.ts),
 -- enriched server-side (apps/api/src/routes/analytics.ts) from the

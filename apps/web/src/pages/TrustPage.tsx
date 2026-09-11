@@ -27,9 +27,9 @@ const EXCEPTIONS: ExceptionCard[] = [
     whatItDoes:
       "When you send a document to someone else for signature, it's stored server-side for the life of that request — each signer gets an unguessable link to their own view of it, and a server-side step composites every signature/initials/date field onto the PDF as each person finishes.",
     whatItTouches:
-      "The document exists server-side for as long as the request is open (and, if you save it as a reusable template, until you delete that template) — that's the one feature in PDFLoom where this is unavoidable, since collecting a signature from someone who isn't the document's owner requires a shared place for that document to exist. It's deleted when you delete the request or template.",
+      "The document exists server-side for as long as the request is open (and, if you save it as a reusable template, until you delete that template) — that's the one feature in PDFLoom where this is unavoidable, since collecting a signature from someone who isn't the document's owner requires a shared place for that document to exist. It's deleted when you delete the request or template. Notification emails (sent via Resend, when configured) also mean a signer's or owner's email address, the document's filename, and the sender's name pass through a second third party — never the document's actual content, only a link to it.",
     whatItNeverDoes:
-      "Signed documents aren't scanned, analyzed, or read by any AI — server access is scoped to compositing fields and generating each signer's view.",
+      "Signed documents aren't scanned, analyzed, or read by any AI — server access is scoped to compositing fields and generating each signer's view. Notification emails never carry the document itself as an attachment, only a link.",
   },
   {
     icon: MessageCircle,

@@ -6,6 +6,77 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 const BUCKET = "signature-requests";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * Best-effort notification email via Resend — "best-effort" is load-
+ * bearing here, not decorative: every caller of this treats a failed send
+ * as a non-fatal warning, never a reason to fail the request/decline/
+ * completion it's attached to. The owner's own copy-the-link flow (already
+ * shown in the UI regardless of whether this succeeds) is the guaranteed
+ * path; email is a convenience on top of it, not a replacement for it.
+ * Returns silently (false) when RESEND_API_KEY isn't configured at all —
+ * this app must keep working with zero email infrastructure, same as
+ * every other optional integration here.
+ */
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+  const from = process.env.RESEND_FROM_EMAIL ?? "PDFLoom <onboarding@resend.dev>";
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to, subject, html }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error(`Resend rejected an email to ${to}: ${res.status} ${body}`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(`Couldn't reach Resend for an email to ${to}`, error);
+    return false;
+  }
+}
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+const EMAIL_FOOTER =
+  '<p style="color:#8a8f9c;font-size:12px;margin-top:24px;">Sent via <a href="https://pdfloom.app" style="color:#6a5adf;">PDFLoom</a> — a free, 100% client-side PDF editor. This is the one feature where a document briefly lives on PDFLoom\'s server, disclosed at pdfloom.app/trust.</p>';
+
+async function sendSignerNotificationEmail(signerEmail: string, signerName: string | null, senderLabel: string, documentName: string, signUrl: string): Promise<void> {
+  const greeting = signerName ? `Hi ${escapeHtml(signerName)},` : "Hi,";
+  const html = `
+    <p>${greeting}</p>
+    <p><strong>${escapeHtml(senderLabel)}</strong> has sent you <strong>${escapeHtml(documentName)}</strong> to review and sign.</p>
+    <p><a href="${signUrl}" style="display:inline-block;background:#6a5adf;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Review &amp; sign</a></p>
+    <p style="color:#5b606c;font-size:13px;">No account needed — this link is unique to you. This records a visual signature, not a certified, PKI-based digital signature.</p>
+    ${EMAIL_FOOTER}
+  `;
+  await sendEmail(signerEmail, `${senderLabel} sent you a document to sign: ${documentName}`, html);
+}
+
+async function sendCompletionEmail(ownerEmail: string, documentName: string, downloadUrl: string | null): Promise<void> {
+  const html = `
+    <p>Everyone has signed <strong>${escapeHtml(documentName)}</strong>.</p>
+    ${downloadUrl ? `<p><a href="${downloadUrl}" style="display:inline-block;background:#6a5adf;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Download the signed document</a> (link expires shortly — you can always get a fresh one from <a href="https://pdfloom.app/signatures">your Signature Requests page</a>).</p>` : ""}
+    ${EMAIL_FOOTER}
+  `;
+  await sendEmail(ownerEmail, `Completed: ${documentName}`, html);
+}
+
+async function sendDeclineEmail(ownerEmail: string, documentName: string, signerEmail: string, reason: string): Promise<void> {
+  const html = `
+    <p><strong>${escapeHtml(signerEmail)}</strong> declined to sign <strong>${escapeHtml(documentName)}</strong>.</p>
+    <p>Reason given: "${escapeHtml(reason)}"</p>
+    <p>See the full status at <a href="https://pdfloom.app/signatures">your Signature Requests page</a>.</p>
+    ${EMAIL_FOOTER}
+  `;
+  await sendEmail(ownerEmail, `Declined: ${documentName}`, html);
+}
+
 type FieldType = "signature" | "initials" | "date";
 type SigningMode = "parallel" | "sequential";
 
@@ -66,6 +137,7 @@ interface AuthResult {
   status: number;
   error?: string;
   userId?: string;
+  userEmail?: string;
 }
 
 /** Every owner-authenticated endpoint in this file shares this: a valid Supabase session is all that's required — ownership itself is enforced per-row via `owner_id` filters at the query, not here. */
@@ -75,7 +147,7 @@ async function requireAuthenticatedUser(req: Request, supabase: SupabaseClient):
   if (!accessToken) return { ok: false, status: 401, error: "Missing Authorization header" };
   const { data, error } = await supabase.auth.getUser(accessToken);
   if (error || !data.user) return { ok: false, status: 401, error: "Invalid or expired session" };
-  return { ok: true, status: 200, userId: data.user.id };
+  return { ok: true, status: 200, userId: data.user.id, userEmail: data.user.email };
 }
 
 // ---- Local PDF-baking helpers ----
@@ -254,11 +326,13 @@ function effectiveRequestStatus(
  * Starts a multi-party signing request: uploads the document (the one
  * intentional exception to this app's "nothing ever leaves your device"
  * design — see SECURITY.md) and creates one unguessable link per signer.
- * No email is sent from here — the owner copies each signUrl and shares it
- * themselves (no outbound-email credential is provisioned for this app yet).
- * Accepts either a from-scratch payload (filename/fileBase64/signers) or a
- * from-template payload (templateId/roleAssignments) — see the two
- * branches below.
+ * Emails each signer their link via Resend when RESEND_API_KEY is
+ * configured (see sendSignerNotificationEmail) — best-effort, never
+ * blocking: the response always includes every signUrl regardless of
+ * whether the email actually sent, so the owner's own copy-and-share path
+ * keeps working either way. Accepts either a from-scratch payload
+ * (filename/fileBase64/signers) or a from-template payload (templateId/
+ * roleAssignments) — see the two branches below.
  */
 export async function createSignatureRequest(req: Request, res: Response): Promise<void> {
   const supabase = getSupabaseAdmin();
@@ -280,11 +354,13 @@ export async function createSignatureRequest(req: Request, res: Response): Promi
     signers?: SignerInput[];
     templateId?: string;
     roleAssignments?: RoleAssignmentInput[];
+    senderName?: string;
   };
   const signingMode: SigningMode = body.signingMode === "sequential" ? "sequential" : "parallel";
+  const senderLabel = body.senderName?.trim() || auth.userEmail || "Someone";
 
   if (body.templateId) {
-    await createFromTemplate(res, supabase, auth.userId!, appUrl, body.templateId, body.roleAssignments ?? [], signingMode);
+    await createFromTemplate(res, supabase, auth.userId!, appUrl, body.templateId, body.roleAssignments ?? [], signingMode, senderLabel);
     return;
   }
 
@@ -316,7 +392,14 @@ export async function createSignatureRequest(req: Request, res: Response): Promi
 
   const insertRequest = await supabase
     .from("signature_requests")
-    .insert({ id: requestId, owner_id: auth.userId, original_filename: filename, storage_path: storagePath, signing_mode: signingMode })
+    .insert({
+      id: requestId,
+      owner_id: auth.userId,
+      original_filename: filename,
+      storage_path: storagePath,
+      signing_mode: signingMode,
+      sender_name: body.senderName?.trim() || null,
+    })
     .select()
     .single();
   if (insertRequest.error) {
@@ -355,11 +438,12 @@ export async function createSignatureRequest(req: Request, res: Response): Promi
     return;
   }
 
-  res.status(200).json({
-    requestId,
-    signingMode,
-    signers: insertSigners.data.map((row) => ({ email: row.email, signUrl: `${appUrl}/sign/${row.access_token}` })),
-  });
+  const signerLinks = insertSigners.data.map((row) => ({ email: row.email, name: row.name as string | null, signUrl: `${appUrl}/sign/${row.access_token}` }));
+  await Promise.allSettled(
+    signerLinks.map((s) => sendSignerNotificationEmail(s.email, s.name, senderLabel, filename, s.signUrl)),
+  );
+
+  res.status(200).json({ requestId, signingMode, signers: signerLinks });
 }
 
 async function createFromTemplate(
@@ -370,6 +454,7 @@ async function createFromTemplate(
   templateId: string,
   roleAssignments: RoleAssignmentInput[],
   signingMode: SigningMode,
+  senderLabel: string,
 ): Promise<void> {
   if (!UUID_RE.test(templateId)) {
     res.status(400).json({ error: "Invalid template id" });
@@ -425,6 +510,7 @@ async function createFromTemplate(
       storage_path: storagePath,
       signing_mode: signingMode,
       template_id: templateId,
+      sender_name: senderLabel === "Someone" ? null : senderLabel,
     })
     .select()
     .single();
@@ -478,11 +564,12 @@ async function createFromTemplate(
     }
   }
 
-  res.status(200).json({
-    requestId,
-    signingMode,
-    signers: insertSigners.data.map((row) => ({ email: row.email, signUrl: `${appUrl}/sign/${row.access_token}` })),
-  });
+  const signerLinks = insertSigners.data.map((row) => ({ email: row.email, name: row.name as string | null, signUrl: `${appUrl}/sign/${row.access_token}` }));
+  await Promise.allSettled(
+    signerLinks.map((s) => sendSignerNotificationEmail(s.email, s.name, senderLabel, template.original_filename as string, s.signUrl)),
+  );
+
+  res.status(200).json({ requestId, signingMode, signers: signerLinks });
 }
 
 /** Public — no account needed. Fetches what a signer's own signing page needs to render. */
@@ -580,6 +667,7 @@ export async function submitSignature(req: Request, res: Response): Promise<void
   const signer = signerData as SignerRow;
   const request = signerData.signature_requests as {
     id: string;
+    owner_id: string;
     status: "pending" | "completed" | "voided";
     signing_mode: SigningMode;
     storage_path: string;
@@ -692,6 +780,11 @@ export async function submitSignature(req: Request, res: Response): Promise<void
 
       const completedSignedUrl = await supabase.storage.from(BUCKET).createSignedUrl(signedPath, 300);
       completedDocumentUrl = completedSignedUrl.data?.signedUrl ?? null;
+
+      const { data: ownerData } = await supabase.auth.admin.getUserById(request.owner_id);
+      if (ownerData?.user?.email) {
+        await sendCompletionEmail(ownerData.user.email, request.original_filename, completedDocumentUrl);
+      }
     }
   }
 
@@ -714,14 +807,14 @@ export async function declineSignature(req: Request, res: Response): Promise<voi
 
   const { data: signerData, error } = await supabase
     .from("signature_request_signers")
-    .select("*, signature_requests(status)")
+    .select("*, signature_requests(status, owner_id, original_filename)")
     .eq("access_token", token)
     .single();
   if (error || !signerData) {
     res.status(404).json({ error: "This signing link isn't valid." });
     return;
   }
-  const request = signerData.signature_requests as { status: string };
+  const request = signerData.signature_requests as { status: string; owner_id: string; original_filename: string };
   if (request.status === "voided") {
     res.status(410).json({ error: "This document is no longer available for signing." });
     return;
@@ -743,6 +836,12 @@ export async function declineSignature(req: Request, res: Response): Promise<voi
     res.status(500).json({ error: `Couldn't record the decline: ${update.error.message}` });
     return;
   }
+
+  const { data: ownerData } = await supabase.auth.admin.getUserById(request.owner_id);
+  if (ownerData?.user?.email) {
+    await sendDeclineEmail(ownerData.user.email, request.original_filename, signerData.email as string, reason.trim());
+  }
+
   res.status(200).json({ status: "declined" });
 }
 
