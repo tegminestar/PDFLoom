@@ -193,6 +193,16 @@ export function WelcomeScreen() {
 
   return (
     <div className="relative flex h-full w-full overflow-y-auto bg-bg p-8">
+      {/* Masks scrolled content behind the floating AccountButton cluster
+          (fixed right-3 top-16, see AccountButton.tsx) instead of letting
+          template cards visibly collide with it on mobile, where this is
+          the one full-bleed scrollable page without its own sticky header
+          to naturally reserve that band. Desktop's centered layout doesn't
+          hit this — hidden there so it never adds an unnecessary seam. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 z-[140] h-28 bg-gradient-to-b from-bg via-bg/90 to-transparent md:hidden"
+      />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 overflow-hidden"
