@@ -1,4 +1,4 @@
-import { IconButton, useTheme } from "@pdfloom/ui";
+import { IconButton, Skeleton, useTheme } from "@pdfloom/ui";
 import { LogIn, Moon, Search, Sparkles, Sun, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
@@ -24,6 +24,7 @@ export function AccountButton() {
   const initialize = useAuthStore((s) => s.initialize);
   const user = useAuthStore((s) => s.user);
   const isPro = useAuthStore((s) => s.isPro);
+  const authLoading = useAuthStore((s) => s.loading);
   const meta = useLoomStore((s) => s.meta);
   const setCommandPaletteOpen = useLoomStore((s) => s.setCommandPaletteOpen);
   const [open, setOpen] = useState(false);
@@ -63,7 +64,17 @@ export function AccountButton() {
           />
         )}
         {isAuthConfigured &&
-          (user ? (
+          (authLoading ? (
+            // Never flash "Sign in" while the initial session check is
+            // still in flight (getSession() + an isPro lookup, both
+            // network round-trips) — a user who really is signed in but
+            // acts fast enough to reach "Send for signature" before this
+            // resolves would otherwise see a false signed-out state and,
+            // worse, have the send itself rejected with no visible reason
+            // why. A neutral placeholder the same size as the real button
+            // beats a misleading answer.
+            <Skeleton className="h-9 w-9 rounded-(--radius-md)" />
+          ) : user ? (
             // Same "blends into a mostly-dark-neutral UI" problem the
             // signed-out button had — IconButton's default/ai variants
             // carry no resting background at all, only on hover, which is

@@ -1,8 +1,10 @@
-import { Button, Dialog, IconButton, cn, toast } from "@pdfloom/ui";
+import { Badge, Button, Dialog, IconButton, cn, toast } from "@pdfloom/ui";
 import { Check, ChevronLeft, ChevronRight, Copy, FileSignature, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuthStore } from "../../app/auth";
 import { apiUrl, supabase } from "../../app/supabase";
 import { useLoomStore } from "../../app/store";
+import { AccountDialog } from "../account/AccountDialog";
 import { BulkAddSignersInput, type BulkSignerEntry } from "./BulkAddSignersInput";
 import { FieldPlacementOverlay, SIGNER_COLORS, type PlacedField, type PlacementFieldType } from "./FieldPlacementOverlay";
 
@@ -72,6 +74,9 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
 
   const [isSending, setIsSending] = useState(false);
   const [links, setLinks] = useState<CreatedLink[] | null>(null);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+  const authUser = useAuthStore((s) => s.user);
+  const authLoading = useAuthStore((s) => s.loading);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [scale, setScale] = useState(1);
@@ -188,7 +193,12 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) {
+        // Opens the sign-in dialog right here instead of a dead-end toast —
+        // everything already filled in (signers, fields, review) stays
+        // exactly as-is underneath, so signing in and clicking Send again
+        // is the whole recovery path, not "start over."
         toast.error("Sign in first", "Requesting signatures needs an account, so the request can be tied back to you.");
+        setAccountDialogOpen(true);
         return;
       }
 
@@ -309,10 +319,11 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={handleClose}
-      title={links ? "Request sent" : stepTitle[step]}
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={handleClose}
+        title={links ? "Request sent" : stepTitle[step]}
       description={
         links
           ? "Uploads this document so the people you list can sign it — the one exception to PDFLoom staying fully on-device."
@@ -561,6 +572,20 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
         </div>
       ) : step === "review" ? (
         <div className="flex flex-col gap-3">
+          {!authLoading &&
+            (authUser ? (
+              <div className="flex items-center gap-2 text-xs text-text-faint">
+                <Badge tone="success">Signed in</Badge>
+                Sending as {authUser.email}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-3 rounded-(--radius-md) border border-warning/40 bg-warning-muted px-3 py-2">
+                <span className="text-xs text-warning">You'll need to sign in before this can be sent.</span>
+                <Button variant="secondary" size="sm" onClick={() => setAccountDialogOpen(true)}>
+                  Sign in
+                </Button>
+              </div>
+            ))}
           <div className="flex flex-col gap-1">
             <label className="px-1 text-xs font-medium text-text-muted" htmlFor="sender-name-input">
               Your name (shown to signers)
@@ -610,6 +635,8 @@ export function RequestSignaturesDialog({ open, onOpenChange }: { open: boolean;
           )}
         </div>
       ) : null}
-    </Dialog>
+      </Dialog>
+      <AccountDialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen} />
+    </>
   );
 }
