@@ -83,6 +83,7 @@ import {
   StickyNote,
   Store,
   Syringe,
+  Tag,
   TestTube,
   Trash2,
   TrendingUp,
@@ -98,6 +99,7 @@ import {
   Wallet,
   WifiOff,
   Wrench,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState, type DragEvent } from "react";
@@ -356,6 +358,9 @@ function formatRelativeTime(timestampMs: number): string {
 export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () => void } = {}) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [recents, setRecents] = useState<RecentFileEntry[]>([]);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [addingTagFor, setAddingTagFor] = useState<string | null>(null);
+  const [newTagText, setNewTagText] = useState("");
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
   const [createFromTextOpen, setCreateFromTextOpen] = useState(false);
   const [templateSearch, setTemplateSearch] = useState("");
@@ -439,6 +444,20 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
     setRecents((prev) => prev.map((r) => (r.id === entry.id ? { ...r, pinned: nextPinned } : r)));
   };
 
+  const handleAddTag = async (entry: RecentFileEntry, rawTag: string) => {
+    const tag = rawTag.trim();
+    if (!tag || entry.tags?.includes(tag)) return;
+    const tags = [...(entry.tags ?? []), tag];
+    await recentsStore.setTags(entry.id, tags);
+    setRecents((prev) => prev.map((r) => (r.id === entry.id ? { ...r, tags } : r)));
+  };
+
+  const handleRemoveTag = async (entry: RecentFileEntry, tag: string) => {
+    const tags = (entry.tags ?? []).filter((t) => t !== tag);
+    await recentsStore.setTags(entry.id, tags);
+    setRecents((prev) => prev.map((r) => (r.id === entry.id ? { ...r, tags } : r)));
+  };
+
   const handleOpenRecent = async (entry: RecentFileEntry) => {
     const handle = await recentsStore.getHandle(entry.id);
     if (!handle) {
@@ -468,6 +487,8 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
   // lastOpenedAt from the store, so a stable sort here only needs to move
   // pinned rows to the front without disturbing either group's own order.
   const sortedRecents = [...recents].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+  const allTags = Array.from(new Set(recents.flatMap((r) => r.tags ?? []))).sort();
+  const visibleRecents = tagFilter ? sortedRecents.filter((r) => r.tags?.includes(tagFilter)) : sortedRecents;
 
   const featuredTemplates = TEMPLATES.filter((t) => t.featured);
   const otherTemplates = TEMPLATES.filter((t) => !t.featured);
@@ -694,61 +715,126 @@ export function WelcomeScreen({ onOpenMultiDocChat }: { onOpenMultiDocChat?: () 
               Files you open will show up here. Pin one to keep it around — pinned files stay listed even once the rest scroll off the recent list.
             </p>
           ) : (
-            <table className="w-full table-fixed text-left text-sm">
-              <thead>
-                <tr className="text-xs text-text-faint">
-                  <th className="w-7 pb-2" />
-                  <th className="w-auto pb-2 pr-2 font-medium">Name</th>
-                  <th className="w-20 pb-2 pr-2 text-right font-medium">Opened</th>
-                  <th className="w-9 pb-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {sortedRecents.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    onClick={() => void handleOpenRecent(entry)}
-                    className={cn("cursor-pointer border-t border-border hover:bg-surface-hover", entry.pinned && "bg-primary-muted/40")}
-                  >
-                    <td className="py-2 pl-0.5 align-top">
-                      <IconButton
-                        icon={entry.pinned ? <Pin className="fill-current" /> : <Pin />}
-                        label={entry.pinned ? `Unpin ${entry.name}` : `Pin ${entry.name}`}
-                        size="sm"
-                        variant={entry.pinned ? "active" : "default"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleTogglePin(entry);
-                        }}
-                      />
-                    </td>
-                    <td className="py-2 pr-2">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 shrink-0 text-text-faint" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-text">{entry.name}</span>
-                          <span className="block text-xs text-text-faint">
-                            {entry.pageCount} {entry.pageCount === 1 ? "page" : "pages"} · {formatBytes(entry.sizeBytes)}
+            <>
+              {allTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 px-1 pb-1">
+                  {allTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setTagFilter((prev) => (prev === tag ? null : tag))}
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-xs transition-colors",
+                        tagFilter === tag ? "border-primary bg-primary-muted text-primary" : "border-border text-text-faint hover:text-text",
+                      )}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {visibleRecents.length === 0 ? (
+                <p className="px-1 text-sm text-text-faint">No recent files tagged "{tagFilter}".</p>
+              ) : (
+                <table className="w-full table-fixed text-left text-sm">
+                  <thead>
+                    <tr className="text-xs text-text-faint">
+                      <th className="w-7 pb-2" />
+                      <th className="w-auto pb-2 pr-2 font-medium">Name</th>
+                      <th className="w-20 pb-2 pr-2 text-right font-medium">Opened</th>
+                      <th className="w-9 pb-2" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleRecents.map((entry) => (
+                      <tr
+                        key={entry.id}
+                        onClick={() => void handleOpenRecent(entry)}
+                        className={cn("cursor-pointer border-t border-border hover:bg-surface-hover", entry.pinned && "bg-primary-muted/40")}
+                      >
+                        <td className="py-2 pl-0.5 align-top">
+                          <IconButton
+                            icon={entry.pinned ? <Pin className="fill-current" /> : <Pin />}
+                            label={entry.pinned ? `Unpin ${entry.name}` : `Pin ${entry.name}`}
+                            size="sm"
+                            variant={entry.pinned ? "active" : "default"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleTogglePin(entry);
+                            }}
+                          />
+                        </td>
+                        <td className="py-2 pr-2">
+                          <span className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 shrink-0 text-text-faint" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-text">{entry.name}</span>
+                              <span className="block text-xs text-text-faint">
+                                {entry.pageCount} {entry.pageCount === 1 ? "page" : "pages"} · {formatBytes(entry.sizeBytes)}
+                              </span>
+                              <span className="mt-1 flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                {(entry.tags ?? []).map((tag) => (
+                                  <span key={tag} className="flex items-center gap-0.5 rounded-full bg-surface px-1.5 py-0.5 text-[10px] text-text-faint">
+                                    {tag}
+                                    <button type="button" onClick={() => void handleRemoveTag(entry, tag)} aria-label={`Remove tag ${tag}`} className="hover:text-text">
+                                      <X className="h-2.5 w-2.5" />
+                                    </button>
+                                  </span>
+                                ))}
+                                {addingTagFor === entry.id ? (
+                                  <input
+                                    autoFocus
+                                    value={newTagText}
+                                    onChange={(e) => setNewTagText(e.target.value)}
+                                    onBlur={() => {
+                                      setAddingTagFor(null);
+                                      setNewTagText("");
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        void handleAddTag(entry, newTagText);
+                                        setNewTagText("");
+                                        setAddingTagFor(null);
+                                      } else if (e.key === "Escape") {
+                                        setAddingTagFor(null);
+                                        setNewTagText("");
+                                      }
+                                    }}
+                                    placeholder="tag…"
+                                    className="h-4 w-16 rounded-full border border-border bg-bg-elevated px-1.5 text-[10px] outline-none focus-visible:ring-1 focus-visible:ring-(--color-focus-ring)"
+                                  />
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setAddingTagFor(entry.id)}
+                                    aria-label={`Add a tag to ${entry.name}`}
+                                    className="flex items-center gap-0.5 rounded-full text-[10px] text-text-faint hover:text-text"
+                                  >
+                                    <Tag className="h-2.5 w-2.5" /> tag
+                                  </button>
+                                )}
+                              </span>
+                            </span>
                           </span>
-                        </span>
-                      </span>
-                    </td>
-                    <td className="py-2 pr-2 text-right align-top text-xs text-text-faint">{formatRelativeTime(entry.lastOpenedAt)}</td>
-                    <td className="py-2 text-right align-top">
-                      <IconButton
-                        icon={<Trash2 />}
-                        label="Remove from recents"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleRemoveRecent(entry.id);
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="py-2 pr-2 text-right align-top text-xs text-text-faint">{formatRelativeTime(entry.lastOpenedAt)}</td>
+                        <td className="py-2 text-right align-top">
+                          <IconButton
+                            icon={<Trash2 />}
+                            label="Remove from recents"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void handleRemoveRecent(entry.id);
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </>
           )}
         </div>
       </div>
