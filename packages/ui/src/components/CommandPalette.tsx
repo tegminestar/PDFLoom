@@ -21,15 +21,28 @@ export interface CommandPaletteGroup {
 export interface CommandPaletteProps {
   groups: CommandPaletteGroup[];
   placeholder?: string;
+  /** Omit both to let the palette own its open state (Cmd/Ctrl+K only).
+   * Pass both to also drive it from a visible trigger elsewhere in the
+   * app shell — the Cmd/Ctrl+K shortcut keeps working either way. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
- * Self-contained Cmd/Ctrl+K command palette — mount once in the app shell.
- * It owns its own open state and global shortcut listener so callers just
- * hand it the current command list.
+ * Cmd/Ctrl+K command palette — mount once in the app shell. Uncontrolled
+ * by default (owns its own open state); pass `open`/`onOpenChange` to also
+ * open it from a visible button, since the shortcut alone is otherwise
+ * undiscoverable to anyone who doesn't already know it exists.
  */
-export function CommandPalette({ groups, placeholder = "Type a command or search…" }: CommandPaletteProps) {
-  const [open, setOpen] = useState(false);
+export function CommandPalette({ groups, placeholder = "Type a command or search…", open: openProp, onOpenChange }: CommandPaletteProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const setOpen = (next: boolean | ((prev: boolean) => boolean)) => {
+    const resolved = typeof next === "function" ? (next as (prev: boolean) => boolean)(open) : next;
+    if (isControlled) onOpenChange?.(resolved);
+    else setInternalOpen(resolved);
+  };
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -41,7 +54,11 @@ export function CommandPalette({ groups, placeholder = "Type a command or search
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, []);
+    // Re-subscribes on every open/isControlled change so the handler always
+    // closes over the latest `open` — cheap (one add/removeEventListener),
+    // avoids a stale-closure toggle bug. setOpen is recreated each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isControlled]);
 
   const runAndClose = (fn: () => void) => {
     setOpen(false);

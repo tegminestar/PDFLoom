@@ -106,31 +106,33 @@ export function Toolbar() {
           </>
         )}
         <Separator orientation="vertical" className="mx-1 h-6" />
-        <IconButton
-          icon={<LayoutGrid />}
-          label="Pages"
-          variant={activePanel === "thumbnails" ? "active" : "default"}
-          onClick={() => toggleActivePanel("thumbnails")}
-        />
-        <IconButton
-          icon={<BookMarked />}
-          label="Bookmarks"
-          variant={activePanel === "outline" ? "active" : "default"}
-          onClick={() => toggleActivePanel("outline")}
-        />
-        <IconButton
-          icon={<Search />}
-          label="Search"
-          variant={activePanel === "search" ? "active" : "default"}
-          onClick={() => toggleActivePanel("search")}
-          shortcut="Ctrl F"
-        />
-        <IconButton
-          icon={<Paperclip />}
-          label="Attachments"
-          variant={activePanel === "attachments" ? "active" : "default"}
-          onClick={() => toggleActivePanel("attachments")}
-        />
+        <TopBarSection grouped>
+          <IconButton
+            icon={<LayoutGrid />}
+            label="Pages"
+            variant={activePanel === "thumbnails" ? "active" : "default"}
+            onClick={() => toggleActivePanel("thumbnails")}
+          />
+          <IconButton
+            icon={<BookMarked />}
+            label="Bookmarks"
+            variant={activePanel === "outline" ? "active" : "default"}
+            onClick={() => toggleActivePanel("outline")}
+          />
+          <IconButton
+            icon={<Search />}
+            label="Search"
+            variant={activePanel === "search" ? "active" : "default"}
+            onClick={() => toggleActivePanel("search")}
+            shortcut="Ctrl F"
+          />
+          <IconButton
+            icon={<Paperclip />}
+            label="Attachments"
+            variant={activePanel === "attachments" ? "active" : "default"}
+            onClick={() => toggleActivePanel("attachments")}
+          />
+        </TopBarSection>
       </TopBarSection>
 
       <TopBarSection align="center">

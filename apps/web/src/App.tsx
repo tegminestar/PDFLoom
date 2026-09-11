@@ -104,6 +104,8 @@ export function App() {
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
   const toggleActivePanel = useLoomStore((s) => s.toggleActivePanel);
+  const commandPaletteOpen = useLoomStore((s) => s.commandPaletteOpen);
+  const setCommandPaletteOpen = useLoomStore((s) => s.setCommandPaletteOpen);
   const zoomIn = useLoomStore((s) => s.zoomIn);
   const zoomOut = useLoomStore((s) => s.zoomOut);
   const rotateView = useLoomStore((s) => s.rotateView);
@@ -678,7 +680,7 @@ export function App() {
           </div>
         </div>
       </main>
-      <CommandPalette groups={commandGroups} />
+      <CommandPalette groups={commandGroups} open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
       <SelectionMarkupToolbar />
       <ExplainSelectionToolbar />
       <VoiceToFillButton />

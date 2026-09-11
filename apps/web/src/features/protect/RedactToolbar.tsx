@@ -2,6 +2,7 @@ import { IconButton, TopBar, TopBarSection, Button as ToolbarButton, Separator, 
 import { Redo2, Sparkles, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
 import { SmartRedactDialog } from "./SmartRedactDialog";
@@ -51,7 +52,7 @@ export function RedactToolbar() {
   return (
     <TopBar>
       <TopBarSection>
-        <span className="mr-2 text-sm font-semibold text-text">Redact</span>
+        <ToolbarModeLabel mode="Redact" />
         <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
         <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
@@ -78,12 +79,10 @@ export function RedactToolbar() {
             Clear
           </ToolbarButton>
         )}
-        <ToolbarButton variant="secondary" size="sm" onClick={() => setRedactOpen(false)} disabled={isApplying}>
-          Cancel
-        </ToolbarButton>
         <ToolbarButton variant="primary" size="sm" disabled={redactBoxes.length === 0 || isApplying} onClick={() => void handleApply()}>
           {isApplying ? "Applying…" : "Apply redactions"}
         </ToolbarButton>
+        <ToolbarExitButton mode="redact" onExit={() => setRedactOpen(false)} disabled={isApplying} />
       </TopBarSection>
       <SmartRedactDialog open={smartDetectOpen} onOpenChange={setSmartDetectOpen} />
     </TopBar>

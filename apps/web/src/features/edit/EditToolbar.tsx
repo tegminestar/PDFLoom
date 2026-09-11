@@ -1,6 +1,7 @@
 import { IconButton, Separator, TopBar, TopBarSection } from "@pdfloom/ui";
-import { Image as ImageIcon, Redo2, Type, Undo2, X } from "lucide-react";
+import { Image as ImageIcon, Redo2, Type, Undo2 } from "lucide-react";
 import { useLoomStore, type EditTool } from "../../app/store";
+import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
 
@@ -23,7 +24,7 @@ export function EditToolbar() {
   return (
     <TopBar>
       <TopBarSection>
-        <span className="mr-2 text-sm font-semibold text-text">Edit</span>
+        <ToolbarModeLabel mode="Edit" />
         <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
         <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
@@ -44,7 +45,7 @@ export function EditToolbar() {
       </TopBarSection>
 
       <TopBarSection align="end">
-        <IconButton icon={<X />} label="Exit edit mode" onClick={() => setEditOpen(false)} showTooltip={false} />
+        <ToolbarExitButton mode="edit" onExit={() => setEditOpen(false)} />
       </TopBarSection>
     </TopBar>
   );

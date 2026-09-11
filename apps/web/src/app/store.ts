@@ -115,6 +115,7 @@ interface LoomState {
   activePanel: PanelId;
   outline: OutlineNode[];
   mainView: MainView;
+  commandPaletteOpen: boolean;
 
   annotateOpen: boolean;
   annotateTool: AnnotateTool;
@@ -233,6 +234,7 @@ interface LoomState {
 
   setActivePanel: (panel: PanelId) => void;
   toggleActivePanel: (panel: Exclude<PanelId, null>) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
 
   setSearchQuery: (query: string) => void;
   runSearch: (query: string) => Promise<void>;
@@ -368,6 +370,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   viewRotation: 0,
 
   activePanel: null,
+  commandPaletteOpen: false,
   outline: [],
   mainView: "read",
 
@@ -851,6 +854,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
 
   setActivePanel: (panel) => set({ activePanel: panel }),
   toggleActivePanel: (panel) => set((s) => ({ activePanel: s.activePanel === panel ? null : panel })),
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 

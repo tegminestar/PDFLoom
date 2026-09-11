@@ -2,6 +2,7 @@ import { IconButton, Separator, TopBar, TopBarSection, Button as ToolbarButton, 
 import { CheckSquare, ChevronDown, Circle, Redo2, Type, Undo2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useLoomStore, type FieldDesignTool } from "../../app/store";
+import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
 import { getMissingRequiredFields } from "./validation";
@@ -61,7 +62,7 @@ export function FormsToolbar() {
   return (
     <TopBar>
       <TopBarSection>
-        <span className="mr-2 text-sm font-semibold text-text">Forms</span>
+        <ToolbarModeLabel mode="Forms" />
         <div className="flex items-center rounded-(--radius-sm) border border-border-strong p-0.5">
           <button
             type="button"
@@ -115,15 +116,13 @@ export function FormsToolbar() {
       </TopBarSection>
 
       <TopBarSection align="end">
-        <ToolbarButton variant="secondary" size="sm" onClick={() => void setFormFillOpen(false)}>
-          Cancel
-        </ToolbarButton>
         <ToolbarButton variant="secondary" size="sm" disabled={isSavingForm} onClick={() => void handleSave(false)}>
           {isSavingForm ? "Saving…" : "Save"}
         </ToolbarButton>
         <ToolbarButton variant="primary" size="sm" disabled={isSavingForm} onClick={() => void handleSave(true)}>
           {isSavingForm ? "Saving…" : "Save & flatten"}
         </ToolbarButton>
+        <ToolbarExitButton mode="forms" onExit={() => setFormFillOpen(false)} disabled={isSavingForm} />
       </TopBarSection>
     </TopBar>
   );

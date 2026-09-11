@@ -1,7 +1,8 @@
 import { Button as ToolbarButton, IconButton, Separator, TopBar, TopBarSection } from "@pdfloom/ui";
-import { CalendarDays, ListChecks, PenLine, Redo2, Send, Stamp, Type, Undo2, X } from "lucide-react";
+import { CalendarDays, ListChecks, PenLine, Redo2, Send, Stamp, Type, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useLoomStore } from "../../app/store";
+import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
 import { RequestSignaturesDialog } from "./RequestSignaturesDialog";
@@ -36,7 +37,7 @@ export function SignToolbar() {
   return (
     <TopBar>
       <TopBarSection>
-        <span className="mr-2 text-sm font-semibold text-text">Sign</span>
+        <ToolbarModeLabel mode="Sign" />
         <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
         <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
@@ -106,8 +107,7 @@ export function SignToolbar() {
           label="View sent signature requests"
           onClick={() => window.open("/signatures", "_blank", "noopener")}
         />
-        <Separator orientation="vertical" className="mx-1.5 h-6" />
-        <IconButton icon={<X />} label="Exit sign mode" onClick={() => setSignOpen(false)} showTooltip={false} />
+        <ToolbarExitButton mode="sign" onExit={() => setSignOpen(false)} />
       </TopBarSection>
 
       {creatorSlot && (

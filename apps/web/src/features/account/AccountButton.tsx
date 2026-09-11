@@ -1,5 +1,5 @@
 import { IconButton, useTheme } from "@pdfloom/ui";
-import { LogIn, Moon, Sparkles, Sun, User } from "lucide-react";
+import { LogIn, Moon, Search, Sparkles, Sun, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLoomStore } from "../../app/store";
 import { isAuthConfigured } from "../../app/supabase";
@@ -25,6 +25,7 @@ export function AccountButton() {
   const user = useAuthStore((s) => s.user);
   const isPro = useAuthStore((s) => s.isPro);
   const meta = useLoomStore((s) => s.meta);
+  const setCommandPaletteOpen = useLoomStore((s) => s.setCommandPaletteOpen);
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
@@ -42,6 +43,17 @@ export function AccountButton() {
           toolbar row instead avoids the collision in every mode, not just
           the welcome screen where the conflict wasn't obvious. */}
       <div className="fixed right-3 top-16 z-[150] flex items-center gap-2">
+        {/* The command palette (Cmd/Ctrl+K) reaches nearly every action in
+            the app but had no visible entry point anywhere — shortcut-only
+            discoverability is invisible to anyone who doesn't already know
+            it exists. This is the one always-rendered spot to put it. */}
+        <IconButton
+          icon={<Search />}
+          label="Search commands"
+          shortcut="Ctrl K"
+          onClick={() => setCommandPaletteOpen(true)}
+          className="border border-border-strong bg-surface shadow-(--shadow-floating)"
+        />
         {!meta && (
           <IconButton
             icon={theme === "dark" ? <Sun /> : <Moon />}

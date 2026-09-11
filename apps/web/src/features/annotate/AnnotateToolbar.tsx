@@ -12,11 +12,11 @@ import {
   Type,
   Underline,
   Undo2,
-  X,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ANNOTATE_COLOR_PRESETS, type AnnotateTool } from "../../app/store";
 import { useLoomStore } from "../../app/store";
+import { ToolbarExitButton, ToolbarModeLabel } from "../../components/ToolbarChrome";
 import { PageNumberField } from "../viewer/PageNumberField";
 import { ZoomControls } from "../viewer/ZoomControls";
 
@@ -59,7 +59,7 @@ export function AnnotateToolbar() {
   return (
     <TopBar>
       <TopBarSection>
-        <span className="mr-2 text-sm font-semibold text-text">Annotate</span>
+        <ToolbarModeLabel mode="Annotate" />
         <IconButton icon={<Undo2 />} label="Undo" onClick={() => void undo()} disabled={!canUndo} shortcut="Ctrl Z" />
         <IconButton icon={<Redo2 />} label="Redo" onClick={() => void redo()} disabled={!canRedo} shortcut="Ctrl Shift Z" />
         <Separator orientation="vertical" className="mx-1.5 h-6" />
@@ -130,10 +130,9 @@ export function AnnotateToolbar() {
           <>
             <Switch checked={smartShapes} onCheckedChange={setSmartShapes} label="Snap freehand drawings that look like a rectangle, circle, or line into a clean shape" />
             <span className="text-xs text-text-muted">Smart shapes</span>
-            <Separator orientation="vertical" className="mx-1.5 h-6" />
           </>
         )}
-        <IconButton icon={<X />} label="Exit annotate mode" onClick={() => setAnnotateOpen(false)} showTooltip={false} />
+        <ToolbarExitButton mode="annotate" onExit={() => setAnnotateOpen(false)} />
       </TopBarSection>
     </TopBar>
   );
