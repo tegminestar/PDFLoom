@@ -22,6 +22,7 @@
     "@pdfloom/ui": "workspace:*",
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.3.3",
+    "@tauri-apps/api": "^2",
     "docx": "^9.7.1",
     "exceljs": "^4.4.0",
     "immer": "^11.1.18",

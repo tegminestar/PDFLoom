@@ -2,6 +2,7 @@ import { ThemeProvider, ToastProvider, TooltipProvider } from "@pdfloom/ui";
 import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { isDesktopShell } from "./app/desktopBridge";
 import { App } from "./App";
 import { LandingPage } from "./pages/LandingPage";
 import { SignerPage } from "./pages/SignerPage";
@@ -53,7 +54,11 @@ createRoot(rootElement).render(
         <ToastProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              {/* The installed desktop app has no use for the marketing
+                  funnel — a user who already has PDFLoom running from an
+                  icon or a file association wants the editor, not a page
+                  whose own call to action is "download the app." */}
+              <Route path="/" element={isDesktopShell ? <Navigate to="/app" replace /> : <LandingPage />} />
               <Route path="/app" element={<App />} />
               <Route path="/trust" element={<TrustPage />} />
               <Route

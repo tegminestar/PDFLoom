@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
+import { initDesktopFileOpen } from "./app/desktopBridge";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { FeedbackDialog } from "./features/feedback/FeedbackDialog";
@@ -106,6 +107,8 @@ export function App() {
   const document_ = useLoomStore((s) => s.document);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
   const openViaPicker = useLoomStore((s) => s.openViaPicker);
+  const storage = useLoomStore((s) => s.storage);
+  const openOpenedFile = useLoomStore((s) => s.openOpenedFile);
   const toggleActivePanel = useLoomStore((s) => s.toggleActivePanel);
   const commandPaletteOpen = useLoomStore((s) => s.commandPaletteOpen);
   const setCommandPaletteOpen = useLoomStore((s) => s.setCommandPaletteOpen);
@@ -178,6 +181,18 @@ export function App() {
     } else if (params.has("upgrade_canceled")) {
       window.history.replaceState({}, "", window.location.pathname);
     }
+  }, []);
+
+  // Desktop shell only (no-op, returns an empty unsubscribe, in the web
+  // build): picks up a file "Open With PDFLoom" or a file association
+  // launched us with — either at process start, or a later launch redirected
+  // into this already-running window — and opens it the same way a
+  // drag-and-drop onto the welcome screen would.
+  useEffect(() => {
+    return initDesktopFileOpen((file) => {
+      void storage.openFromFile(file).then(openOpenedFile);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Global keyboard shortcuts. These are the same actions advertised in the
