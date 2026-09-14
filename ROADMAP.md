@@ -36,8 +36,53 @@ scoped, or closed — this is the source of truth, not chat history.
   Free-text items in the original ~15-item category (lecture notes,
   research papers, course syllabi) stay deliberately skipped.
 
+- Desktop shell (Tauri): "Open With PDFLoom" / double-clicking a .pdf
+  previously did nothing — no file association was even declared, and the
+  app ignored argv entirely, always booting to the WelcomeScreen (or, on
+  `/`, the marketing landing page — also fixed, the desktop shell now
+  redirects `/` → `/app` since a marketing funnel makes no sense inside an
+  already-installed app). Windows/Linux: argv + `tauri-plugin-single-instance`
+  (a second launch redirects into the already-running window instead of
+  spawning a new one) — built, compiles clean, and the argv-extraction
+  logic itself was verified directly (a temporary diagnostic build
+  confirmed the right path is extracted from a real launch). macOS/iOS/
+  Android: the official `RunEvent::Opened` mechanism, added using the
+  same code path across all three.
+  **Not fully verified**: this sandboxed environment has no real
+  interactive display session, so the packaged app's actual on-screen
+  behavior (WebView2 content loading, the file actually opening) could
+  not be confirmed end-to-end here — only the Rust-side logic and the
+  unaffected web build were verifiable. Needs a real run on an actual
+  desktop before being called done. **Known incomplete**: Android's
+  `content://` URIs (common when a file is opened from another app or a
+  file manager, not always a plain file path) can't be read by the
+  current plain-`std::fs::read` command — would need `tauri-plugin-fs`'s
+  content-resolver support, not added since it's unverifiable without a
+  real Android device/emulator. iOS/Android in general were never built
+  or run — no toolchain available in this environment.
+- Also found while investigating: an *already-installed* desktop build
+  showing "refused to connect, localhost" — root cause is
+  `apps/web/src/app/supabase.ts`'s `apiUrl` falling back to
+  `http://localhost:8080` when `VITE_API_URL` isn't baked in at build
+  time. `release-desktop.yml` already sets that env var correctly for
+  the whole build job, so a *fresh* release should not have this problem
+  — the installed copy showing it is almost certainly older than that
+  fix, or the specific one used to build the desktop app. Confirm on the
+  next release rather than assuming this is closed.
+
 ## Open — in progress or queued
 
+- **Verify the desktop file-association fix on a real machine** (see
+  above) — Windows especially, since that's the platform actually
+  reported broken. Trigger `release-desktop.yml` for a fresh build once
+  ready (an external, visible action — needs explicit go-ahead, not
+  something to trigger automatically).
+- **Android/iOS file-association support** — plumbing added per Tauri's
+  official mobile guide, but never built, run, or tested on either
+  platform (no toolchain here). Needs a session with the right mobile
+  build tools, plus `tauri-plugin-fs` (or equivalent) for Android's
+  `content://` URI case specifically, before this can be considered done
+  for mobile.
 - **Outline/bookmark rename & delete of *pre-existing* bookmarks** — still
   blocked on a real constraint: pdf.js (read side) and pdf-lib (write side)
   are independent parsers with no shared node identity, so there's no safe
