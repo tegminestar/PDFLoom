@@ -23,3 +23,9 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
+
+# Desktop-only: lets "Open With PDFLoom" on a second file redirect into the
+# already-running instance instead of spawning a new window — mobile has no
+# such concept, and the plugin doesn't support those targets.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
