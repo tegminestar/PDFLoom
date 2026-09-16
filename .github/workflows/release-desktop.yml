@@ -2,9 +2,15 @@ name: Build Desktop Installers and Publish a GitHub Release
 
 # Manual only, on purpose — same standing rule as deploy-api.yml and
 # deploy-web.yml: a release is an explicit, asked-for action, never an
-# automatic side effect of pushing to master. The version becomes the git
-# tag (v<version>) and the release title, so re-running for a new version
-# doesn't require a separate commit bumping tauri.conf.json first.
+# automatic side effect of pushing to master. The version input becomes the
+# git tag (v<version>) and the release title — but tauri-action separately
+# reads the *actual bundle* version from src-tauri/tauri.conf.json (and
+# expects it to match src-tauri/Cargo.toml and package.json too), so this
+# input does NOT replace bumping those files first. Get that wrong and
+# tauri-action silently falls back to creating an "untagged-<hash>" release
+# instead of the one you asked for (discovered the hard way: this file used
+# to claim the opposite). The "Verify version consistency" step below fails
+# fast if they ever drift again.
 on:
   workflow_dispatch:
     inputs:
@@ -49,6 +55,28 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+
+      # Fails fast (before ~8+ minutes of Rust compilation) if the version
+      # bumped into tauri.conf.json/Cargo.toml/package.json doesn't match
+      # what was typed into the workflow_dispatch input — a mismatch here
+      # doesn't fail the build, it makes tauri-action silently create an
+      # "untagged-<hash>" release instead of tag v<version>, which is far
+      # more confusing to discover after three platforms finish building.
+      - name: Verify version consistency
+        shell: bash
+        run: |
+          input_version="${{ github.event.inputs.version }}"
+          tauri_conf_version=$(grep -m1 '"version"' apps/desktop/src-tauri/tauri.conf.json | sed -E 's/.*"version":\s*"([^"]*)".*/\1/')
+          package_json_version=$(grep -m1 '"version"' apps/desktop/package.json | sed -E 's/.*"version":\s*"([^"]*)".*/\1/')
+          cargo_toml_version=$(grep -m1 '^version' apps/desktop/src-tauri/Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "workflow input: $input_version"
+          echo "tauri.conf.json: $tauri_conf_version"
+          echo "package.json: $package_json_version"
+          echo "Cargo.toml: $cargo_toml_version"
+          if [ "$input_version" != "$tauri_conf_version" ] || [ "$input_version" != "$package_json_version" ] || [ "$input_version" != "$cargo_toml_version" ]; then
+            echo "::error::Version mismatch — bump apps/desktop/src-tauri/tauri.conf.json, apps/desktop/src-tauri/Cargo.toml, and apps/desktop/package.json to $input_version (and commit it) before re-running this workflow."
+            exit 1
+          fi
 
       # libayatana-appindicator3-dev is Tauri v2's actual requirement on
       # modern Ubuntu — NOT libappindicator3-dev (that's the Tauri
