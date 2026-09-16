@@ -66,8 +66,16 @@ jobs:
         shell: bash
         run: |
           input_version="${{ github.event.inputs.version }}"
-          tauri_conf_version=$(grep -m1 '"version"' apps/desktop/src-tauri/tauri.conf.json | sed -E 's/.*"version":\s*"([^"]*)".*/\1/')
-          package_json_version=$(grep -m1 '"version"' apps/desktop/package.json | sed -E 's/.*"version":\s*"([^"]*)".*/\1/')
+          # [[:space:]] not \s — macOS ships BSD sed, which (unlike GNU sed
+          # on Linux and Git Bash's sed on Windows runners) doesn't support
+          # \s as a whitespace shorthand; \s silently failed to match there,
+          # so the substitution left the whole line — "version": "0.1.2", —
+          # untouched, which then obviously never equal-compared to a bare
+          # version string, permanently failing this check on macOS
+          # specifically. Caught by actually running this workflow, since
+          # there's no macOS shell available to test it in beforehand.
+          tauri_conf_version=$(grep -m1 '"version"' apps/desktop/src-tauri/tauri.conf.json | sed -E 's/.*"version":[[:space:]]*"([^"]*)".*/\1/')
+          package_json_version=$(grep -m1 '"version"' apps/desktop/package.json | sed -E 's/.*"version":[[:space:]]*"([^"]*)".*/\1/')
           cargo_toml_version=$(grep -m1 '^version' apps/desktop/src-tauri/Cargo.toml | sed -E 's/version = "(.*)"/\1/')
           echo "workflow input: $input_version"
           echo "tauri.conf.json: $tauri_conf_version"
