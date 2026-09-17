@@ -75,6 +75,14 @@ pub fn run() {
         emit_open_file(app, path);
       }
     }));
+
+    // Update checks/downloads happen entirely from the frontend (see
+    // desktopBridge.ts) via these two plugins' JS bindings — installed
+    // builds have no auto-updater otherwise, so a shipped fix or feature
+    // never reaches an existing install without this.
+    builder = builder
+      .plugin(tauri_plugin_updater::Builder::new().build())
+      .plugin(tauri_plugin_process::init());
   }
 
   let initial_path = extract_pdf_path_from_argv(&std::env::args().collect::<Vec<_>>());

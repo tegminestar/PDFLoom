@@ -10,6 +10,8 @@ export interface ToastOptions {
   description?: string;
   tone?: ToastTone;
   durationMs?: number;
+  /** An actionable toast (e.g. "Restart to update") — renders a button that stays open until the viewer acts or dismisses it. */
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastRecord extends ToastOptions {
@@ -85,6 +87,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <RadixToast.Description className="mt-0.5 text-xs text-text-muted">
                 {record.description}
               </RadixToast.Description>
+            ) : null}
+            {record.action ? (
+              <RadixToast.Action asChild altText={record.action.label}>
+                <button
+                  type="button"
+                  onClick={record.action.onClick}
+                  className="mt-2 rounded-(--radius-sm) bg-primary px-2.5 py-1 text-xs font-semibold text-primary-text hover:opacity-90"
+                >
+                  {record.action.label}
+                </button>
+              </RadixToast.Action>
             ) : null}
           </div>
           <RadixToast.Close

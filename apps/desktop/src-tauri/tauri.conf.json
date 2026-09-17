@@ -22,12 +22,13 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.supabase.co https://pdfloom-api-tegminestar.azurewebsites.net; media-src 'self' blob:"
+      "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.supabase.co https://pdfloom-api-tegminestar.azurewebsites.net https://api.github.com https://github.com https://objects.githubusercontent.com; media-src 'self' blob:"
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -46,6 +47,14 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVCRTM3MTU3MEU2OEUzMDQKUldRRTQyZ09WM0hqVzg5Wk5PMFNxSVROVjJzSE1idDQ2ZFFuZUJDc202TGxJMnF5cFB2RURoeC8K",
+      "endpoints": [
+        "https://github.com/tegminestar/PDFLoom/releases/latest/download/latest.json"
+      ]
     }
   }
 }

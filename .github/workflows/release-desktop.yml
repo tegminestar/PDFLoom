@@ -119,11 +119,21 @@ jobs:
       # GitHub Release and uploads each platform's installers to it — left
       # as a draft deliberately so the actual artifacts can be checked
       # before anyone sees a public release.
+      # TAURI_SIGNING_PRIVATE_KEY signs the update bundle tauri-action
+      # produces (bundle.createUpdaterArtifacts in tauri.conf.json) — without
+      # it, `tauri build` silently skips generating .sig files and the
+      # updater plugin has nothing valid to verify against. Note the
+      # updater's endpoint (tauri.conf.json's plugins.updater.endpoints)
+      # points at .../releases/latest/download/latest.json, and GitHub's
+      # "latest" release excludes drafts — installed apps won't see this (or
+      # any) release as an update until it's published, not left as a draft.
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: v${{ github.event.inputs.version }}

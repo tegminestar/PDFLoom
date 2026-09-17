@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLoomStore, type CompareTarget } from "./app/store";
-import { initDesktopFileOpen } from "./app/desktopBridge";
+import { checkForDesktopUpdate, initDesktopFileOpen } from "./app/desktopBridge";
 import { PasswordPromptDialog } from "./components/PasswordPromptDialog";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { FeedbackDialog } from "./features/feedback/FeedbackDialog";
@@ -193,6 +193,31 @@ export function App() {
       void storage.openFromFile(file).then(openOpenedFile);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Desktop shell only: the packaged app has no other update mechanism, so
+  // an installed build stays on whatever version it shipped with forever
+  // unless this check finds something newer. Shown as a persistent,
+  // non-blocking toast (not a modal) — this must never interrupt someone
+  // mid-edit, and it stays open (not auto-dismissed) since "Restart to
+  // update" is meant to be acted on, not missed.
+  useEffect(() => {
+    void checkForDesktopUpdate().then((update) => {
+      if (!update) return;
+      toast.show({
+        title: `PDFLoom ${update.version} is available`,
+        description: "Downloads and installs, then restarts the app.",
+        tone: "info",
+        durationMs: Infinity,
+        action: {
+          label: "Restart to update",
+          onClick: () => {
+            toast.info("Downloading update…");
+            void update.install().catch(() => toast.error("Couldn't install the update", "Try again from a stable connection."));
+          },
+        },
+      });
+    });
   }, []);
 
   // Global keyboard shortcuts. These are the same actions advertised in the

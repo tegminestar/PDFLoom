@@ -26,6 +26,12 @@ tauri-plugin-log = "2"
 
 # Desktop-only: lets "Open With PDFLoom" on a second file redirect into the
 # already-running instance instead of spawning a new window — mobile has no
-# such concept, and the plugin doesn't support those targets.
+# such concept, and the plugin doesn't support those targets. The updater
+# plugin is desktop-only for the same reason installers are desktop-only
+# here (mobile ships through app stores, which handle their own updates);
+# tauri-plugin-process (specifically its restart command) relaunches the
+# app once an update has been downloaded and installed.
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"

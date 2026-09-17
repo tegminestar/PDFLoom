@@ -1,5 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check, type Update } from "@tauri-apps/plugin-updater";
 
 /** True only inside the Tauri desktop shell — false for every web deployment (including this exact same bundle served over HTTP). */
 export const isDesktopShell: boolean = isTauri();
@@ -53,4 +55,39 @@ export function initDesktopFileOpen(onFile: (file: File) => void): () => void {
     cancelled = true;
     unlisten?.();
   };
+}
+
+export interface DesktopUpdate {
+  version: string;
+  body?: string;
+  /** Downloads and installs the update, then relaunches the app into it — the only way an installed build ever picks up a fix, since there's no other update path. */
+  install: () => Promise<void>;
+}
+
+/**
+ * Checks GitHub's "latest release" for a newer version than the one running.
+ * A no-op (resolves null) outside the desktop shell, and on any failure —
+ * offline, GitHub unreachable, no *published* (non-draft) release yet —
+ * since a failed check should never interrupt someone just trying to edit a
+ * PDF. See release-desktop.yml: the endpoint only ever resolves once a
+ * release is published, not while it's still a draft.
+ */
+export async function checkForDesktopUpdate(): Promise<DesktopUpdate | null> {
+  if (!isDesktopShell) return null;
+  try {
+    const update = await check();
+    if (!update?.available) return null;
+    return {
+      version: update.version,
+      body: update.body,
+      install: () => installDesktopUpdate(update),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function installDesktopUpdate(update: Update): Promise<void> {
+  await update.downloadAndInstall();
+  await relaunch();
 }
