@@ -10,12 +10,14 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const isPro = useAuthStore((s) => s.isPro);
   const actionPending = useAuthStore((s) => s.actionPending);
   const signInWithEmail = useAuthStore((s) => s.signInWithEmail);
+  const verifyOtpCode = useAuthStore((s) => s.verifyOtpCode);
   const signOut = useAuthStore((s) => s.signOut);
   const startCheckout = useAuthStore((s) => s.startCheckout);
   const openBillingPortal = useAuthStore((s) => s.openBillingPortal);
 
   const [email, setEmail] = useState("");
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [plan, setPlan] = useState<"monthly" | "annual">("monthly");
 
@@ -44,11 +46,24 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
     };
   }, [user]);
 
-  const handleSignIn = async () => {
+  const handleSendCode = async () => {
     if (!email.trim()) return;
     const { error } = await signInWithEmail(email.trim());
-    if (error) toast.error("Couldn't send sign-in link", error);
-    else setMagicLinkSent(true);
+    if (error) toast.error("Couldn't send sign-in code", error);
+    else setCodeSent(true);
+  };
+
+  // Verifies the 6-digit code directly, rather than the same email's
+  // clickable link — the link's redirect target isn't a real https:// URL
+  // inside the desktop app's webview, and even if it were, clicking it from
+  // an email client opens the system's default *browser*, not this running
+  // app, so a successful click would sign in a browser tab while this
+  // window kept waiting forever. Typing the code back in here completes
+  // the whole exchange within the same window, on every platform.
+  const handleVerifyCode = async () => {
+    if (!code.trim()) return;
+    const { error } = await verifyOtpCode(email.trim(), code.trim());
+    if (error) toast.error("Couldn't verify that code", error);
   };
 
   const handleUpgrade = async () => {
@@ -77,10 +92,39 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       }
     >
       {!user ? (
-        magicLinkSent ? (
-          <p className="text-sm text-text-muted">
-            Check <span className="font-medium text-text">{email}</span> for a sign-in link.
-          </p>
+        codeSent ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-text-muted">
+              Enter the code sent to <span className="font-medium text-text">{email}</span>.
+            </p>
+            <label className="flex flex-col gap-1.5 text-sm text-text">
+              Code
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                autoFocus
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void handleVerifyCode()}
+                placeholder="123456"
+                className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-center text-lg tracking-[0.3em] text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
+              />
+            </label>
+            <Button variant="primary" size="sm" disabled={!code.trim() || actionPending} onClick={() => void handleVerifyCode()}>
+              {actionPending ? "Verifying…" : "Verify code"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => {
+                setCodeSent(false);
+                setCode("");
+              }}
+              className="text-xs text-text-faint underline decoration-dotted hover:text-text"
+            >
+              Use a different email
+            </button>
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1.5 text-sm text-text">
@@ -89,13 +133,13 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void handleSignIn()}
+                onKeyDown={(e) => e.key === "Enter" && void handleSendCode()}
                 placeholder="you@example.com"
                 className="h-9 rounded-(--radius-sm) border border-border-strong bg-surface px-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-(--color-focus-ring)"
               />
             </label>
-            <Button variant="primary" size="sm" disabled={!email.trim() || actionPending} onClick={() => void handleSignIn()}>
-              {actionPending ? "Sending…" : "Send sign-in link"}
+            <Button variant="primary" size="sm" disabled={!email.trim() || actionPending} onClick={() => void handleSendCode()}>
+              {actionPending ? "Sending…" : "Send sign-in code"}
             </Button>
           </div>
         )

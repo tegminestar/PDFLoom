@@ -18,6 +18,8 @@ interface AuthState {
   actionPending: boolean;
   initialize: () => void;
   signInWithEmail: (email: string) => Promise<{ error: string | null }>;
+  /** Verifies the 6-digit code the same signInWithOtp email carries — the direct-sign-in path, no email-client → browser round trip required (see verifyOtpCode's own note in AccountDialog.tsx for why that round trip doesn't work correctly in the desktop app). */
+  verifyOtpCode: (email: string, token: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   startCheckout: (plan: "monthly" | "annual") => Promise<{ error: string | null }>;
   openBillingPortal: () => Promise<{ error: string | null }>;
@@ -87,6 +89,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         email,
         options: { emailRedirectTo: window.location.origin + "/app" },
       });
+      return { error: error?.message ?? null };
+    } catch {
+      return { error: "Couldn't reach the sign-in service — check your connection and try again." };
+    } finally {
+      set({ actionPending: false });
+    }
+  },
+
+  verifyOtpCode: async (email, token) => {
+    if (!supabase) return { error: "Auth isn't configured" };
+    set({ actionPending: true });
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
       return { error: error?.message ?? null };
     } catch {
       return { error: "Couldn't reach the sign-in service — check your connection and try again." };
