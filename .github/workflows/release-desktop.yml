@@ -54,7 +54,7 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Fails fast (before ~8+ minutes of Rust compilation) if the version
       # bumped into tauri.conf.json/Cargo.toml/package.json doesn't match
