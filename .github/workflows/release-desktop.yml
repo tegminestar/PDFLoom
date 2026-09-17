@@ -127,7 +127,7 @@ jobs:
       # points at .../releases/latest/download/latest.json, and GitHub's
       # "latest" release excludes drafts — installed apps won't see this (or
       # any) release as an update until it's published, not left as a draft.
-      - uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
