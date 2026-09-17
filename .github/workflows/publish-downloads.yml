@@ -42,7 +42,7 @@ jobs:
           gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --dir ./release-assets --clobber
           ls -la ./release-assets
 
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
