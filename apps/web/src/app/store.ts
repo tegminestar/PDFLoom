@@ -768,17 +768,29 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     oldDoc.destroy();
     const outline = await newDoc.getOutline();
     const nextUndoStack = [...undoStack, oldBytes].slice(-MAX_HISTORY);
-    set((s) => ({
-      document: newDoc,
-      meta: { ...meta, pageCount: newDoc.pageCount },
-      outline,
-      currentPage: Math.min(s.currentPage, newDoc.pageCount),
-      pageNavigationNonce: s.pageNavigationNonce + 1,
-      undoStack: nextUndoStack,
-      redoStack: [],
-      canUndo: true,
-      canRedo: false,
-    }));
+    set((s) => {
+      const clampedPage = Math.min(s.currentPage, newDoc.pageCount);
+      return {
+        document: newDoc,
+        meta: { ...meta, pageCount: newDoc.pageCount },
+        outline,
+        currentPage: clampedPage,
+        // Bumping this forces the viewer to scroll-to-top-of-page (see
+        // Viewer.tsx's "explicit navigation" effect) — only actually needed
+        // when the page the user was on no longer exists post-mutation.
+        // Bumping it unconditionally (as this used to) fired on *every*
+        // annotate/edit/redact/form-save/sign commit in the app, snapping
+        // the view back to the top of the same page the user was already
+        // on and discarding their scroll position mid-page — e.g. right
+        // after placing a signature near the bottom of a tall page, with
+        // no way to see what was just placed without scrolling back down.
+        pageNavigationNonce: clampedPage !== s.currentPage ? s.pageNavigationNonce + 1 : s.pageNavigationNonce,
+        undoStack: nextUndoStack,
+        redoStack: [],
+        canUndo: true,
+        canRedo: false,
+      };
+    });
   },
 
   undo: async () => {
@@ -791,17 +803,22 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     oldDoc.destroy();
     const outline = await newDoc.getOutline();
     const nextRedoStack = [...redoStack, oldBytes].slice(-MAX_HISTORY);
-    set((s) => ({
-      document: newDoc,
-      meta: { ...meta, pageCount: newDoc.pageCount },
-      outline,
-      currentPage: Math.min(s.currentPage, newDoc.pageCount),
-      pageNavigationNonce: s.pageNavigationNonce + 1,
-      undoStack: nextUndoStack,
-      redoStack: nextRedoStack,
-      canUndo: nextUndoStack.length > 0,
-      canRedo: true,
-    }));
+    set((s) => {
+      const clampedPage = Math.min(s.currentPage, newDoc.pageCount);
+      return {
+        document: newDoc,
+        meta: { ...meta, pageCount: newDoc.pageCount },
+        outline,
+        currentPage: clampedPage,
+        // Same fix as applyPdfMutation: only force a re-scroll when the
+        // current page actually became invalid, not on every undo.
+        pageNavigationNonce: clampedPage !== s.currentPage ? s.pageNavigationNonce + 1 : s.pageNavigationNonce,
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        canUndo: nextUndoStack.length > 0,
+        canRedo: true,
+      };
+    });
   },
 
   redo: async () => {
@@ -814,17 +831,22 @@ export const useLoomStore = create<LoomState>((set, get) => ({
     oldDoc.destroy();
     const outline = await newDoc.getOutline();
     const nextUndoStack = [...undoStack, oldBytes].slice(-MAX_HISTORY);
-    set((s) => ({
-      document: newDoc,
-      meta: { ...meta, pageCount: newDoc.pageCount },
-      outline,
-      currentPage: Math.min(s.currentPage, newDoc.pageCount),
-      pageNavigationNonce: s.pageNavigationNonce + 1,
-      undoStack: nextUndoStack,
-      redoStack: nextRedoStack,
-      canUndo: true,
-      canRedo: nextRedoStack.length > 0,
-    }));
+    set((s) => {
+      const clampedPage = Math.min(s.currentPage, newDoc.pageCount);
+      return {
+        document: newDoc,
+        meta: { ...meta, pageCount: newDoc.pageCount },
+        outline,
+        currentPage: clampedPage,
+        // Same fix as applyPdfMutation: only force a re-scroll when the
+        // current page actually became invalid, not on every redo.
+        pageNavigationNonce: clampedPage !== s.currentPage ? s.pageNavigationNonce + 1 : s.pageNavigationNonce,
+        undoStack: nextUndoStack,
+        redoStack: nextRedoStack,
+        canUndo: true,
+        canRedo: nextRedoStack.length > 0,
+      };
+    });
   },
 
   setCurrentPage: (page) => {

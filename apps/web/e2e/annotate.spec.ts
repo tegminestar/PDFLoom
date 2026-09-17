@@ -249,6 +249,39 @@ test("sticky-note comment: a genuine popup-note icon, distinct from the Add text
   expect(canvasAfterEscapeDataUrl).toBe(canvasAfterCommitDataUrl);
 });
 
+test("committing an annotation preserves scroll position instead of jumping to the top of the page", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  // A PDF page at the default "fit width" zoom is routinely taller than the
+  // browser viewport (established by other tests in this file), so
+  // scrolling partway down still leaves the viewer mid-page rather than at
+  // a page boundary — exactly the case where a forced re-scroll-to-top is
+  // most disruptive (e.g. right after placing a signature or comment near
+  // the bottom of a tall page).
+  const scrollRegion = page.getByRole("region", { name: "Document pages" });
+  await scrollRegion.evaluate((el) => {
+    el.scrollTop = 250;
+  });
+  const scrollTopBefore = await scrollRegion.evaluate((el) => el.scrollTop);
+  expect(scrollTopBefore).toBeGreaterThan(0);
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await page.getByLabel("Add comment", { exact: true }).click();
+
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error("viewport size unavailable");
+  await page.mouse.click(viewport.width * 0.5, viewport.height * 0.5);
+  await page.locator("textarea").fill("Scroll position should not reset after this.");
+  await page.getByRole("button", { name: "Add comment" }).last().click();
+  await expect(page.getByText("Added comment").first()).toBeVisible({ timeout: 8000 });
+
+  // The commit must not have moved the viewport at all — not "close to",
+  // exactly unchanged, since nothing about this action should touch scroll.
+  const scrollTopAfter = await scrollRegion.evaluate((el) => el.scrollTop);
+  expect(scrollTopAfter).toBe(scrollTopBefore);
+});
+
 test("stamp: stays adjustable before placing, and Escape discards it without touching the document", async ({ page }) => {
   await page.goto("/app");
   await openPdf(page, "sample.pdf");
