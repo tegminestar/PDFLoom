@@ -558,6 +558,109 @@ const STAMP_PRESETS: Record<StampPreset, { label: string; color: RgbColor }> = {
   rejected: { label: "REJECTED", color: { r: 0.84, g: 0.24, b: 0.24 } },
 };
 
+// --- Sticky note (popup comment) --------------------------------------------
+
+export interface StickyNoteOptions {
+  color?: RgbColor;
+  opacity?: number;
+}
+
+/** A fixed icon footprint, matching every elite PDF reader's own Note/Comment tool — the icon isn't resizable, only its popup's text is. */
+const NOTE_ICON_SIZE = 20;
+
+/** Draws a small speech-bubble icon into the given BBox-local operators list — the vector equivalent of the icon glyph other readers ship as a bundled image, since pdf.js's own built-in note icon is only available to its separate interactive AnnotationLayer, not to a plain `page.render()` canvas. */
+function noteIconOperators(size: number, fill: RgbColor, ink: RgbColor): PDFOperator[] {
+  const r = size * 0.12;
+  const k = r * BEZIER_CIRCLE_KAPPA;
+  const bodyX = size * 0.1;
+  const bodyY = size * 0.32;
+  const bodyW = size * 0.8;
+  const bodyH = size * 0.58;
+  const ops: PDFOperator[] = [
+    setFillingRgbColor(fill.r, fill.g, fill.b),
+    setStrokingRgbColor(ink.r, ink.g, ink.b),
+    setLineWidth(Math.max(0.75, size * 0.05)),
+    // Rounded-rect body (same corner-bezier technique as addCircle).
+    moveTo(bodyX + r, bodyY),
+    lineTo(bodyX + bodyW - r, bodyY),
+    appendBezierCurve(bodyX + bodyW - r + k, bodyY, bodyX + bodyW, bodyY + r - k, bodyX + bodyW, bodyY + r),
+    lineTo(bodyX + bodyW, bodyY + bodyH - r),
+    appendBezierCurve(bodyX + bodyW, bodyY + bodyH - r + k, bodyX + bodyW - r + k, bodyY + bodyH, bodyX + bodyW - r, bodyY + bodyH),
+    lineTo(bodyX + r, bodyY + bodyH),
+    appendBezierCurve(bodyX + r - k, bodyY + bodyH, bodyX, bodyY + bodyH - r + k, bodyX, bodyY + bodyH - r),
+    lineTo(bodyX, bodyY + r),
+    appendBezierCurve(bodyX, bodyY + r - k, bodyX + r - k, bodyY, bodyX + r, bodyY),
+    closePath(),
+    // Tail, pointing down toward where the annotation's actual point is.
+    moveTo(bodyX + bodyW * 0.22, bodyY),
+    lineTo(bodyX + bodyW * 0.1, size * 0.05),
+    lineTo(bodyX + bodyW * 0.42, bodyY),
+    closePath(),
+    fillAndStroke(),
+  ];
+  // Three text-line strokes inside the bubble, so it reads as "a note" rather than a blank bubble.
+  const lineInset = bodyW * 0.16;
+  for (let i = 0; i < 3; i++) {
+    const ly = bodyY + bodyH * (0.3 + i * 0.24);
+    ops.push(setLineWidth(Math.max(0.6, size * 0.035)), moveTo(bodyX + lineInset, ly), lineTo(bodyX + bodyW - lineInset, ly), stroke());
+  }
+  return ops;
+}
+
+/**
+ * A true PDF `/Text` popup-note annotation — a small persistent icon baked
+ * into the document itself (unlike the Live Review feature's comment pins,
+ * which are ephemeral Supabase Realtime metadata that never touch document
+ * bytes, per this codebase's Live Review scope rule). Distinct from
+ * addFreeText: FreeText is an always-visible inline text box meant to print
+ * (Edge/Acrobat's "Add text"); this is a closed icon with a click-to-open
+ * popup, meant to stay off the printed page (Acrobat/Foxit's "Add comment"/
+ * "Note" tool) — real PDF readers treat these as two different tools because
+ * they solve different problems, not two labels for one feature.
+ */
+export async function addStickyNote(source: Uint8Array, pageIndex: number, point: Point, text: string, options: StickyNoteOptions = {}): Promise<Uint8Array> {
+  const doc = await loadForMutation(source);
+  const page = doc.getPage(pageIndex);
+  const { context } = page.doc;
+  const color = options.color ?? { r: 1, g: 0.85, b: 0.35 };
+  const ink = { r: 0.35, g: 0.27, b: 0.05 };
+  const opacity = options.opacity ?? DEFAULT_OPACITY;
+  const size = NOTE_ICON_SIZE;
+  const rect: Rect = { x: point.x, y: point.y - size, width: size, height: size };
+
+  const appearance = context.formXObject(noteIconOperators(size, color, ink), { BBox: [0, 0, size, size] });
+  const appearanceRef = context.register(appearance);
+
+  const textDict = context.obj({
+    Type: "Annot",
+    Subtype: "Text",
+    Rect: [rect.x, rect.y, rect.x + rect.width, rect.y + rect.height],
+    Contents: text,
+    Name: "Comment",
+    C: colorToArray(color),
+    CA: opacity,
+    Open: false,
+    AP: { N: appearanceRef },
+  });
+  const textRef = context.register(textDict);
+
+  const popupWidth = 220;
+  const popupHeight = 110;
+  const popupDict = context.obj({
+    Type: "Annot",
+    Subtype: "Popup",
+    Rect: [rect.x + rect.width + 4, rect.y - popupHeight + rect.height, rect.x + rect.width + 4 + popupWidth, rect.y + rect.height],
+    Parent: textRef,
+    Open: false,
+  });
+  const popupRef = context.register(popupDict);
+  textDict.set(PDFName.of("Popup"), popupRef);
+
+  pushAnnotation(page, textRef);
+  pushAnnotation(page, popupRef);
+  return finish(doc);
+}
+
 export async function addStamp(source: Uint8Array, pageIndex: number, rect: Rect, preset: StampPreset): Promise<Uint8Array> {
   const doc = await loadForMutation(source);
   const { label, color } = STAMP_PRESETS[preset];

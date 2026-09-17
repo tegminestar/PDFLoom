@@ -1,6 +1,6 @@
 import { getPdfWorkerClient, recognizeShape, type PdfDocument, type StampPreset } from "@pdfloom/core";
 import { toast } from "@pdfloom/ui";
-import { Check, GripHorizontal, X } from "lucide-react";
+import { Check, GripHorizontal, MessageSquare, X } from "lucide-react";
 import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLoomStore, type AnnotateTool } from "../../app/store";
 
@@ -25,6 +25,9 @@ interface PendingTextBox extends ScreenRect {
 interface PendingStamp extends ScreenRect {
   preset: StampPreset;
 }
+interface PendingNote extends ScreenPoint {
+  value: string;
+}
 
 // Mirrors packages/core/src/pdf/annotations.ts's STAMP_PRESETS exactly, so
 // the live preview matches what addStamp actually draws — labels differ
@@ -40,6 +43,7 @@ const STAMP_PREVIEW: Record<StampPreset, { label: string; color: string }> = {
 const DRAW_TOOLS: AnnotateTool[] = ["ink", "square", "circle", "line"];
 const DEFAULT_TEXT_BOX = { width: 220, height: 70 };
 const DEFAULT_STAMP_BOX = { width: 160, height: 56 };
+const NOTE_POPUP_BOX = { width: 220, height: 96 };
 const MIN_TEXT_BOX = { width: 60, height: 28 };
 const MIN_STAMP_BOX = { width: 60, height: 24 };
 const SNAP_PX = 6;
@@ -113,6 +117,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   const [pendingStamp, setPendingStamp] = useState<PendingStamp | null>(null);
   const [stampDragMode, setStampDragMode] = useState<DragMode | null>(null);
   const [stampSnapGuides, setStampSnapGuides] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+  const [noteBox, setNoteBox] = useState<PendingNote | null>(null);
 
   const localPoint = useCallback((e: ReactPointerEvent<HTMLDivElement>): ScreenPoint => {
     const rect = overlayRef.current!.getBoundingClientRect();
@@ -335,6 +340,24 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
           box: { fill: { r: 1, g: 0.98, b: 0.75 }, stroke: color, lineWidth: 1 },
         });
         await applyPdfMutation(bytes);
+        toast.success("Added text");
+      } catch (error) {
+        toast.error("Couldn't add text", error instanceof Error ? error.message : undefined);
+      }
+    },
+    [applyPdfMutation, color, doc, pageNumber, toPdf],
+  );
+
+  const commitNote = useCallback(
+    async (note: PendingNote) => {
+      const text = note.value.trim();
+      setNoteBox(null);
+      if (!text) return;
+      try {
+        const point = await toPdf({ x: note.x, y: note.y });
+        const client = await getPdfWorkerClient();
+        const bytes = await client.addStickyNote(await doc.getRawBytes(), pageNumber - 1, point, text, { color });
+        await applyPdfMutation(bytes);
         toast.success("Added comment");
       } catch (error) {
         toast.error("Couldn't add comment", error instanceof Error ? error.message : undefined);
@@ -467,7 +490,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   }, [textBoxDragMode]);
 
   const isDrawTool = DRAW_TOOLS.includes(tool);
-  const isPlacementTool = tool === "text" || tool === "stamp";
+  const isPlacementTool = tool === "text" || tool === "note" || tool === "stamp";
   if (!annotateOpen || (!isDrawTool && !isPlacementTool)) {
     return null;
   }
@@ -476,7 +499,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
     <div
       ref={overlayRef}
       className="absolute inset-0 z-10"
-      style={{ cursor: tool === "text" || tool === "stamp" ? "crosshair" : "crosshair" }}
+      style={{ cursor: "crosshair" }}
       onPointerDown={(e) => {
         // Without this, browsers can undo a .focus() applied to a newly
         // created element (our text-box textarea, focused via autoFocus)
@@ -485,19 +508,28 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
         // before a user could type anything.
         e.preventDefault();
         if (textBox) {
-          // A pending comment box already exists — clicking anywhere else
-          // on the page (regardless of which tool is now selected)
-          // finalizes it at its current position/size/text, rather than
-          // silently discarding whatever was typed.
+          // A pending text box already exists — clicking anywhere else on
+          // the page (regardless of which tool is now selected) finalizes
+          // it at its current position/size/text, rather than silently
+          // discarding whatever was typed.
           void commitText(textBox);
           return;
         }
+        if (noteBox) {
+          // Same "click elsewhere finalizes it" rule as the text box.
+          void commitNote(noteBox);
+          return;
+        }
         if (pendingStamp) {
-          // Same "click elsewhere finalizes it" rule as the comment box.
+          // Same "click elsewhere finalizes it" rule as the text box.
           void commitStamp(pendingStamp);
           return;
         }
         const p = localPoint(e);
+        if (tool === "note") {
+          setNoteBox({ x: p.x, y: p.y, value: "" });
+          return;
+        }
         if (tool === "stamp") {
           setPendingStamp({
             x: p.x - DEFAULT_STAMP_BOX.width / 2,
@@ -585,7 +617,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
               style={{ background: colorHex(color) }}
             >
               <GripHorizontal className="h-3 w-3" />
-              Comment
+              Text
             </div>
             <div
               onPointerDown={(e) => {
@@ -598,7 +630,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 type="button"
                 onClick={() => void commitText(textBox)}
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-text hover:opacity-90"
-                aria-label="Add comment"
+                aria-label="Add text"
               >
                 <Check className="h-3.5 w-3.5" />
               </button>
@@ -606,7 +638,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 type="button"
                 onClick={() => setTextBox(null)}
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-bg text-text-muted hover:text-text"
-                aria-label="Discard comment"
+                aria-label="Discard text"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -615,7 +647,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
             <textarea
               autoFocus
               value={textBox.value}
-              placeholder="Type a comment…"
+              placeholder="Type text…"
               onChange={(e) => setTextBox((prev) => (prev ? { ...prev, value: e.target.value } : prev))}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
@@ -653,6 +685,59 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
             ))}
           </div>
         </>
+      )}
+
+      {noteBox && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute z-30 flex flex-col gap-2 rounded-(--radius-md) border border-border-strong bg-surface p-3 text-sm shadow-(--shadow-floating)"
+          style={{ left: noteBox.x, top: noteBox.y, width: NOTE_POPUP_BOX.width }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: colorHex(color) }}>
+              <MessageSquare className="h-3.5 w-3.5" />
+              Comment
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => void commitNote(noteBox)}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-text hover:opacity-90"
+                aria-label="Add comment"
+                disabled={!noteBox.value.trim()}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setNoteBox(null)}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-bg text-text-muted hover:text-text"
+                aria-label="Discard comment"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          <textarea
+            autoFocus
+            rows={4}
+            value={noteBox.value}
+            placeholder="Type a comment…"
+            onChange={(e) => setNoteBox((prev) => (prev ? { ...prev, value: e.target.value } : prev))}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onBlur={() => {
+              if (noteBox) void commitNote(noteBox);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setNoteBox(null);
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void commitNote(noteBox);
+            }}
+            className="resize-none rounded-(--radius-sm) border border-border-strong bg-bg p-2 text-text outline-none focus-visible:border-primary"
+            style={{ height: NOTE_POPUP_BOX.height }}
+          />
+        </div>
       )}
 
       {pendingStamp && (

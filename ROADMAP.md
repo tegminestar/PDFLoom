@@ -70,13 +70,30 @@ scoped, or closed — this is the source of truth, not chat history.
   fix, or the specific one used to build the desktop app. Confirm on the
   next release rather than assuming this is closed.
 
+- Desktop shell: fixed "Failed to fetch" on sign-in inside the packaged
+  app — `tauri.conf.json`'s CSP `connect-src` didn't allow Supabase or the
+  API origin, so the webview blocked the request outright (invisible on
+  the hosted web app, which has no such CSP). Also switched sign-in from a
+  magic link to a typed 6-digit OTP code: a link's redirect isn't a real
+  `https://` origin inside the webview, and even a correct one opens the
+  system browser when clicked from an email client, not this app — the
+  code path works identically on web and desktop with no platform branch.
+- Annotate: added a genuine sticky-note "Add comment" tool — a real PDF
+  `/Text` + `/Popup` annotation (persists in the file, opens on click,
+  doesn't print by default), distinct from the existing text-box tool
+  (which writes a `/FreeText` box and is now correctly labeled "Add text",
+  matching Edge/Acrobat's own naming — it had been mislabeled "Add
+  comment" since it shipped, which is what surfaced this gap). Marketing
+  copy (`LandingPage.tsx`, `App.tsx`'s mode picker) already promised
+  "sticky notes" before this — this was a real gap, not just a naming fix.
+
 ## Open — in progress or queued
 
-- **Verify the desktop file-association fix on a real machine** (see
-  above) — Windows especially, since that's the platform actually
-  reported broken. Trigger `release-desktop.yml` for a fresh build once
-  ready (an external, visible action — needs explicit go-ahead, not
-  something to trigger automatically).
+- **Verify the desktop file-association fix on a real machine** — done,
+  user-confirmed working on a real Windows install of the v0.1.2 build.
+  Still open: whether to publish that draft release publicly (asked, not
+  yet answered), and the CSP/OTP sign-in fix above still needs the same
+  real-machine confirmation before its own release.
 - **Android/iOS file-association support** — plumbing added per Tauri's
   official mobile guide, but never built, run, or tested on either
   platform (no toolchain here). Needs a session with the right mobile

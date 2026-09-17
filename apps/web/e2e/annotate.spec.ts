@@ -121,12 +121,12 @@ test("smart shapes: a hand-traced rectangle-like freehand stroke snaps to a clea
   await expect(page.getByText("Added drawing").first()).toBeVisible({ timeout: 8000 });
 });
 
-test("comment (text) box: stays adjustable while editing, then move + resize + commit bakes it in at the adjusted spot", async ({ page }) => {
+test("text box: stays adjustable while editing, then move + resize + commit bakes it in at the adjusted spot", async ({ page }) => {
   await page.goto("/app");
   await openPdf(page, "sample.pdf");
 
   await page.getByLabel("Annotate", { exact: true }).click();
-  await page.getByLabel("Add comment", { exact: true }).click();
+  await page.getByLabel("Add text", { exact: true }).click();
 
   const canvasBeforeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
 
@@ -151,7 +151,7 @@ test("comment (text) box: stays adjustable while editing, then move + resize + c
 
   // Drag via the grip handle — the box must stay editable afterward (not
   // accidentally blurred/committed by the drag gesture).
-  const grip = page.getByText("Comment", { exact: true });
+  const grip = page.getByText("Text", { exact: true });
   const gripBox = await grip.boundingBox();
   if (!gripBox) throw new Error("drag grip not found");
   await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
@@ -171,7 +171,7 @@ test("comment (text) box: stays adjustable while editing, then move + resize + c
   await expect(textarea).toHaveValue("Please review this section before signing.");
 
   // Commit via the checkmark button.
-  await page.getByRole("button", { name: "Add comment" }).last().click();
+  await page.getByRole("button", { name: "Add text" }).last().click();
   await expect(page.locator("textarea")).toHaveCount(0);
   await expect
     .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
@@ -181,7 +181,7 @@ test("comment (text) box: stays adjustable while editing, then move + resize + c
   // A second box, discarded via the X button, must not touch the document.
   const secondY = pageBox.y + Math.min(pageBox.height * 0.6, viewport.height * 0.55);
   await page.mouse.click(pageBox.x + pageBox.width * 0.5, secondY);
-  const discardBtn = page.getByRole("button", { name: "Discard comment" });
+  const discardBtn = page.getByRole("button", { name: "Discard text" });
   await expect(discardBtn).toBeVisible({ timeout: 3000 });
   await discardBtn.click();
   await expect(page.locator("textarea")).toHaveCount(0);
@@ -195,6 +195,58 @@ test("comment (text) box: stays adjustable while editing, then move + resize + c
   await expect
     .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
     .not.toBe(canvasAfterDiscardDataUrl);
+});
+
+test("sticky-note comment: a genuine popup-note icon, distinct from the Add text box, bakes into the page and can be discarded", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await page.getByLabel("Add comment", { exact: true }).click();
+
+  const canvasBeforeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  const pageBox = await page.locator("[data-page-number='1']").boundingBox();
+  if (!pageBox) throw new Error("page not found");
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error("viewport size unavailable");
+  const firstY = pageBox.y + Math.min(pageBox.height * 0.35, viewport.height * 0.3);
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, firstY);
+
+  const textarea = page.locator("textarea");
+  await expect(textarea).toBeVisible({ timeout: 3000 });
+  await textarea.fill("Please confirm this figure with finance.");
+
+  // Nothing is baked in yet just from placing + typing.
+  const canvasWhileEditingDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasWhileEditingDataUrl).toBe(canvasBeforeDataUrl);
+
+  // Commit via the checkmark button — a small icon bakes into the page,
+  // unlike the Add text tool's always-visible box.
+  await page.getByRole("button", { name: "Add comment" }).last().click();
+  await expect(page.locator("textarea")).toHaveCount(0);
+  await expect
+    .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
+    .not.toBe(canvasBeforeDataUrl);
+  const canvasAfterCommitDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+
+  // A second note, discarded via the X button, must not touch the document.
+  const secondY = pageBox.y + Math.min(pageBox.height * 0.6, viewport.height * 0.55);
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, secondY);
+  const discardBtn = page.getByRole("button", { name: "Discard comment" });
+  await expect(discardBtn).toBeVisible({ timeout: 3000 });
+  await discardBtn.click();
+  await expect(page.locator("textarea")).toHaveCount(0);
+  const canvasAfterDiscardDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasAfterDiscardDataUrl).toBe(canvasAfterCommitDataUrl);
+
+  // A third note, cancelled via Escape instead of the X button.
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, secondY);
+  await expect(page.locator("textarea")).toBeVisible({ timeout: 3000 });
+  await page.keyboard.press("Escape");
+  await expect(page.locator("textarea")).toHaveCount(0);
+  const canvasAfterEscapeDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  expect(canvasAfterEscapeDataUrl).toBe(canvasAfterCommitDataUrl);
 });
 
 test("stamp: stays adjustable before placing, and Escape discards it without touching the document", async ({ page }) => {

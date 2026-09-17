@@ -3,6 +3,7 @@ import { IconButton, Separator, Switch, TopBar, TopBarSection, cn } from "@pdflo
 import {
   Circle,
   Highlighter,
+  MessageSquare,
   MoveUpRight,
   Pencil,
   Redo2,
@@ -28,7 +29,8 @@ const TOOLS: { id: AnnotateTool; label: string; icon: ReactNode }[] = [
   { id: "square", label: "Rectangle", icon: <Square /> },
   { id: "circle", label: "Ellipse", icon: <Circle /> },
   { id: "line", label: "Line / arrow", icon: <MoveUpRight /> },
-  { id: "text", label: "Add comment", icon: <Type /> },
+  { id: "text", label: "Add text", icon: <Type /> },
+  { id: "note", label: "Add comment", icon: <MessageSquare /> },
   { id: "stamp", label: "Stamp", icon: <Stamp /> },
 ];
 
