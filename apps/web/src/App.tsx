@@ -201,23 +201,33 @@ export function App() {
   // non-blocking toast (not a modal) — this must never interrupt someone
   // mid-edit, and it stays open (not auto-dismissed) since "Restart to
   // update" is meant to be acted on, not missed.
+  //
+  // Deliberately deferred a few seconds past mount, not fired immediately
+  // alongside the file-open effect above — a version check has zero
+  // urgency, and there's no reason for it to make its own network request
+  // during the same critical window where a cold start (someone just
+  // double-clicked/"Open With"'d a PDF) needs to land the actual file open
+  // as fast and reliably as possible.
   useEffect(() => {
-    void checkForDesktopUpdate().then((update) => {
-      if (!update) return;
-      toast.show({
-        title: `PDFLoom ${update.version} is available`,
-        description: "Downloads and installs, then restarts the app.",
-        tone: "info",
-        durationMs: Infinity,
-        action: {
-          label: "Restart to update",
-          onClick: () => {
-            toast.info("Downloading update…");
-            void update.install().catch(() => toast.error("Couldn't install the update", "Try again from a stable connection."));
+    const timer = window.setTimeout(() => {
+      void checkForDesktopUpdate().then((update) => {
+        if (!update) return;
+        toast.show({
+          title: `PDFLoom ${update.version} is available`,
+          description: "Downloads and installs, then restarts the app.",
+          tone: "info",
+          durationMs: Infinity,
+          action: {
+            label: "Restart to update",
+            onClick: () => {
+              toast.info("Downloading update…");
+              void update.install().catch(() => toast.error("Couldn't install the update", "Try again from a stable connection."));
+            },
           },
-        },
+        });
       });
-    });
+    }, 5000);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Global keyboard shortcuts. These are the same actions advertised in the
