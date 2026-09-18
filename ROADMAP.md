@@ -4,6 +4,23 @@ Durable tracking of what's shipped and what's open, so nothing gets dropped
 across sessions. Update this file whenever a deferred item is picked up,
 scoped, or closed — this is the source of truth, not chat history.
 
+**Releasing a new desktop build is two steps, not one — don't skip the
+second:** (1) `release-desktop.yml` builds and creates/updates a **draft**
+GitHub Release. (2) `publish-downloads.yml` (input: the tag, e.g. `v0.1.5`)
+is the separate, explicit "make this version public" step — it copies that
+release's installers to the `pdfloomdownloads` Azure Blob Storage account
+under stable `PDFLoom-latest-*` names, which is what `LandingPage.tsx`'s
+"Download PDFLoom" buttons actually link to (deliberately, so the landing
+page never needs a code change per release). Forgetting step 2 leaves the
+public download button silently serving whatever version was last
+published there — discovered the hard way on 2026-09-18: it had been
+frozen at v0.1.1 (the very first release) for the entire multi-version CSP/
+sticky-note/scroll-fix/updater cycle earlier that same day, so every
+"regression" a real user reported (broken file-association, broken sign-in,
+stale feature list) was actually v0.1.1 the whole time, not a real
+regression in any of the versions actually built. Always run
+`publish-downloads.yml` right after publishing a desktop release.
+
 ## Shipped (this cycle)
 
 - Per-field signature/initials review on the signer page (was: everything
