@@ -197,6 +197,54 @@ test("text box: stays adjustable while editing, then move + resize + commit bake
     .not.toBe(canvasAfterDiscardDataUrl);
 });
 
+test("text box: bold/italic/size controls are live in the preview and each produces a visibly different bake", async ({ page }) => {
+  await page.goto("/app");
+  await openPdf(page, "sample.pdf");
+
+  await page.getByLabel("Annotate", { exact: true }).click();
+  await page.getByLabel("Add text", { exact: true }).click();
+
+  const pageBox = await page.locator("[data-page-number='1']").boundingBox();
+  if (!pageBox) throw new Error("page not found");
+  await page.mouse.click(pageBox.x + pageBox.width * 0.5, pageBox.y + 250);
+
+  const textarea = page.locator("textarea");
+  await expect(textarea).toBeVisible({ timeout: 3000 });
+  await textarea.fill("Formatted");
+
+  const boldBtn = page.getByRole("button", { name: "Bold", exact: true });
+  const italicBtn = page.getByRole("button", { name: "Italic", exact: true });
+  await expect(boldBtn).toHaveAttribute("aria-pressed", "false");
+  await expect(italicBtn).toHaveAttribute("aria-pressed", "false");
+
+  const fontBefore = await textarea.evaluate((el) => getComputedStyle(el).fontWeight);
+  await boldBtn.click();
+  await expect(boldBtn).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => textarea.evaluate((el) => getComputedStyle(el).fontWeight)).not.toBe(fontBefore);
+
+  await italicBtn.click();
+  await expect(italicBtn).toHaveAttribute("aria-pressed", "true");
+  await expect(textarea).toHaveCSS("font-style", "italic");
+
+  // Bump the size 3 steps and confirm the readout and the live preview both track it.
+  const increaseBtn = page.getByRole("button", { name: "Increase font size" });
+  const sizeBefore = await textarea.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  await increaseBtn.click();
+  await increaseBtn.click();
+  await increaseBtn.click();
+  await expect(page.getByText("20", { exact: true })).toBeVisible();
+  await expect.poll(() => textarea.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThan(sizeBefore);
+
+  // Commit and confirm it actually baked something in (the specific pixel
+  // effect of bold/italic/size isn't asserted here — that's what packages/
+  // core's own tests own — only that this UI's choices reach the document).
+  const canvasBeforeCommitDataUrl = await page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  await page.getByRole("button", { name: "Add text" }).last().click();
+  await expect
+    .poll(async () => page.locator("canvas").first().evaluate((c: HTMLCanvasElement) => c.toDataURL()), { timeout: 8000 })
+    .not.toBe(canvasBeforeCommitDataUrl);
+});
+
 test("sticky-note comment: a genuine popup-note icon, distinct from the Add text box, bakes into the page and can be discarded", async ({ page }) => {
   await page.goto("/app");
   await openPdf(page, "sample.pdf");

@@ -1,6 +1,6 @@
 import { getPdfWorkerClient, recognizeShape, type PdfDocument, type StampPreset } from "@pdfloom/core";
-import { toast } from "@pdfloom/ui";
-import { Check, GripHorizontal, MessageSquare, X } from "lucide-react";
+import { cn, toast } from "@pdfloom/ui";
+import { Bold, Check, GripHorizontal, Italic, MessageSquare, Minus, Plus, X } from "lucide-react";
 import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useLoomStore, type AnnotateTool } from "../../app/store";
 
@@ -21,6 +21,9 @@ interface ScreenRect extends ScreenPoint {
 }
 interface PendingTextBox extends ScreenRect {
   value: string;
+  fontSize: number;
+  bold: boolean;
+  italic: boolean;
 }
 interface PendingStamp extends ScreenRect {
   preset: StampPreset;
@@ -42,6 +45,10 @@ const STAMP_PREVIEW: Record<StampPreset, { label: string; color: string }> = {
 
 const DRAW_TOOLS: AnnotateTool[] = ["ink", "square", "circle", "line"];
 const DEFAULT_TEXT_BOX = { width: 220, height: 70 };
+const DEFAULT_TEXT_FONT_SIZE = 14;
+const MIN_TEXT_FONT_SIZE = 8;
+const MAX_TEXT_FONT_SIZE = 72;
+const TEXT_FONT_SIZE_STEP = 2;
 const DEFAULT_STAMP_BOX = { width: 160, height: 56 };
 const NOTE_POPUP_BOX = { width: 220, height: 96 };
 const MIN_TEXT_BOX = { width: 60, height: 28 };
@@ -103,6 +110,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
   const annotateOpen = useLoomStore((s) => s.annotateOpen);
   const tool = useLoomStore((s) => s.annotateTool);
   const color = useLoomStore((s) => s.annotateColor);
+  const textColor = useLoomStore((s) => s.annotateTextColor);
   const stampPreset = useLoomStore((s) => s.annotateStampPreset);
   const smartShapes = useLoomStore((s) => s.annotateSmartShapes);
   const applyPdfMutation = useLoomStore((s) => s.applyPdfMutation);
@@ -335,9 +343,19 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
         const p2 = await toPdf({ x: box.x + box.width, y: box.y + box.height });
         const rect = { x: Math.min(p1.x, p2.x), y: Math.min(p1.y, p2.y), width: Math.abs(p2.x - p1.x), height: Math.abs(p2.y - p1.y) };
         const client = await getPdfWorkerClient();
+        // No box/fill — plain inline text sitting directly on the page,
+        // matching Edge/Acrobat's actual "Add text" tool. A filled/stroked
+        // box behind the text is what a *comment* icon's popup looks like;
+        // baking one in here made this tool visually indistinguishable
+        // from the separate sticky-note "Add comment" tool it was already
+        // getting confused with. Its own color swatch (not the shared
+        // annotateColor, which defaults to amber for highlighter/shape
+        // fills) sets the text's own color.
         const bytes = await client.addFreeText(await doc.getRawBytes(), pageNumber - 1, rect, text, {
-          color: { r: 0.1, g: 0.1, b: 0.1 },
-          box: { fill: { r: 1, g: 0.98, b: 0.75 }, stroke: color, lineWidth: 1 },
+          color: textColor,
+          fontSize: box.fontSize,
+          bold: box.bold,
+          italic: box.italic,
         });
         await applyPdfMutation(bytes);
         toast.success("Added text");
@@ -345,7 +363,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
         toast.error("Couldn't add text", error instanceof Error ? error.message : undefined);
       }
     },
-    [applyPdfMutation, color, doc, pageNumber, toPdf],
+    [applyPdfMutation, textColor, doc, pageNumber, toPdf],
   );
 
   const commitNote = useCallback(
@@ -541,7 +559,16 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
           return;
         }
         if (tool === "text") {
-          setTextBox({ x: p.x, y: p.y, width: DEFAULT_TEXT_BOX.width, height: DEFAULT_TEXT_BOX.height, value: "" });
+          setTextBox({
+            x: p.x,
+            y: p.y,
+            width: DEFAULT_TEXT_BOX.width,
+            height: DEFAULT_TEXT_BOX.height,
+            value: "",
+            fontSize: DEFAULT_TEXT_FONT_SIZE,
+            bold: false,
+            italic: false,
+          });
           return;
         }
         if (!isDrawTool) return;
@@ -605,43 +632,102 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
           )}
 
           <div className="absolute" style={{ left: textBox.x, top: textBox.y, width: textBox.width, height: textBox.height }}>
-            {/* Drag handle — the textarea itself has to stay a normal
+            {/* One toolbar row, left to right: drag grip, bold/italic/size
+                (matching Edge's own inline "Add text" toolbar), then
+                confirm/discard. Deliberately allowed to overflow past the
+                box's own width rather than wrap — the box is often narrower
+                than this cluster, and Edge's reference toolbar does the
+                same. The textarea itself has to stay a normal
                 click-to-position-cursor editable surface, so moving the box
                 is a separate grip strip rather than "drag the textarea". */}
-            <div
-              onPointerDown={beginTextBoxMove}
-              onPointerMove={handleTextBoxDragMove}
-              onPointerUp={handleTextBoxDragEnd}
-              onPointerCancel={handleTextBoxDragEnd}
-              className="absolute -top-7 left-0 flex h-6 cursor-move items-center gap-1 rounded-(--radius-sm) px-2 text-[11px] font-medium text-white"
-              style={{ background: colorHex(color) }}
-            >
-              <GripHorizontal className="h-3 w-3" />
-              Text
-            </div>
-            <div
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              className="absolute -top-7 right-0 flex items-center gap-1"
-            >
-              <button
-                type="button"
-                onClick={() => void commitText(textBox)}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-text hover:opacity-90"
-                aria-label="Add text"
+            <div className="absolute -top-7 left-0 flex items-center gap-1.5 whitespace-nowrap">
+              <div
+                onPointerDown={beginTextBoxMove}
+                onPointerMove={handleTextBoxDragMove}
+                onPointerUp={handleTextBoxDragEnd}
+                onPointerCancel={handleTextBoxDragEnd}
+                className="flex h-6 cursor-move items-center gap-1 rounded-(--radius-sm) px-2 text-[11px] font-medium text-white"
+                style={{ background: colorHex(textColor) }}
               >
-                <Check className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setTextBox(null)}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-bg text-text-muted hover:text-text"
-                aria-label="Discard text"
+                <GripHorizontal className="h-3 w-3" />
+                Text
+              </div>
+
+              <div
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="flex items-center gap-0.5 rounded-(--radius-sm) border border-border-strong bg-surface px-1 py-0.5 shadow-(--shadow-floating)"
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setTextBox((prev) => (prev ? { ...prev, bold: !prev.bold } : prev))}
+                  className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded-(--radius-sm)",
+                    textBox.bold ? "bg-primary text-primary-text" : "text-text-muted hover:text-text",
+                  )}
+                  aria-label="Bold"
+                  aria-pressed={textBox.bold}
+                >
+                  <Bold className="h-3 w-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTextBox((prev) => (prev ? { ...prev, italic: !prev.italic } : prev))}
+                  className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded-(--radius-sm)",
+                    textBox.italic ? "bg-primary text-primary-text" : "text-text-muted hover:text-text",
+                  )}
+                  aria-label="Italic"
+                  aria-pressed={textBox.italic}
+                >
+                  <Italic className="h-3 w-3" />
+                </button>
+                <div className="mx-0.5 h-4 w-px bg-border" />
+                <button
+                  type="button"
+                  onClick={() => setTextBox((prev) => (prev ? { ...prev, fontSize: Math.max(MIN_TEXT_FONT_SIZE, prev.fontSize - TEXT_FONT_SIZE_STEP) } : prev))}
+                  className="flex h-5 w-5 items-center justify-center rounded-(--radius-sm) text-text-muted hover:text-text"
+                  aria-label="Decrease font size"
+                >
+                  <Minus className="h-3 w-3" />
+                </button>
+                <span className="w-5 text-center text-[11px] tabular-nums text-text-muted">{textBox.fontSize}</span>
+                <button
+                  type="button"
+                  onClick={() => setTextBox((prev) => (prev ? { ...prev, fontSize: Math.min(MAX_TEXT_FONT_SIZE, prev.fontSize + TEXT_FONT_SIZE_STEP) } : prev))}
+                  className="flex h-5 w-5 items-center justify-center rounded-(--radius-sm) text-text-muted hover:text-text"
+                  aria-label="Increase font size"
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </div>
+
+              <div
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="flex items-center gap-1"
+              >
+                <button
+                  type="button"
+                  onClick={() => void commitText(textBox)}
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-text hover:opacity-90"
+                  aria-label="Add text"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTextBox(null)}
+                  className="flex h-6 w-6 items-center justify-center rounded-full bg-bg text-text-muted hover:text-text"
+                  aria-label="Discard text"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
 
             <textarea
@@ -664,11 +750,23 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 if (e.key === "Escape") setTextBox(null);
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void commitText(textBox);
               }}
-              className="h-full w-full resize-none rounded-(--radius-sm) border-2 p-2 text-sm shadow-(--shadow-floating) outline-none"
+              // Dashed, near-transparent while composing (nothing is baked
+              // in yet) — a solid fill here would preview a box that never
+              // actually gets committed (see commitText: no box/fill is
+              // sent to addFreeText), and a filled box is exactly what made
+              // this tool look like the separate sticky-note "Add comment"
+              // tool. Text color, size (scaled by the page's current zoom,
+              // like the box's own screen position/size already are, so
+              // the preview is accurate at any zoom level — not just at
+              // 100%), weight, and style all match what's actually about to
+              // be baked into the document.
+              className="h-full w-full resize-none rounded-(--radius-sm) border-2 border-dashed bg-transparent p-2 outline-none"
               style={{
-                borderColor: colorHex(color),
-                background: "rgb(255 250 224)",
-                color: "#1a1204",
+                borderColor: colorHex(textColor),
+                color: colorHex(textColor),
+                fontSize: textBox.fontSize * scale,
+                fontWeight: textBox.bold ? 700 : 400,
+                fontStyle: textBox.italic ? "italic" : "normal",
               }}
             />
 
@@ -680,7 +778,7 @@ export function AnnotationDrawOverlay({ doc, pageNumber, scale, rotation }: Anno
                 onPointerUp={handleTextBoxDragEnd}
                 onPointerCancel={handleTextBoxDragEnd}
                 className={`absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-white shadow ${HANDLE_CURSOR[h]}`}
-                style={{ left: HANDLE_POSITION[h].left, top: HANDLE_POSITION[h].top, borderColor: colorHex(color) }}
+                style={{ left: HANDLE_POSITION[h].left, top: HANDLE_POSITION[h].top, borderColor: colorHex(textColor) }}
               />
             ))}
           </div>

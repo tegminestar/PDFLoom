@@ -124,6 +124,8 @@ interface LoomState {
   annotateOpen: boolean;
   annotateTool: AnnotateTool;
   annotateColor: RgbColor;
+  /** Separate from annotateColor on purpose: that one's shared default (amber) is tuned for highlighter/shape fills, which would make freshly-typed text nearly invisible on a white page by default. */
+  annotateTextColor: RgbColor;
   annotateStampPreset: StampPreset;
   /** When on, a freehand "ink" stroke that's confidently a rectangle/circle/line snaps to that clean shape instead of staying as drawn. */
   annotateSmartShapes: boolean;
@@ -180,6 +182,7 @@ interface LoomState {
   setAnnotateOpen: (open: boolean) => void;
   setAnnotateTool: (tool: AnnotateTool) => void;
   setAnnotateColor: (color: RgbColor) => void;
+  setAnnotateTextColor: (color: RgbColor) => void;
   setAnnotateStampPreset: (preset: StampPreset) => void;
   setAnnotateSmartShapes: (enabled: boolean) => void;
 
@@ -387,6 +390,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   annotateOpen: false,
   annotateTool: "highlight",
   annotateColor: ANNOTATE_COLOR_PRESETS[0]!,
+  annotateTextColor: ANNOTATE_COLOR_PRESETS[5]!, // near-black — legible on a white page by default, unlike the highlighter-tuned amber default above
   annotateStampPreset: "approved",
   annotateSmartShapes: true,
 
@@ -526,6 +530,7 @@ export const useLoomStore = create<LoomState>((set, get) => ({
   },
   setAnnotateTool: (annotateTool) => set({ annotateTool }),
   setAnnotateColor: (annotateColor) => set({ annotateColor }),
+  setAnnotateTextColor: (annotateTextColor) => set({ annotateTextColor }),
   setAnnotateStampPreset: (annotateStampPreset) => set({ annotateStampPreset }),
   setAnnotateSmartShapes: (annotateSmartShapes) => set({ annotateSmartShapes }),
 

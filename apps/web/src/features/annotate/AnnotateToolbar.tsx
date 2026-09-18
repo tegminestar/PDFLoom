@@ -48,6 +48,8 @@ export function AnnotateToolbar() {
   const setTool = useLoomStore((s) => s.setAnnotateTool);
   const color = useLoomStore((s) => s.annotateColor);
   const setColor = useLoomStore((s) => s.setAnnotateColor);
+  const textColor = useLoomStore((s) => s.annotateTextColor);
+  const setTextColor = useLoomStore((s) => s.setAnnotateTextColor);
   const stampPreset = useLoomStore((s) => s.annotateStampPreset);
   const setStampPreset = useLoomStore((s) => s.setAnnotateStampPreset);
   const smartShapes = useLoomStore((s) => s.annotateSmartShapes);
@@ -101,30 +103,39 @@ export function AnnotateToolbar() {
           </>
         )}
 
-        {tool !== "stamp" && (
-          <>
-            <Separator orientation="vertical" className="mx-1.5 h-6" />
-            <div className="flex items-center gap-1">
-              {ANNOTATE_COLOR_PRESETS.map((c, i) => {
-                const hex = `rgb(${Math.round(c.r * 255)} ${Math.round(c.g * 255)} ${Math.round(c.b * 255)})`;
-                const active = c.r === color.r && c.g === color.g && c.b === color.b;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    aria-label={`Color ${i + 1}`}
-                    onClick={() => setColor(c)}
-                    className={cn(
-                      "h-6 w-6 rounded-full border-2 transition-transform",
-                      active ? "scale-110 border-text" : "border-transparent hover:scale-105",
-                    )}
-                    style={{ backgroundColor: hex }}
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
+        {tool !== "stamp" &&
+          (() => {
+            // "text" gets its own color state (defaults to near-black) — the
+            // shared annotateColor's default (amber) is tuned for
+            // highlighter/shape fills, which would make freshly-typed text
+            // barely visible on a white page by default.
+            const activeColor = tool === "text" ? textColor : color;
+            const setActiveColor = tool === "text" ? setTextColor : setColor;
+            return (
+              <>
+                <Separator orientation="vertical" className="mx-1.5 h-6" />
+                <div className="flex items-center gap-1">
+                  {ANNOTATE_COLOR_PRESETS.map((c, i) => {
+                    const hex = `rgb(${Math.round(c.r * 255)} ${Math.round(c.g * 255)} ${Math.round(c.b * 255)})`;
+                    const active = c.r === activeColor.r && c.g === activeColor.g && c.b === activeColor.b;
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-label={`Color ${i + 1}`}
+                        onClick={() => setActiveColor(c)}
+                        className={cn(
+                          "h-6 w-6 rounded-full border-2 transition-transform",
+                          active ? "scale-110 border-text" : "border-transparent hover:scale-105",
+                        )}
+                        style={{ backgroundColor: hex }}
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
       </TopBarSection>
 
       <TopBarSection align="end">
